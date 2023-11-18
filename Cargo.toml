@@ -63,5 +63,5 @@ primitive-types = {version = "0.12.2", default-features = false, features = ["by
 cw-utils = { version = "1.0.2" }
 
 [dev-dependencies]
-cw-multi-test = "0.18.0"
+cw-multi-test = { version = "0.18.0", features = ["iterator"]}
 rand = "0.8"

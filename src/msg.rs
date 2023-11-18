@@ -35,14 +35,14 @@ pub enum ExecuteMsg {
         port: u16,
         ip_type: u8,
     },
-    // Register {
-    //     netuid: u16,
-    //     block_number: u64,
-    //     nonce: u64,
-    //     work: Vec<u8>,
-    //     hotkey: Addr,
-    //     coldkey: Addr,
-    // },
+    Register {
+        netuid: u16,
+        block_number: u64,
+        nonce: u64,
+        work: Vec<u8>,
+        hotkey: Addr,
+        coldkey: Addr,
+    },
     RootRegister { hotkey: Addr },
     BurnedRegister { netuid: u16, hotkey: Addr },
 
@@ -93,6 +93,8 @@ pub enum ExecuteMsg {
     SudoSetNetworkMinLockCost { lock_cost: u64 },
     SudoSetSubnetLimit { max_subnets: u16 },
     SudoSetLockReductionInterval { interval: u64 },
+
+    SudoSetValidatorPermitForUid { netuid: u16, uid: u16, permit: bool },
 }
 
 #[cw_serde]
@@ -128,4 +130,33 @@ pub enum QueryMsg {
 
     #[returns(u64)]
     GetNetworkRegistrationCost {},
+
+    // TODO added queries for testing
+    #[returns(u16)]
+    GetUidForNetAndHotkey { netuid: u16, hotkey_account: Addr },
+    #[returns(Vec<Vec<u16>>)]
+    GetWeights { netuid: u16 },
+    #[returns(bool)]
+    GetMaxWeightLimited {
+        netuid: u16,
+        uid: u16,
+        uids: Vec<u16>,
+        weights: Vec<u16>
+    },
+    #[returns(bool)]
+    CheckLength {
+        netuid: u16,
+        uid: u16,
+        uids: Vec<u16>,
+        weights: Vec<u16>
+    },
+    #[returns(bool)]
+    CheckLenUidsWithingAllowed {
+        netuid: u16,
+        uids: Vec<u16>,
+    },
+    #[returns(u16)]
+    GetSubnetworkN {
+        netuid: u16,
+    },
 }

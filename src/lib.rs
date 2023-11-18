@@ -17,6 +17,7 @@ mod neuron_info;
 mod epoch;
 mod delegate_info;
 mod block_step;
+mod test_helpers;
 mod tests;
 
 pub use crate::error::ContractError;

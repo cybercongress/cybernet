@@ -7,7 +7,7 @@ use crate::ContractError;
 use crate::epoch::get_float_kappa;
 use crate::math::{inplace_normalize_64, matmul_64, vec_fixed64_to_u64};
 use crate::staking::{add_balance_to_coldkey_account, create_account_if_non_existent, get_total_stake_for_hotkey, can_remove_balance_from_coldkey_account, remove_balance_from_coldkey_account};
-use crate::state::{ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ADJUSTMENTS_ALPHA, BONDS, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DELEGATES, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_DIFFICULTY, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, NETWORKS_ADDED, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, SUBNET_LIMIT, SUBNET_OWNER, SUBNETWORK_N, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS};
+use crate::state::{ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ADJUSTMENTS_ALPHA, BONDS, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DELEGATES, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, NETWORKS_ADDED, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, SUBNET_LIMIT, SUBNET_OWNER, SUBNETWORK_N, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY};
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, replace_neuron};
 use crate::utils::{get_block_emission, get_emission_value, get_max_allowed_uids, get_rho, get_subnet_locked_balance, get_subnet_owner, get_tempo, set_subnet_locked_balance, get_registrations_this_interval, get_registrations_this_block, get_max_registrations_per_block, get_target_registrations_per_interval};
 
@@ -698,46 +698,25 @@ pub fn init_new_network(store: &mut dyn Storage, netuid: u16, tempo: u16) -> Res
     ADJUSTMENTS_ALPHA.save(store, netuid, &58000)?;
     IMMUNITY_PERIOD.save(store, netuid, &5000)?;
     MIN_BURN.save(store, netuid, &1)?;
-    MIN_DIFFICULTY.save(store, netuid, &u64::MAX)?;
-    MAX_DIFFICULTY.save(store, netuid, &u64::MAX)?;
+
+    DIFFICULTY.save(store, netuid, &0)?;
+    MIN_DIFFICULTY.save(store, netuid, &10_000_000)?;
+    MAX_DIFFICULTY.save(store, netuid, &(u64::MAX / 4))?;
 
     // Make network parameters explicit.
-    if !TEMPO.has(store, netuid) {
-        TEMPO.save(store, netuid, &0)?;
-    }
-    if !KAPPA.has(store, netuid) {
-        KAPPA.save(store, netuid, &0)?;
-    }
-    if !DIFFICULTY.has(store, netuid) {
-        DIFFICULTY.save(store, netuid, &0)?;
-    }
-    if !MAX_ALLOWED_UIDS.has(store, netuid) {
-        MAX_ALLOWED_UIDS.save(store, netuid, &0)?;
-    }
-    if !IMMUNITY_PERIOD.has(store, netuid) {
-        IMMUNITY_PERIOD.save(store, netuid, &0)?;
-    }
-    if !ACTIVITY_CUTOFF.has(store, netuid) {
-        ACTIVITY_CUTOFF.save(store, netuid, &0)?;
-    }
-    if !EMISSION_VALUES.has(store, netuid) {
-        EMISSION_VALUES.save(store, netuid, &0)?;
-    }
-    if !MAX_WEIGHTS_LIMIT.has(store, netuid) {
-        MAX_WEIGHTS_LIMIT.save(store, netuid, &0)?;
-    }
-    if !MIN_ALLOWED_WEIGHTS.has(store, netuid) {
-        MIN_ALLOWED_WEIGHTS.save(store, netuid, &0)?;
-    }
-    if !REGISTRATIONS_THIS_INTERVAL.has(store, netuid) {
-        REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
-    }
-    if !POW_REGISTRATIONS_THIS_INTERVAL.has(store, netuid) {
-        POW_REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
-    }
-    if !BURN_REGISTRATIONS_THIS_INTERVAL.has(store, netuid) {
-        BURN_REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
-    }
+    KAPPA.save(store, netuid, &32_767)?; // 0.5 = 65535/2
+    IMMUNITY_PERIOD.save(store, netuid, &0)?;
+    ACTIVITY_CUTOFF.save(store, netuid, &0)?;
+    EMISSION_VALUES.save(store, netuid, &0)?;
+
+    REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
+    POW_REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
+    BURN_REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
+
+    // TODO Added initializations
+    WEIGHTS_VERSION_KEY.save(store, netuid, &0)?;
+    MAX_REGISTRATION_PER_BLOCK.save(store, netuid, &1)?;
+    WEIGHTS_SET_RATE_LIMIT.save(store, netuid, &100)?;
 
     Ok(())
 }
@@ -824,6 +803,11 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     add_balance_to_coldkey_account(owner_coldkey, reserved_amount_as_bal);
     set_subnet_locked_balance(store, netuid, 0);
     SUBNET_OWNER.remove(store, netuid);
+
+    // TODO Added
+    WEIGHTS_VERSION_KEY.remove(store, netuid);
+    MAX_REGISTRATION_PER_BLOCK.remove(store, netuid);
+    WEIGHTS_SET_RATE_LIMIT.remove(store, netuid);
 
     Ok(())
 }
@@ -969,4 +953,3 @@ pub fn set_lock_reduction_interval(store: &mut dyn Storage, interval: u64) {
 pub fn get_lock_reduction_interval(store: &dyn Storage) -> u64 {
     NETWORK_LOCK_REDUCTION_INTERVAL.load(store).unwrap()
 }
-

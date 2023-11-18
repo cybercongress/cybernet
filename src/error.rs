@@ -1,7 +1,7 @@
 use cosmwasm_std::StdError;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
     Std(#[from] StdError),
@@ -136,20 +136,20 @@ pub enum ContractError {
     HotkeyOriginMismatch {},
 
     // {} Senate errors
-    #[error("Thrown when attempting to do something to a senate member that is limited")]
-    SenateMember {},
-
-    #[error("Thrown when a hotkey attempts to do something only senate members can do")]
-    NotSenateMember {},
-
-    #[error("Thrown when a hotkey attempts to join the senate while already being a member")]
-    AlreadySenateMember {},
-
-    #[error("Thrown when a hotkey attempts to join the senate without enough stake")]
-    BelowStakeThreshold {},
-
-    #[error("Thrown when a hotkey attempts to join the senate without being a delegate first")]
-    NotDelegate {},
+    // #[error("Thrown when attempting to do something to a senate member that is limited")]
+    // SenateMember {},
+    //
+    // #[error("Thrown when a hotkey attempts to do something only senate members can do")]
+    // NotSenateMember {},
+    //
+    // #[error("Thrown when a hotkey attempts to join the senate while already being a member")]
+    // AlreadySenateMember {},
+    //
+    // #[error("Thrown when a hotkey attempts to join the senate without enough stake")]
+    // BelowStakeThreshold {},
+    //
+    // #[error("Thrown when a hotkey attempts to join the senate without being a delegate first")]
+    // NotDelegate {},
 
     #[error("Thrown when an incorrect amount of Netuids are passed as input")]
     IncorrectNetuidsLength {},

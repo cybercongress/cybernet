@@ -107,10 +107,10 @@ pub fn append_neuron(
     VALIDATOR_PERMIT.update(store, netuid.clone(), |vec| -> StdResult<_> {
         match vec {
             Some(mut v) => {
-                v.push(true);
+                v.push(false);
                 Ok(v)
             },
-            None => Ok(vec!(true)),
+            None => Ok(vec!(false)),
         }
     })?;
 
@@ -121,6 +121,12 @@ pub fn append_neuron(
     IS_NETWORK_MEMBER.save(store, (&new_hotkey, netuid), &true )?; // Fill network is member.
 
     Ok(())
+}
+
+// Returns true if the uid is set on the network.
+//
+pub fn is_uid_exist_on_network(store: &dyn Storage, netuid: u16, uid: u16) -> bool {
+    KEYS.has(store, (netuid, uid))
 }
 
 // Returns true if the hotkey holds a slot on the network.
@@ -141,12 +147,8 @@ pub fn get_hotkey_for_net_and_uid(store: &dyn Storage, netuid: u16, neuron_uid: 
 
 // Returns the uid of the hotkey in the network as a Result. Ok if the hotkey has a slot.
 //
-pub fn get_uid_for_net_and_hotkey(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> Result<u16, ContractError> {
-    let key = UIDS.may_load(store, (netuid, hotkey))?;
-    match key {
-        Some(key) => Ok(key),
-        None => Err(ContractError::NotRegistered {}),
-    }
+pub fn get_uid_for_net_and_hotkey(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> StdResult<u16> {
+    UIDS.load(store, (netuid, hotkey))
 }
 
 // Returns the stake of the uid on network or 0 if it doesnt exist.

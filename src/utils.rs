@@ -278,7 +278,7 @@ pub fn get_difficulty(store: &dyn Storage, netuid: u16) -> U256 {
 }
 
 pub fn get_registrations_this_block(store: &dyn Storage, netuid: u16) -> u16 {
-    REGISTRATIONS_THIS_BLOCK.load(store, netuid).unwrap()
+    REGISTRATIONS_THIS_BLOCK.load(store, netuid).unwrap_or_default()
 }
 
 pub fn get_last_mechanism_step_block(store: &dyn Storage, netuid: u16) -> u64 {
@@ -1301,5 +1301,33 @@ pub fn do_sudo_set_lock_reduction_interval(
     Ok(Response::default()
         .add_attribute("action", "network_lock_cost_reduction_set")
         .add_attribute("interval", format!("{}", interval))
+    )
+}
+
+// TODO added
+pub fn do_sudo_set_validator_permit_for_uid(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    netuid: u16,
+    uid: u16,
+    validator_permit: bool,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, info.sender)?;
+
+    set_validator_permit_for_uid(deps.storage, netuid, uid, validator_permit);
+
+    deps.api.debug(&format!(
+        "VALIDATOR_PERMIT( netuid: {:?} uid: {:?} validator_permit: {:?} ) ",
+        netuid,
+        uid,
+        validator_permit,
+    ));
+
+    Ok(Response::default()
+        .add_attribute("action", "network_lock_cost_reduction_set")
+        .add_attribute("netuid", format!("{}", netuid))
+        .add_attribute("uid", format!("{}", uid))
+        .add_attribute("validator_permit", format!("{}", validator_permit))
     )
 }
