@@ -1,15 +1,39 @@
-use cosmwasm_std::{Addr, Api, DepsMut, ensure, Env, MessageInfo, Order, Response, StdResult, Storage};
 use cosmwasm_std::StdError::GenericErr;
+use cosmwasm_std::{
+    ensure, Addr, Api, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage,
+};
 use substrate_fixed::types::I64F64;
 
 use crate::block_step::blocks_until_next_epoch;
-use crate::ContractError;
 use crate::epoch::get_float_kappa;
 use crate::math::{inplace_normalize_64, matmul_64, vec_fixed64_to_u64};
-use crate::staking::{add_balance_to_coldkey_account, create_account_if_non_existent, get_total_stake_for_hotkey, can_remove_balance_from_coldkey_account, remove_balance_from_coldkey_account};
-use crate::state::{ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ADJUSTMENTS_ALPHA, BONDS, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DELEGATES, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, NETWORKS_ADDED, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, SUBNET_LIMIT, SUBNET_OWNER, SUBNETWORK_N, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY};
+use crate::staking::{
+    add_balance_to_coldkey_account, can_remove_balance_from_coldkey_account,
+    create_account_if_non_existent, delegate_hotkey, get_total_stake_for_hotkey,
+    hotkey_is_delegate, remove_balance_from_coldkey_account,
+};
+use crate::state::{
+    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS,
+    BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DIFFICULTY, DIVIDENDS,
+    EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS, LAST_ADJUSTMENT_BLOCK,
+    LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY,
+    MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
+    NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
+    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT,
+    NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, PENDING_EMISSION,
+    POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION,
+    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, SERVING_RATE_LIMIT, SUBNETWORK_N,
+    SUBNET_LIMIT, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST,
+    UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+};
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, replace_neuron};
-use crate::utils::{get_block_emission, get_emission_value, get_max_allowed_uids, get_rho, get_subnet_locked_balance, get_subnet_owner, get_tempo, set_subnet_locked_balance, get_registrations_this_interval, get_registrations_this_block, get_max_registrations_per_block, get_target_registrations_per_interval};
+use crate::utils::{
+    get_block_emission, get_emission_value, get_max_allowed_uids, get_max_registrations_per_block,
+    get_registrations_this_block, get_registrations_this_interval, get_rho,
+    get_subnet_locked_balance, get_subnet_owner, get_target_registrations_per_interval, get_tempo,
+    set_subnet_locked_balance,
+};
+use crate::ContractError;
 
 // Retrieves the unique identifier (UID) for the root network.
 //
@@ -87,7 +111,11 @@ pub fn get_subnet_emission_value(store: &dyn Storage, netuid: u16) -> u64 {
 //
 pub fn if_subnet_exist(store: &dyn Storage, netuid: u16) -> bool {
     let exist = NETWORKS_ADDED.load(store, netuid);
-    if exist.is_ok() { return exist.unwrap(); } else { false }
+    if exist.is_ok() {
+        return exist.unwrap();
+    } else {
+        false
+    }
 }
 
 // Returns true if the subnetwork allows registration.
@@ -143,24 +171,37 @@ pub fn contains_invalid_root_uids(store: &dyn Storage, api: &dyn Api, netuids: &
 // Sets the emission values for each netuid
 //
 //
-pub fn set_emission_values(store: &mut dyn Storage, api: &dyn Api, netuids: &Vec<u16>, emission: Vec<u64>) -> Result<(), ContractError> {
+pub fn set_emission_values(
+    store: &mut dyn Storage,
+    api: &dyn Api,
+    netuids: &Vec<u16>,
+    emission: Vec<u64>,
+) -> Result<(), ContractError> {
     api.debug(&format!(
         "set_emission_values: netuids: {:?} emission:{:?}",
-        netuids,
-        emission
+        netuids, emission
     ));
 
     // Be careful this function can fail.
     if contains_invalid_root_uids(store, api, netuids) {
-        api.debug(&format!("error set_emission_values: contains_invalid_root_uids"));
+        api.debug(&format!(
+            "error set_emission_values: contains_invalid_root_uids"
+        ));
         return Err(ContractError::InvalidUid {});
     }
     if netuids.len() != emission.len() {
-        api.debug(&format!("error set_emission_values: netuids.len() != emission.len()"));
-        return Err(ContractError::Std(GenericErr { msg: "netuids and emission must have the same length".to_string() }));
+        api.debug(&format!(
+            "error set_emission_values: netuids.len() != emission.len()"
+        ));
+        return Err(ContractError::Std(GenericErr {
+            msg: "netuids and emission must have the same length".to_string(),
+        }));
     }
     for (i, netuid_i) in netuids.iter().enumerate() {
-        api.debug(&format!("set netuid:{:?} emission:{:?}", netuid_i, emission[i]));
+        api.debug(&format!(
+            "set netuid:{:?} emission:{:?}",
+            netuid_i, emission[i]
+        ));
         // EmissionValues::<T>::insert(*netuid_i, emission[i]);
         EMISSION_VALUES.save(store, *netuid_i, &emission[i])?;
     }
@@ -179,7 +220,10 @@ pub fn get_root_weights(store: &dyn Storage, api: &dyn Api) -> Vec<Vec<I64F64>> 
     let n: usize = get_num_root_validators(store) as usize;
 
     // --- 1 The number of subnets to validate.
-    api.debug(&format!("subnet size before cast: {:?}", get_num_subnets(store)));
+    api.debug(&format!(
+        "subnet size before cast: {:?}",
+        get_num_subnets(store)
+    ));
     let k: usize = get_num_subnets(store) as usize;
     api.debug(&format!("n: {:?} k: {:?}", n, k));
 
@@ -200,9 +244,7 @@ pub fn get_root_weights(store: &dyn Storage, api: &dyn Api) -> Vec<Vec<I64F64>> 
         // initialized `weights` 2D vector. Here, `uid_j` represents a subnet, and `weight_ij` is the
         // weight of `uid_i` with respect to `uid_j`.
         for (netuid, weight_ij) in weights_i.iter() {
-            let option = subnet_list.iter().position(|item| {
-                item == netuid
-            });
+            let option = subnet_list.iter().position(|item| item == netuid);
 
             let idx = uid_i as usize;
             if let Some(weight) = weights.get_mut(idx) {
@@ -226,7 +268,11 @@ pub fn get_network_rate_limit(store: &dyn Storage) -> u64 {
 // This function is responsible for calculating emission based on network weights, stake values,
 // and registered hotkeys.
 //
-pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> Result<(), ContractError> {
+pub fn root_epoch(
+    store: &mut dyn Storage,
+    api: &dyn Api,
+    block_number: u64,
+) -> Result<(), ContractError> {
     // --- 0. The unique ID associated with the root network.
     let root_netuid: u16 = get_root_netuid();
 
@@ -235,8 +281,13 @@ pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> 
         blocks_until_next_epoch(root_netuid, get_tempo(store, root_netuid), block_number);
     if blocks_until_next_epoch != 0 {
         // Not the block to update emission values.
-        api.debug(&format!("blocks_until_next_epoch: {:?}", blocks_until_next_epoch));
-        return Err(ContractError::Std(GenericErr { msg: "Not the block to update emission values.".to_string() }));
+        api.debug(&format!(
+            "blocks_until_next_epoch: {:?}",
+            blocks_until_next_epoch
+        ));
+        return Err(ContractError::Std(GenericErr {
+            msg: "Not the block to update emission values.".to_string(),
+        }));
     }
 
     // --- 1. Retrieves the number of root validators on subnets.
@@ -244,7 +295,9 @@ pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> 
     api.debug(&format!("n:\n{:?}\n", n));
     if n == 0 {
         // No validators.
-        return Err(ContractError::Std(GenericErr { msg: "No validators to validate emission values.".to_string() }));
+        return Err(ContractError::Std(GenericErr {
+            msg: "No validators to validate emission values.".to_string(),
+        }));
     }
 
     // --- 2. Obtains the number of registered subnets.
@@ -252,7 +305,9 @@ pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> 
     api.debug(&format!("k:\n{:?}\n", k));
     if k == 0 {
         // No networks to validate.
-        return Err(ContractError::Std(GenericErr { msg: "No networks to validate emission values.".to_string() }));
+        return Err(ContractError::Std(GenericErr {
+            msg: "No networks to validate emission values.".to_string(),
+        }));
     }
 
     // --- 4. Determines the total block emission across all the subnetworks. This is the
@@ -277,7 +332,7 @@ pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> 
     // Stakes are stored in a 64-bit fixed point representation for precise calculations.
     let mut stake_i64: Vec<I64F64> = vec![I64F64::from_num(0.0); n as usize];
     for (uid_i, hotkey) in hotkeys.iter() {
-        stake_i64[*uid_i as usize] = I64F64::from_num(get_total_stake_for_hotkey(store, hotkey.clone()));
+        stake_i64[*uid_i as usize] = I64F64::from_num(get_total_stake_for_hotkey(store, &hotkey));
     }
     inplace_normalize_64(&mut stake_i64);
     // api.debug(&format!("S:\n{:?}\n", &stake_i64));
@@ -311,7 +366,9 @@ pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> 
     // api.debug(&format!("Total_stake:\n{:?}\n", &total_stake));
 
     if total_stake == 0 {
-        return Err(ContractError::Std(GenericErr { msg: "No stake on network".to_string() }));
+        return Err(ContractError::Std(GenericErr {
+            msg: "No stake on network".to_string(),
+        }));
     }
 
     for trust_score in trust.iter_mut() {
@@ -331,7 +388,8 @@ pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> 
     for (idx, trust_score) in trust.iter_mut().enumerate() {
         let shifted_trust = *trust_score - I64F64::from_num(get_float_kappa(store, 0)); // Range( -kappa, 1 - kappa )
         let temperatured_trust = shifted_trust * I64F64::from_num(get_rho(store, 0)); // Range( -rho * kappa, rho ( 1 - kappa ) )
-        let exponentiated_trust: I64F64 = substrate_fixed::transcendental::exp(-temperatured_trust).expect("temperatured_trust is on range( -rho * kappa, rho ( 1 - kappa ) )");
+        let exponentiated_trust: I64F64 = substrate_fixed::transcendental::exp(-temperatured_trust)
+            .expect("temperatured_trust is on range( -rho * kappa, rho ( 1 - kappa ) )");
 
         consensus[idx] = one / (one + exponentiated_trust);
     }
@@ -356,7 +414,10 @@ pub fn root_epoch(store: &mut dyn Storage, api: &dyn Api, block_number: u64) -> 
 
     // --- 13. Set the emission values for each subnet directly.
     let netuids: Vec<u16> = get_all_subnet_netuids(store);
-    api.debug(&format!("netuids: {:?} values: {:?}", netuids, emission_u64));
+    api.debug(&format!(
+        "netuids: {:?} values: {:?}",
+        netuids, emission_u64
+    ));
 
     set_emission_values(store, api, &netuids, emission_u64)?;
 
@@ -384,7 +445,10 @@ pub fn do_root_register(
     // --- 0. Get the unique identifier (UID) for the root network.
     let root_netuid: u16 = get_root_netuid();
     let current_block_number: u64 = env.block.height;
-    ensure!(if_subnet_exist(deps.storage, root_netuid), ContractError::NetworkDoesNotExist {});
+    ensure!(
+        if_subnet_exist(deps.storage, root_netuid),
+        ContractError::NetworkDoesNotExist {}
+    );
 
     // --- 1. Ensure that the call originates from a signed source and retrieve the caller's account ID (coldkey).
     let coldkey = info.sender;
@@ -396,22 +460,26 @@ pub fn do_root_register(
 
     // --- 2. Ensure that the number of registrations in this block doesn't exceed the allowed limit.
     ensure!(
-            get_registrations_this_block(deps.storage, root_netuid) < get_max_registrations_per_block(deps.storage, root_netuid),
-            ContractError::TooManyRegistrationsThisBlock{}
-        );
+        get_registrations_this_block(deps.storage, root_netuid)
+            < get_max_registrations_per_block(deps.storage, root_netuid),
+        ContractError::TooManyRegistrationsThisBlock {}
+    );
 
     // --- 3. Ensure that the number of registrations in this interval doesn't exceed thrice the target limit.
     ensure!(
-            get_registrations_this_interval(deps.storage, root_netuid)
-                < get_target_registrations_per_interval(deps.storage, root_netuid) * 3,
-            ContractError::TooManyRegistrationsThisInterval{}
-        );
+        get_registrations_this_interval(deps.storage, root_netuid)
+            < get_target_registrations_per_interval(deps.storage, root_netuid) * 3,
+        ContractError::TooManyRegistrationsThisInterval {}
+    );
 
     // --- 4. Check if the hotkey is already registered. If so, error out.
-    ensure!(UIDS.has(deps.storage, (root_netuid, &hotkey)), ContractError::AlreadyRegistered {});
+    ensure!(
+        !UIDS.has(deps.storage, (root_netuid, &hotkey)),
+        ContractError::AlreadyRegistered {}
+    );
 
     // --- 6. Create a network account for the user if it doesn't exist.
-    create_account_if_non_existent(deps.storage, coldkey, hotkey.clone());
+    create_account_if_non_existent(deps.storage, &coldkey, &hotkey);
 
     // --- 7. Fetch the current size of the subnetwork.
     let current_num_root_validators: u16 = get_num_root_validators(deps.storage);
@@ -426,8 +494,17 @@ pub fn do_root_register(
         subnetwork_uid = current_num_root_validators;
 
         // --- 12.1.2 Add the new account and make them a member of the Senate.
-        append_neuron(deps.storage, deps.api, root_netuid, hotkey.clone(), current_block_number)?;
-        deps.api.debug(&format!("add new neuron: {:?} on uid {:?}", hotkey, subnetwork_uid));
+        append_neuron(
+            deps.storage,
+            deps.api,
+            root_netuid,
+            &hotkey,
+            current_block_number,
+        )?;
+        deps.api.debug(&format!(
+            "add new neuron: {:?} on uid {:?}",
+            hotkey, subnetwork_uid
+        ));
     } else {
         // --- 13.1.1 The network is full. Perform replacement.
         // Find the neuron with the lowest stake value to replace.
@@ -437,9 +514,10 @@ pub fn do_root_register(
         // Iterate over all keys in the root network to find the neuron with the lowest stake.
         for item in KEYS
             .prefix(root_netuid)
-            .range(deps.storage, None, None, Order::Ascending) {
+            .range(deps.storage, None, None, Order::Ascending)
+        {
             let (uid_i, hotkey_i) = item?;
-            let stake_i: u64 = get_total_stake_for_hotkey(deps.storage, hotkey_i.clone());
+            let stake_i: u64 = get_total_stake_for_hotkey(deps.storage, &hotkey_i);
             if stake_i < lowest_stake {
                 lowest_stake = stake_i;
                 lowest_uid = uid_i;
@@ -451,23 +529,29 @@ pub fn do_root_register(
 
         // --- 13.1.2 The new account has a higher stake than the one being replaced.
         ensure!(
-                lowest_stake < get_total_stake_for_hotkey(deps.storage, hotkey.clone()),
-                ContractError::StakeTooLowForRoot{}
-            );
+            lowest_stake < get_total_stake_for_hotkey(deps.storage, &hotkey),
+            ContractError::StakeTooLowForRoot {}
+        );
 
         // --- 13.1.3 The new account has a higher stake than the one being replaced.
         // Replace the neuron account with new information.
-        replace_neuron(deps.storage, deps.api, root_netuid, lowest_uid, hotkey.clone(), current_block_number)?;
+        replace_neuron(
+            deps.storage,
+            deps.api,
+            root_netuid,
+            lowest_uid,
+            &hotkey,
+            current_block_number,
+        )?;
 
         deps.api.debug(&format!(
             "replace neuron: {:?} with {:?} on uid {:?}",
-            replaced_hotkey,
-            hotkey,
-            subnetwork_uid
+            replaced_hotkey, hotkey, subnetwork_uid
         ));
     }
 
-    let current_stake = get_total_stake_for_hotkey(deps.storage, hotkey.clone());
+    // TODO revisit this as we don't have a senate and subnetwork n is 0 and account don't have stake
+    // let current_stake = get_total_stake_for_hotkey(deps.storage, hotkey.clone());
     // If we're full, we'll swap out the lowest stake member.
     // let members = T::SenateMembers::members();
     // if (members.len() as u32) == T::SenateMembers::max_members() {
@@ -492,8 +576,8 @@ pub fn do_root_register(
     // }
 
     // --- 13. Force all members on root to become a delegate.
-    if !DELEGATES.has(deps.storage, hotkey.clone()) {
-        DELEGATES.save(deps.storage, hotkey.clone(), &11796)?
+    if !hotkey_is_delegate(deps.storage, &hotkey) {
+        delegate_hotkey(deps.storage, &hotkey, 11796);
     }
 
     // --- 14. Update the registration counters for both the block and interval.
@@ -511,9 +595,7 @@ pub fn do_root_register(
     // --- 15. Log and announce the successful registration.
     deps.api.debug(&format!(
         "RootRegistered(netuid:{:?} uid:{:?} hotkey:{:?})",
-        root_netuid,
-        subnetwork_uid,
-        hotkey
+        root_netuid, subnetwork_uid, hotkey
     ));
 
     // --- 16. Finish and return success.
@@ -521,8 +603,7 @@ pub fn do_root_register(
         .add_attribute("active", "neuron_registered")
         .add_attribute("root_netuid", format!("{}", root_netuid))
         .add_attribute("subnetwork_uid", format!("{}", subnetwork_uid))
-        .add_attribute("hotkey", hotkey)
-    )
+        .add_attribute("hotkey", hotkey))
 }
 
 // Facilitates user registration of a new subnetwork.
@@ -550,34 +631,41 @@ pub fn user_add_network(
     let current_block = env.block.height;
     let last_lock_block = get_network_last_lock_block(deps.storage);
     ensure!(
-            current_block - last_lock_block >= get_network_rate_limit(deps.storage),
-            ContractError::TxRateLimitExceeded{}
-        );
+        current_block - last_lock_block >= get_network_rate_limit(deps.storage),
+        ContractError::TxRateLimitExceeded {}
+    );
 
     // --- 2. Calculate and lock the required tokens.
     let lock_amount: u64 = get_network_lock_cost(deps.storage, deps.api, env.block.height)?;
     // TODO revisit this
     // let lock_as_balance = u64_to_balance(lock_amount);
     let lock_as_balance = 0;
-    deps.api.debug(&format!("network lock_amount: {:?}", lock_amount));
+    deps.api
+        .debug(&format!("network lock_amount: {:?}", lock_amount));
     // ensure!(
     //         lock_as_balance.is_some(),
     //         Error::<T>::CouldNotConvertToBalance
     //     );
     ensure!(
-            can_remove_balance_from_coldkey_account(coldkey.clone(), lock_as_balance),
-            ContractError::NotEnoughBalanceToStake{}
-        );
+        can_remove_balance_from_coldkey_account(&coldkey, lock_as_balance),
+        ContractError::NotEnoughBalanceToStake {}
+    );
 
     // --- 4. Determine the netuid to register.
     let netuid_to_register: u16 = {
-        deps.api.debug(&format!("subnet count: {:?}\nmax subnets: {:?}", get_num_subnets(deps.storage), get_max_subnets(deps.storage)));
-        if get_num_subnets(deps.storage) - 1 < get_max_subnets(deps.storage) { // We subtract one because we don't want root subnet to count towards total
+        deps.api.debug(&format!(
+            "subnet count: {:?}\nmax subnets: {:?}",
+            get_num_subnets(deps.storage),
+            get_max_subnets(deps.storage)
+        ));
+        if get_num_subnets(deps.storage) - 1 < get_max_subnets(deps.storage) {
+            // We subtract one because we don't want root subnet to count towards total
             let mut next_available_netuid = 0;
             loop {
                 next_available_netuid += 1;
                 if !if_subnet_exist(deps.storage, next_available_netuid) {
-                    deps.api.debug(&format!("got subnet id: {:?}", next_available_netuid));
+                    deps.api
+                        .debug(&format!("got subnet id: {:?}", next_available_netuid));
                     break next_available_netuid;
                 }
             }
@@ -586,22 +674,24 @@ pub fn user_add_network(
             // ensure!(netuid_to_prune > 0, Error::<T>::AllNetworksInImmunity);
 
             remove_network(deps.storage, netuid_to_prune)?;
-            deps.api.debug(&format!("remove_network: {:?}", netuid_to_prune));
+            deps.api
+                .debug(&format!("remove_network: {:?}", netuid_to_prune));
             netuid_to_prune
         }
     };
 
     // --- 5. Perform the lock operation.
     ensure!(
-            remove_balance_from_coldkey_account(coldkey.clone(), lock_as_balance) == true,
-            ContractError::BalanceWithdrawalError{}
-        );
+        remove_balance_from_coldkey_account(&coldkey, lock_as_balance) == true,
+        ContractError::BalanceWithdrawalError {}
+    );
     set_subnet_locked_balance(deps.storage, netuid_to_register, lock_amount);
     set_network_last_lock(deps.storage, lock_amount);
 
     // --- 6. Set initial and custom parameters for the network.
     init_new_network(deps.storage, netuid_to_register, 360)?;
-    deps.api.debug(&format!("init_new_network: {:?}", netuid_to_register));
+    deps.api
+        .debug(&format!("init_new_network: {:?}", netuid_to_register));
 
     // --- 7. Set netuid storage.
     let current_block_number: u64 = env.block.height;
@@ -612,15 +702,13 @@ pub fn user_add_network(
     // --- 8. Emit the NetworkAdded event.
     deps.api.debug(&format!(
         "NetworkAdded( netuid:{:?}, modality:{:?} )",
-        netuid_to_register,
-        0
+        netuid_to_register, 0
     ));
 
     // --- 9. Return success.
     Ok(Response::default()
         .add_attribute("active", "network_added")
-        .add_attribute("netuid_to_register", format!("{}", netuid_to_register))
-    )
+        .add_attribute("netuid_to_register", format!("{}", netuid_to_register)))
 }
 
 // Facilitates the removal of a user's subnetwork.
@@ -646,29 +734,36 @@ pub fn user_remove_network(
     let coldkey = info.sender;
 
     // --- 2. Ensure this subnet exists.
-    ensure!(if_subnet_exist(deps.storage, netuid), ContractError::NetworkDoesNotExist{});
+    ensure!(
+        if_subnet_exist(deps.storage, netuid),
+        ContractError::NetworkDoesNotExist {}
+    );
 
     // --- 3. Ensure the caller owns this subnet.
     ensure!(
-            get_subnet_owner(deps.storage, netuid) == coldkey,
-            ContractError::NotSubnetOwner{}
-        );
+        get_subnet_owner(deps.storage, netuid) == coldkey,
+        ContractError::NotSubnetOwner {}
+    );
 
     // --- 4. Explicitly erase the network and all its parameters.
     remove_network(deps.storage, netuid)?;
 
     // --- 5. Emit the NetworkRemoved event.
-    deps.api.debug(&format!("NetworkRemoved( netuid:{:?} )", netuid));
+    deps.api
+        .debug(&format!("NetworkRemoved( netuid:{:?} )", netuid));
 
     // --- 6. Return success.
     Ok(Response::default()
         .add_attribute("active", "network_removed")
-        .add_attribute("netuid", format!("{}", netuid))
-    )
+        .add_attribute("netuid", format!("{}", netuid)))
 }
 
 // Sets initial and custom parameters for a new network.
-pub fn init_new_network(store: &mut dyn Storage, netuid: u16, tempo: u16) -> Result<(), ContractError> {
+pub fn init_new_network(
+    store: &mut dyn Storage,
+    netuid: u16,
+    tempo: u16,
+) -> Result<(), ContractError> {
     // --- 1. Set network to 0 size.
     SUBNETWORK_N.save(store, netuid, &0)?;
 
@@ -696,17 +791,17 @@ pub fn init_new_network(store: &mut dyn Storage, netuid: u16, tempo: u16) -> Res
     ADJUSTMENT_INTERVAL.save(store, netuid, &360)?;
     TARGET_REGISTRATIONS_PER_INTERVAL.save(store, netuid, &1)?;
     ADJUSTMENTS_ALPHA.save(store, netuid, &58000)?;
-    IMMUNITY_PERIOD.save(store, netuid, &5000)?;
+    IMMUNITY_PERIOD.save(store, netuid, &7200)?;
     MIN_BURN.save(store, netuid, &1)?;
 
-    DIFFICULTY.save(store, netuid, &0)?;
+    DIFFICULTY.save(store, netuid, &10_000_000)?;
     MIN_DIFFICULTY.save(store, netuid, &10_000_000)?;
     MAX_DIFFICULTY.save(store, netuid, &(u64::MAX / 4))?;
 
     // Make network parameters explicit.
     KAPPA.save(store, netuid, &32_767)?; // 0.5 = 65535/2
-    IMMUNITY_PERIOD.save(store, netuid, &0)?;
-    ACTIVITY_CUTOFF.save(store, netuid, &0)?;
+                                         // IMMUNITY_PERIOD.save(store, netuid, &0)?;
+    ACTIVITY_CUTOFF.save(store, netuid, &5000)?;
     EMISSION_VALUES.save(store, netuid, &0)?;
 
     REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
@@ -715,8 +810,22 @@ pub fn init_new_network(store: &mut dyn Storage, netuid: u16, tempo: u16) -> Res
 
     // TODO Added initializations
     WEIGHTS_VERSION_KEY.save(store, netuid, &0)?;
-    MAX_REGISTRATION_PER_BLOCK.save(store, netuid, &1)?;
+    MAX_REGISTRATION_PER_BLOCK.save(store, netuid, &3)?;
     WEIGHTS_SET_RATE_LIMIT.save(store, netuid, &100)?;
+    PENDING_EMISSION.save(store, netuid, &0)?;
+    BLOCKS_SINCE_LAST_STEP.save(store, netuid, &0)?;
+    BONDS_MOVING_AVERAGE.save(store, netuid, &900_000)?;
+    LAST_ADJUSTMENT_BLOCK.save(store, netuid, &0)?;
+    ADJUSTMENT_INTERVAL.save(store, netuid, &100)?;
+    BURN.save(store, netuid, &0)?;
+    // MIN_BURN.save(store, netuid,&0)?;
+    MAX_BURN.save(store, netuid, &1_000_000_000)?;
+    REGISTRATIONS_THIS_BLOCK.save(store, netuid, &0)?;
+    // MAX_REGISTRATION_PER_BLOCK.save(store, netuid, &3)?;
+    KAPPA.save(store, netuid, &32_767)?;
+    RHO.save(store, netuid, &30)?;
+    RAO_RECYCLED_FOR_REGISTRATION.save(store, netuid, &0)?;
+    SERVING_RATE_LIMIT.save(store, netuid, &50)?;
 
     Ok(())
 }
@@ -800,7 +909,7 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     BURN_REGISTRATIONS_THIS_INTERVAL.remove(store, netuid);
 
     // --- 11. Add the balance back to the owner.
-    add_balance_to_coldkey_account(owner_coldkey, reserved_amount_as_bal);
+    add_balance_to_coldkey_account(&owner_coldkey, reserved_amount_as_bal);
     set_subnet_locked_balance(store, netuid, 0);
     SUBNET_OWNER.remove(store, netuid);
 
@@ -808,6 +917,23 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     WEIGHTS_VERSION_KEY.remove(store, netuid);
     MAX_REGISTRATION_PER_BLOCK.remove(store, netuid);
     WEIGHTS_SET_RATE_LIMIT.remove(store, netuid);
+
+    PENDING_EMISSION.remove(store, netuid);
+    BLOCKS_SINCE_LAST_STEP.remove(store, netuid);
+    BONDS_MOVING_AVERAGE.remove(store, netuid);
+    LAST_ADJUSTMENT_BLOCK.remove(store, netuid);
+    ADJUSTMENT_INTERVAL.remove(store, netuid);
+    BURN.remove(store, netuid);
+    MIN_BURN.remove(store, netuid);
+    MAX_BURN.remove(store, netuid);
+    REGISTRATIONS_THIS_BLOCK.remove(store, netuid);
+    // MAX_REGISTRATION_PER_BLOCK.remove(store, netuid);
+    KAPPA.remove(store, netuid);
+    RHO.remove(store, netuid);
+    RAO_RECYCLED_FOR_REGISTRATION.remove(store, netuid);
+    SERVING_RATE_LIMIT.remove(store, netuid);
+    MIN_DIFFICULTY.remove(store, netuid);
+    MAX_DIFFICULTY.remove(store, netuid);
 
     Ok(())
 }
@@ -830,23 +956,22 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
 // 	* 'u64':
 // 		- The lock cost for the network.
 //
-pub fn get_network_lock_cost(store: &dyn Storage, api: &dyn Api, current_block: u64) -> StdResult<u64> {
+pub fn get_network_lock_cost(
+    store: &dyn Storage,
+    api: &dyn Api,
+    current_block: u64,
+) -> StdResult<u64> {
     let last_lock = get_network_last_lock(store);
     let min_lock = get_network_min_lock(store);
     let last_lock_block = get_network_last_lock_block(store);
     let lock_reduction_interval = get_lock_reduction_interval(store);
     let mult = if last_lock_block == 0 { 1 } else { 2 };
 
-    let mut lock_cost =
+    let mut lock_cost = last_lock.saturating_mul(mult).saturating_sub(
         last_lock
-            .saturating_mul(mult)
-            .saturating_sub(
-                last_lock
-                    .saturating_div(lock_reduction_interval)
-                    .saturating_mul(
-                        current_block.saturating_sub(last_lock_block)
-                    )
-            );
+            .saturating_div(lock_reduction_interval)
+            .saturating_mul(current_block.saturating_sub(last_lock_block)),
+    );
 
     if lock_cost < min_lock {
         lock_cost = min_lock;
@@ -923,7 +1048,9 @@ pub fn get_network_immunity_period(store: &dyn Storage) -> u64 {
 }
 
 pub fn set_network_immunity_period(store: &mut dyn Storage, net_immunity_period: u64) {
-    NETWORK_IMMUNITY_PERIOD.save(store, &net_immunity_period).unwrap();
+    NETWORK_IMMUNITY_PERIOD
+        .save(store, &net_immunity_period)
+        .unwrap();
 }
 
 pub fn set_network_min_lock(store: &mut dyn Storage, net_min_lock: u64) {
@@ -947,7 +1074,9 @@ pub fn get_network_last_lock_block(store: &dyn Storage) -> u64 {
 }
 
 pub fn set_lock_reduction_interval(store: &mut dyn Storage, interval: u64) {
-    NETWORK_LOCK_REDUCTION_INTERVAL.save(store, &interval).unwrap();
+    NETWORK_LOCK_REDUCTION_INTERVAL
+        .save(store, &interval)
+        .unwrap();
 }
 
 pub fn get_lock_reduction_interval(store: &dyn Storage) -> u64 {

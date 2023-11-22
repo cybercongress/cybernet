@@ -1,23 +1,25 @@
+mod block_step;
 pub mod contract;
+mod delegate_info;
+mod epoch;
 mod error;
 pub mod helpers;
+mod math;
 pub mod msg;
+mod neuron_info;
+mod registration;
+mod root;
+mod serving;
+mod stake_info;
+mod staking;
 pub mod state;
-mod weights;
+mod subnet_info;
+#[cfg(test)]
+mod test_helpers;
+#[cfg(test)]
+mod tests;
 mod uids;
 mod utils;
-mod math;
-mod subnet_info;
-mod staking;
-mod stake_info;
-mod serving;
-mod root;
-mod registration;
-mod neuron_info;
-mod epoch;
-mod delegate_info;
-mod block_step;
-mod test_helpers;
-mod tests;
+mod weights;
 
 pub use crate::error::ContractError;

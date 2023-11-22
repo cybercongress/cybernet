@@ -1,7 +1,11 @@
-use cosmwasm_std::{Addr, DepsMut, Env, MessageInfo, Response, Storage};
-use crate::ContractError;
-use crate::state::{AxonInfo, AxonInfoOf, AXONS, PROMETHEUS, PrometheusInfo, PrometheusInfoOf, SERVING_RATE_LIMIT};
+use crate::state::{
+    AxonInfo, AxonInfoOf, PrometheusInfo, PrometheusInfoOf, AXONS, PROMETHEUS, SERVING_RATE_LIMIT,
+};
 use crate::uids::is_hotkey_registered_on_any_network;
+use crate::utils::get_serving_rate_limit;
+use crate::ContractError;
+use cosmwasm_std::{ensure, Addr, DepsMut, Env, MessageInfo, Response, Storage};
+use std::fmt::format;
 
 // ---- The implementation for the extrinsic serve_axon which sets the ip endpoint information for a uid on a network.
 //
@@ -70,24 +74,24 @@ pub fn do_serve_axon(
     let hotkey_id = info.sender;
 
     // --- 2. Ensure the hotkey is registered somewhere.
-    if !is_hotkey_registered_on_any_network( deps.storage,hotkey_id.clone() ) {
-        return Err(ContractError::NotRegistered {});
-    };
+    ensure!(
+        is_hotkey_registered_on_any_network(deps.storage, &hotkey_id),
+        ContractError::NotRegistered {}
+    );
 
     // --- 3. Check the ip signature validity.
-    if !is_valid_ip_type(ip_type) {
-        return Err(ContractError::InvalidIpType {})
-    }
-    if !is_valid_ip_address(ip_type, ip) {
-        return Err(ContractError::InvalidIpAddress {})
-    }
+    ensure!(is_valid_ip_type(ip_type), ContractError::InvalidIpType {});
+    ensure!(
+        is_valid_ip_address(ip_type, ip),
+        ContractError::InvalidIpAddress {}
+    );
 
     // --- 4. Get the previous axon information.
-    let mut prev_axon = get_axon_info( deps.storage, netuid, &hotkey_id.clone() );
-    let current_block:u64 = env.block.height;
-    if !axon_passes_rate_limit( deps.storage, netuid, &prev_axon, current_block ) {
-        return Err(ContractError::ServingRateLimitExceeded {})
-    }
+    let mut prev_axon = get_axon_info(deps.storage, netuid, &hotkey_id.clone());
+    ensure!(
+        axon_passes_rate_limit(deps.storage, netuid, &prev_axon, env.block.height),
+        ContractError::ServingRateLimitExceeded {}
+    );
 
     // --- 6. We insert the axon meta.
     prev_axon.block = env.block.height;
@@ -101,21 +105,24 @@ pub fn do_serve_axon(
 
     // --- 7. Validate axon data with delegate func
     let axon_validated = validate_axon_data(&prev_axon);
-    if axon_validated.is_err() {
-        return Err(axon_validated.err().unwrap_or(ContractError::InvalidPort {}))
-    }
+    ensure!(
+        axon_validated.is_ok(),
+        axon_validated
+            .err()
+            .unwrap_or(ContractError::InvalidPort {})
+    );
 
-    AXONS.save(deps.storage, (netuid, hotkey_id.clone()), &prev_axon )?;
+    AXONS.save(deps.storage, (netuid, &hotkey_id), &prev_axon)?;
 
     // --- 8. We deposit axon served event.
-    deps.api.debug(&format!("AxonServed( hotkey:{:?} ) ", hotkey_id.clone() ));
+    deps.api
+        .debug(&format!("AxonServed( hotkey:{:?} ) ", hotkey_id.clone()));
 
     // --- 9. Return is successful dispatch.
     Ok(Response::default()
         .add_attribute("action", "axon_served")
-        // .add_attribute("netuid", netuid)
-        // .add_attribute("hotkey_id", hotkey_id)
-    )
+        .add_attribute("netuid", format!("{}", netuid))
+        .add_attribute("hotkey_id", format!("{}", hotkey_id)))
 }
 
 // ---- The implementation for the extrinsic serve_prometheus.
@@ -173,24 +180,24 @@ pub fn do_serve_prometheus(
     let hotkey_id = info.sender;
 
     // --- 2. Ensure the hotkey is registered somewhere.
-    if !is_hotkey_registered_on_any_network( deps.storage,hotkey_id.clone() ) {
-        return Err(ContractError::NotRegistered {});
-    };
+    ensure!(
+        is_hotkey_registered_on_any_network(deps.storage, &hotkey_id),
+        ContractError::NotRegistered {}
+    );
 
     // --- 3. Check the ip signature validity.
-    if !is_valid_ip_type(ip_type) {
-        return Err(ContractError::InvalidIpType {})
-    }
-    if !is_valid_ip_address(ip_type, ip) {
-        return Err(ContractError::InvalidIpAddress {})
-    }
+    ensure!(is_valid_ip_type(ip_type), ContractError::InvalidIpType {});
+    ensure!(
+        is_valid_ip_address(ip_type, ip),
+        ContractError::InvalidIpAddress {}
+    );
 
     // --- 5. We get the previous axon info assoicated with this ( netuid, uid )
-    let mut prev_prometheus = get_prometheus_info( deps.storage, netuid, &hotkey_id.clone() );
-    let current_block:u64 = env.block.height;
-    if !prometheus_passes_rate_limit( deps.storage, netuid, &prev_prometheus, current_block ) {
-        return Err(ContractError::ServingRateLimitExceeded {})
-    }
+    let mut prev_prometheus = get_prometheus_info(deps.storage, netuid, &hotkey_id.clone());
+    ensure!(
+        prometheus_passes_rate_limit(deps.storage, netuid, &prev_prometheus, env.block.height),
+        ContractError::ServingRateLimitExceeded {}
+    );
 
     // --- 6. We insert the prometheus meta.
     prev_prometheus.block = env.block.height;
@@ -202,20 +209,24 @@ pub fn do_serve_prometheus(
     // --- 7. Validate prometheus data with delegate func
     let prom_validated = validate_prometheus_data(&prev_prometheus);
     if prom_validated.is_err() {
-        return Err(prom_validated.err().unwrap_or(ContractError::InvalidPort {}))
+        return Err(prom_validated
+            .err()
+            .unwrap_or(ContractError::InvalidPort {}));
     }
 
     // --- 8. Insert new prometheus data
-    PROMETHEUS.save(deps.storage, (netuid, hotkey_id.clone()), &prev_prometheus )?;
+    PROMETHEUS.save(deps.storage, (netuid, &hotkey_id), &prev_prometheus)?;
 
     // --- 9. We deposit prometheus served event.
-    deps.api.debug(&format!("PrometheusServed( hotkey:{:?} ) ", hotkey_id.clone() ));
+    deps.api.debug(&format!(
+        "PrometheusServed( hotkey:{:?} ) ",
+        hotkey_id.clone()
+    ));
 
     // --- 10. Return is successful dispatch.
-    Ok(Response::default()
-        .add_attribute("action", "prometheus_served")
-        // .add_attribute("netuid", netuid)
-        // .add_attribute("hotkey_id", hotkey_id)
+    Ok(
+        Response::default().add_attribute("action", "prometheus_served"), // .add_attribute("netuid", netuid)
+                                                                          // .add_attribute("hotkey_id", hotkey_id)
     )
 }
 
@@ -223,21 +234,35 @@ pub fn do_serve_prometheus(
  --==[[  Helper functions   ]]==--
 *********************************/
 
-pub fn axon_passes_rate_limit(store: &dyn Storage, netuid: u16, prev_axon_info: &AxonInfoOf, current_block: u64 ) -> bool {
-    let rate_limit: u64 = SERVING_RATE_LIMIT.load(store, netuid).unwrap();
+pub fn axon_passes_rate_limit(
+    store: &dyn Storage,
+    netuid: u16,
+    prev_axon_info: &AxonInfoOf,
+    current_block: u64,
+) -> bool {
+    let rate_limit: u64 = get_serving_rate_limit(store, netuid);
     let last_serve = prev_axon_info.block;
     return rate_limit == 0 || last_serve == 0 || current_block - last_serve >= rate_limit;
 }
 
-pub fn prometheus_passes_rate_limit(store: &dyn Storage, netuid: u16, prev_prometheus_info: &PrometheusInfoOf, current_block: u64 ) -> bool {
-    let rate_limit: u64 = SERVING_RATE_LIMIT.load(store, netuid).unwrap();
+pub fn has_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> bool {
+    return AXONS.has(store, (netuid, &hotkey));
+}
+
+pub fn prometheus_passes_rate_limit(
+    store: &dyn Storage,
+    netuid: u16,
+    prev_prometheus_info: &PrometheusInfoOf,
+    current_block: u64,
+) -> bool {
+    let rate_limit: u64 = get_serving_rate_limit(store, netuid);
     let last_serve = prev_prometheus_info.block;
     return rate_limit == 0 || last_serve == 0 || current_block - last_serve >= rate_limit;
 }
 
-pub fn get_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr ) -> AxonInfoOf {
-    return if AXONS.has(store, (netuid, hotkey.clone())) {
-        AXONS.load(store, (netuid, hotkey.clone())).unwrap()
+pub fn get_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> AxonInfoOf {
+    return if has_axon_info(store, netuid, hotkey) {
+        AXONS.load(store, (netuid, &hotkey)).unwrap()
     } else {
         AxonInfo {
             block: 0,
@@ -247,14 +272,18 @@ pub fn get_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr ) -> AxonIn
             ip_type: 0,
             protocol: 0,
             placeholder1: 0,
-            placeholder2: 0
+            placeholder2: 0,
         }
-    }
+    };
 }
 
-pub fn get_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr ) -> PrometheusInfoOf {
-    return if PROMETHEUS.has(store, (netuid, hotkey.clone())) {
-        PROMETHEUS.load(store, (netuid, hotkey.clone())).unwrap()
+pub fn has_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> bool {
+    return PROMETHEUS.has(store, (netuid, &hotkey));
+}
+
+pub fn get_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> PrometheusInfoOf {
+    return if has_prometheus_info(store, netuid, hotkey) {
+        PROMETHEUS.load(store, (netuid, &hotkey)).unwrap()
     } else {
         PrometheusInfo {
             block: 0,
@@ -263,7 +292,7 @@ pub fn get_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr ) -> 
             port: 0,
             ip_type: 0,
         }
-    }
+    };
 }
 
 pub fn is_valid_ip_type(ip_type: u8) -> bool {
@@ -280,14 +309,26 @@ pub fn is_valid_ip_address(ip_type: u8, addr: u128) -> bool {
         return false;
     }
     if ip_type == 4 {
-        if addr == 0 { return false; }
-        if addr >= u32::MAX as u128 { return false; }
-        if addr == 0x7f000001 { return false; } // Localhost
+        if addr == 0 {
+            return false;
+        }
+        if addr >= u32::MAX as u128 {
+            return false;
+        }
+        if addr == 0x7f000001 {
+            return false;
+        } // Localhost
     }
     if ip_type == 6 {
-        if addr == 0x0 { return false; }
-        if addr == u128::MAX { return false; }
-        if addr == 1 { return false; } // IPv6 localhost
+        if addr == 0x0 {
+            return false;
+        }
+        if addr == u128::MAX {
+            return false;
+        }
+        if addr == 1 {
+            return false;
+        } // IPv6 localhost
     }
     return true;
 }

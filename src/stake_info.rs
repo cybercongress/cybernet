@@ -1,6 +1,6 @@
+use crate::state::STAKE;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
-use crate::state::STAKE;
 
 #[cw_serde]
 pub struct StakeInfo {
@@ -57,7 +57,10 @@ pub fn get_stake_info_for_coldkeys(
     Ok(stake_info)
 }
 
-pub fn get_stake_info_for_coldkey(deps: Deps, coldkey_account: String) -> StdResult<Vec<StakeInfo>> {
+pub fn get_stake_info_for_coldkey(
+    deps: Deps,
+    coldkey_account: String,
+) -> StdResult<Vec<StakeInfo>> {
     let coldkey = deps.api.addr_validate(&coldkey_account)?;
 
     let stake_info = _get_stake_info_for_coldkeys(deps.storage, vec![coldkey])?;
@@ -66,5 +69,5 @@ pub fn get_stake_info_for_coldkey(deps: Deps, coldkey_account: String) -> StdRes
         Ok(Vec::new()) // Invalid coldkey
     } else {
         Ok(stake_info.get(0).unwrap().1.clone())
-    }
+    };
 }

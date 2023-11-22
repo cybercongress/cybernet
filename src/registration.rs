@@ -1,13 +1,28 @@
-use cosmwasm_std::{Addr, Api, DepsMut, ensure, Env, MessageInfo, Response, StdResult, Storage};
-use crate::staking::{add_balance_to_coldkey_account, create_account_if_non_existent, increase_stake_on_coldkey_hotkey_account, u64_to_balance};
+use crate::staking::{
+    add_balance_to_coldkey_account, create_account_if_non_existent,
+    increase_stake_on_coldkey_hotkey_account, u64_to_balance,
+};
+use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, StdResult, Storage};
 use primitive_types::{H256, U256};
 // use sp_io::hashing::{keccak_256, sha2_256};
-use crate::ContractError;
-use crate::root::{if_subnet_exist, get_root_netuid, if_subnet_allows_registration};
-use crate::state::{MAX_ALLOWED_UIDS, UIDS, USED_WORK, ALLOW_FAUCET, TOTAL_ISSUANCE};
+use crate::root::{get_root_netuid, if_subnet_allows_registration, if_subnet_exist};
+use crate::staking::{
+    can_remove_balance_from_coldkey_account, coldkey_owns_hotkey,
+    remove_balance_from_coldkey_account,
+};
+use crate::state::{
+    ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, MAX_ALLOWED_UIDS,
+    POW_REGISTRATIONS_THIS_INTERVAL, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL,
+    TOTAL_ISSUANCE, UIDS, USED_WORK,
+};
 use crate::uids::{append_neuron, get_subnetwork_n, replace_neuron};
-use crate::utils::{burn_tokens, ensure_root, get_burn_as_u64, get_registrations_this_block, get_max_registrations_per_block, get_registrations_this_interval, get_target_registrations_per_interval, get_max_allowed_uids, get_difficulty, get_pruning_score_for_uid, get_neuron_block_at_registration, get_immunity_period, set_pruning_score_for_uid };
-use crate::staking::{coldkey_owns_hotkey, remove_balance_from_coldkey_account, can_remove_balance_from_coldkey_account};
+use crate::utils::{
+    burn_tokens, ensure_root, get_burn_as_u64, get_immunity_period, get_max_allowed_uids,
+    get_max_registrations_per_block, get_neuron_block_at_registration, get_pruning_score_for_uid,
+    get_registrations_this_block, get_registrations_this_interval,
+    get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid,
+};
+use crate::ContractError;
 
 pub fn do_sudo_registration(
     deps: DepsMut,
@@ -19,44 +34,53 @@ pub fn do_sudo_registration(
     stake: u64,
     balance: u64,
 ) -> Result<Response, ContractError> {
-    ensure_root(deps.storage, info.sender)?;
-    ensure!(netuid != get_root_netuid(), ContractError::OperationNotPermittedOnRootSubnet{});
+    ensure_root(deps.storage, &info.sender)?;
 
     ensure!(
-            if_subnet_exist(deps.storage, netuid),
-            ContractError::NetworkDoesNotExist{}
-        );
+        netuid != get_root_netuid(),
+        ContractError::OperationNotPermittedOnRootSubnet {}
+    );
+
+    ensure!(
+        if_subnet_exist(deps.storage, netuid),
+        ContractError::NetworkDoesNotExist {}
+    );
 
     ensure!(
         !UIDS.has(deps.storage, (netuid, &hotkey)),
-        ContractError::AlreadyRegistered{}
+        ContractError::AlreadyRegistered {}
     );
 
-    create_account_if_non_existent(deps.storage, coldkey.clone(), hotkey.clone());
+    create_account_if_non_existent(deps.storage, &coldkey, &hotkey);
     ensure!(
-        coldkey_owns_hotkey(deps.storage, coldkey.clone(), hotkey.clone()),
-        ContractError::NonAssociatedColdKey{}
+        coldkey_owns_hotkey(deps.storage, &coldkey, &hotkey),
+        ContractError::NonAssociatedColdKey {}
     );
-    increase_stake_on_coldkey_hotkey_account(deps.storage, coldkey.clone(), hotkey.clone(), stake);
+    increase_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake);
 
     let balance_to_be_added_as_balance = u64_to_balance(balance);
     ensure!(
         balance_to_be_added_as_balance.is_some(),
-        ContractError::CouldNotConvertToBalance{}
+        ContractError::CouldNotConvertToBalance {}
     );
-    add_balance_to_coldkey_account(coldkey.clone(), balance_to_be_added_as_balance.unwrap());
+    add_balance_to_coldkey_account(&coldkey, balance_to_be_added_as_balance.unwrap());
 
     let subnetwork_uid: u16;
     let current_block_number: u64 = env.block.height;
     let current_subnetwork_n: u16 = get_subnetwork_n(deps.storage, netuid);
-    let max_validators = MAX_ALLOWED_UIDS.load(deps.storage, netuid)?;
-    if current_subnetwork_n < max_validators {
+    if current_subnetwork_n < get_max_allowed_uids(deps.storage, netuid) {
         // --- 12.1.1 No replacement required, the uid appends the subnetwork.
         // We increment the subnetwork count here but not below.
         subnetwork_uid = current_subnetwork_n;
 
         // --- 12.1.2 Expand subnetwork with new account.
-        append_neuron(deps.storage, deps.api, netuid, hotkey.clone(), current_block_number)?;
+        append_neuron(
+            deps.storage,
+            deps.api,
+            netuid,
+            &hotkey,
+            current_block_number,
+        )?;
         deps.api.debug(&format!("add new neuron account"));
     } else {
         // --- 12.1.1 Replacement required.
@@ -64,22 +88,26 @@ pub fn do_sudo_registration(
         subnetwork_uid = get_neuron_to_prune(deps.storage, deps.api, netuid, env.block.height);
 
         // --- 12.1.1 Replace the neuron account with the new info.
-        replace_neuron(deps.storage, deps.api, netuid, subnetwork_uid, hotkey.clone(), current_block_number)?;
+        replace_neuron(
+            deps.storage,
+            deps.api,
+            netuid,
+            subnetwork_uid,
+            &hotkey,
+            current_block_number,
+        )?;
         deps.api.debug(&format!("prune neuron"));
     }
 
     deps.api.debug(&format!(
         "NeuronRegistered( netuid:{:?} uid:{:?} hotkey:{:?}  ) ",
-        netuid,
-        subnetwork_uid,
-        hotkey
+        netuid, subnetwork_uid, hotkey
     ));
 
     Ok(Response::default()
         .add_attribute("action", "neuron_registered")
         .add_attribute("subnetwork_uid", format!("{}", subnetwork_uid))
-        .add_attribute("hotkey", hotkey)
-    )
+        .add_attribute("hotkey", hotkey))
 }
 
 // ---- The implementation for the extrinsic do_burned_registration: registering by burning TAO.
@@ -120,66 +148,58 @@ pub fn do_burned_registration(
     let coldkey = info.sender;
     deps.api.debug(&format!(
         "do_registration( coldkey:{:?} netuid:{:?} hotkey:{:?} )",
-        coldkey,
-        netuid,
-        hotkey
+        coldkey, netuid, hotkey
     ));
 
     // --- 2. Ensure the passed network is valid.
     ensure!(
-            netuid != get_root_netuid(),
-            ContractError::OperationNotPermittedOnRootSubnet{}
-        );
+        netuid != get_root_netuid(),
+        ContractError::OperationNotPermittedOnRootSubnet {}
+    );
     ensure!(
-            if_subnet_exist(deps.storage, netuid),
-            ContractError::NetworkDoesNotExist{}
-        );
+        if_subnet_exist(deps.storage, netuid),
+        ContractError::NetworkDoesNotExist {}
+    );
 
     // --- 3. Ensure the passed network allows registrations.
     ensure!(
         if_subnet_allows_registration(deps.storage, netuid),
-        ContractError::RegistrationDisabled{}
+        ContractError::RegistrationDisabled {}
     );
 
     // --- 4. Ensure we are not exceeding the max allowed registrations per block.
     ensure!(
         get_registrations_this_block(deps.storage, netuid)
             < get_max_registrations_per_block(deps.storage, netuid),
-        ContractError::TooManyRegistrationsThisBlock{}
+        ContractError::TooManyRegistrationsThisBlock {}
     );
 
     // --- 4. Ensure we are not exceeding the max allowed registrations per interval.
     ensure!(
         get_registrations_this_interval(deps.storage, netuid)
             < get_target_registrations_per_interval(deps.storage, netuid) * 3,
-        ContractError::TooManyRegistrationsThisInterval{}
+        ContractError::TooManyRegistrationsThisInterval {}
     );
 
     // --- 4. Ensure that the key is not already registered.
     ensure!(
         !UIDS.has(deps.storage, (netuid, &hotkey)),
-        ContractError::AlreadyRegistered{}
+        ContractError::AlreadyRegistered {}
     );
-
-    // DEPRECATED --- 6. Ensure that the key passes the registration requirement
-    // ensure!(
-    //     passes_network_connection_requirement(netuid, &hotkey),
-    //     Error::<T>::DidNotPassConnectedNetworkRequirement
-    // );
 
     // --- 7. Ensure the callers coldkey has enough stake to perform the transaction.
     let current_block_number: u64 = env.block.height;
     let registration_cost_as_u64 = get_burn_as_u64(deps.storage, netuid);
     let registration_cost_as_balance = u64_to_balance(registration_cost_as_u64).unwrap();
     ensure!(
-        can_remove_balance_from_coldkey_account(coldkey.clone(), registration_cost_as_balance),
-        ContractError::NotEnoughBalanceToStake{}
+        can_remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance),
+        ContractError::NotEnoughBalanceToStake {}
     );
 
     // --- 8. Ensure the remove operation from the coldkey is a success.
     ensure!(
-        remove_balance_from_coldkey_account(coldkey.clone(), registration_cost_as_balance) == true,
-        ContractError::BalanceWithdrawalError{}
+        remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance) == true,
+        ContractError::BalanceWithdrawalError {}
     );
 
     // The burn occurs here.
@@ -187,12 +207,12 @@ pub fn do_burned_registration(
     burn_tokens(deps.storage, burn_amount)?;
 
     // --- 9. If the network account does not exist we will create it here.
-    create_account_if_non_existent(deps.storage, coldkey.clone(), hotkey.clone());
+    create_account_if_non_existent(deps.storage, &coldkey, &hotkey);
 
     // --- 10. Ensure that the pairing is correct.
     ensure!(
-        coldkey_owns_hotkey(deps.storage, coldkey.clone(), hotkey.clone()),
-        ContractError::NonAssociatedColdKey{}
+        coldkey_owns_hotkey(deps.storage, &coldkey, &hotkey),
+        ContractError::NonAssociatedColdKey {}
     );
 
     // --- 11. Append neuron or prune it.
@@ -200,18 +220,24 @@ pub fn do_burned_registration(
     let current_subnetwork_n: u16 = get_subnetwork_n(deps.storage, netuid);
 
     // Possibly there is no neuron slots at all.
-    let max_validators = MAX_ALLOWED_UIDS.load(deps.storage, netuid)?;
-    if max_validators == 0 {
-        return Err(ContractError::NetworkDoesNotExist {})
-    }
+    ensure!(
+        get_max_allowed_uids(deps.storage, netuid) != 0,
+        ContractError::NetworkDoesNotExist {}
+    );
 
-    if current_subnetwork_n < max_validators {
+    if current_subnetwork_n < get_max_allowed_uids(deps.storage, netuid) {
         // --- 12.1.1 No replacement required, the uid appends the subnetwork.
         // We increment the subnetwork count here but not below.
         subnetwork_uid = current_subnetwork_n;
 
         // --- 12.1.2 Expand subnetwork with new account.
-        append_neuron(deps.storage, deps.api, netuid, hotkey.clone(), current_block_number)?;
+        append_neuron(
+            deps.storage,
+            deps.api,
+            netuid,
+            &hotkey,
+            current_block_number,
+        )?;
         deps.api.debug(&format!("add new neuron account"));
     } else {
         // --- 13.1.1 Replacement required.
@@ -219,15 +245,38 @@ pub fn do_burned_registration(
         subnetwork_uid = get_neuron_to_prune(deps.storage, deps.api, netuid, env.block.height);
 
         // --- 13.1.1 Replace the neuron account with the new info.
-        replace_neuron(deps.storage, deps.api, netuid, subnetwork_uid, hotkey.clone(), current_block_number)?;
+        replace_neuron(
+            deps.storage,
+            deps.api,
+            netuid,
+            subnetwork_uid,
+            &hotkey,
+            current_block_number,
+        )?;
         deps.api.debug(&format!("prune neuron"));
     }
 
     // --- 14. Record the registration and increment block and interval counters.
-    // BurnRegistrationsThisInterval::<T>::mutate(netuid, |val| *val += 1);
-    // RegistrationsThisInterval::<T>::mutate(netuid, |val| *val += 1);
-    // RegistrationsThisBlock::<T>::mutate(netuid, |val| *val += 1);
-    // increase_rao_recycled(netuid, get_burn_as_u64(netuid));
+    BURN_REGISTRATIONS_THIS_INTERVAL.update(deps.storage, netuid, |val| -> StdResult<_> {
+        match val {
+            Some(val) => Ok(val.saturating_add(1)),
+            None => Ok(1),
+        }
+    })?;
+    REGISTRATIONS_THIS_INTERVAL.update(deps.storage, netuid, |val| -> StdResult<_> {
+        match val {
+            Some(val) => Ok(val.saturating_add(1)),
+            None => Ok(1),
+        }
+    })?;
+    REGISTRATIONS_THIS_BLOCK.update(deps.storage, netuid, |val| -> StdResult<_> {
+        match val {
+            Some(val) => Ok(val.saturating_add(1)),
+            None => Ok(1),
+        }
+    })?;
+    let burn = get_burn_as_u64(deps.storage, netuid);
+    increase_rao_recycled(deps.storage, netuid, burn);
 
     // --- 15. Deposit successful event.
     deps.api.debug(&format!(
@@ -241,8 +290,7 @@ pub fn do_burned_registration(
     Ok(Response::default()
         .add_attribute("action", "neuron_registered")
         .add_attribute("subnetwork_uid", format!("{}", subnetwork_uid))
-        .add_attribute("hotkey", hotkey)
-    )
+        .add_attribute("hotkey", hotkey))
 }
 
 // ---- The implementation for the extrinsic do_registration.
@@ -305,50 +353,53 @@ pub fn do_registration(
 ) -> Result<Response, ContractError> {
     // --- 1. Check that the caller has signed the transaction.
     // TODO( const ): This not be the hotkey signature or else an exterior actor can register the hotkey and potentially control it?
-    // let signing_origin = ensure_signed(origin)?;
+    // TODO seriously consider this. Add signatures to the registration.
     let signing_origin = info.sender;
     deps.api.debug(&format!(
         "do_registration( origin:{:?} netuid:{:?} hotkey:{:?}, coldkey:{:?} )",
-        signing_origin,
-        netuid,
-        hotkey,
-        coldkey
+        signing_origin, netuid, hotkey, coldkey
     ));
+
+    ensure!(
+        signing_origin == hotkey,
+        ContractError::HotkeyOriginMismatch {}
+    );
 
     // --- 2. Ensure the passed network is valid.
     ensure!(
         netuid != get_root_netuid(),
-        ContractError::OperationNotPermittedOnRootSubnet{}
+        ContractError::OperationNotPermittedOnRootSubnet {}
     );
     ensure!(
         if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist{}
+        ContractError::NetworkDoesNotExist {}
     );
 
     // --- 3. Ensure the passed network allows registrations.
     ensure!(
         if_subnet_allows_registration(deps.storage, netuid),
-        ContractError::RegistrationDisabled{}
+        ContractError::RegistrationDisabled {}
     );
 
     // --- 4. Ensure we are not exceeding the max allowed registrations per block.
+    // TODO TESTS FAIL HERE
     ensure!(
         get_registrations_this_block(deps.storage, netuid)
             < get_max_registrations_per_block(deps.storage, netuid),
-        ContractError::TooManyRegistrationsThisBlock{}
+        ContractError::TooManyRegistrationsThisBlock {}
     );
 
     // --- 5. Ensure we are not exceeding the max allowed registrations per interval.
     ensure!(
         get_registrations_this_interval(deps.storage, netuid)
             < get_target_registrations_per_interval(deps.storage, netuid) * 3,
-        ContractError::TooManyRegistrationsThisInterval{}
+        ContractError::TooManyRegistrationsThisInterval {}
     );
 
     // --- 6. Ensure that the key is not already registered.
     ensure!(
-        !UIDS.has(deps.storage, (netuid, &hotkey)),
-        ContractError::AlreadyRegistered{}
+        !UIDS.has(deps.storage, (netuid, &hotkey.clone())),
+        ContractError::AlreadyRegistered {}
     );
 
     // --- 7. Ensure the passed block number is valid, not in the future or too old.
@@ -356,11 +407,11 @@ pub fn do_registration(
     let current_block_number: u64 = env.block.height;
     ensure!(
         block_number <= current_block_number,
-        ContractError::InvalidWorkBlock{}
+        ContractError::InvalidWorkBlock {}
     );
     ensure!(
         current_block_number - block_number < 3,
-        ContractError::InvalidWorkBlock{}
+        ContractError::InvalidWorkBlock {}
     );
 
     // --- 8. Ensure the supplied work passes the difficulty.
@@ -376,19 +427,13 @@ pub fn do_registration(
     // ensure!(seal == work_hash, ContractError::InvalidSeal{});
     // USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
 
-    // DEPRECATED --- 8. Ensure that the key passes the registration requirement
-    // ensure!(
-    //     passes_network_connection_requirement(netuid, &hotkey),
-    //     Error::<T>::DidNotPassConnectedNetworkRequirement
-    // );
-
     // --- 9. If the network account does not exist we will create it here.
-    create_account_if_non_existent(deps.storage, coldkey.clone(), hotkey.clone());
+    create_account_if_non_existent(deps.storage, &coldkey, &hotkey);
 
     // --- 10. Ensure that the pairing is correct.
     ensure!(
-        coldkey_owns_hotkey(deps.storage, coldkey.clone(), hotkey.clone()),
-        ContractError::NonAssociatedColdKey{}
+        coldkey_owns_hotkey(deps.storage, &coldkey, &hotkey),
+        ContractError::NonAssociatedColdKey {}
     );
 
     // --- 11. Append neuron or prune it.
@@ -398,7 +443,7 @@ pub fn do_registration(
     // Possibly there is no neuron slots at all.
     ensure!(
         get_max_allowed_uids(deps.storage, netuid) != 0,
-        ContractError::NetworkDoesNotExist{}
+        ContractError::NetworkDoesNotExist {}
     );
 
     if current_subnetwork_n < get_max_allowed_uids(deps.storage, netuid) {
@@ -407,7 +452,13 @@ pub fn do_registration(
         subnetwork_uid = current_subnetwork_n;
 
         // --- 11.1.2 Expand subnetwork with new account.
-        append_neuron(deps.storage, deps.api, netuid, hotkey.clone(), current_block_number)?;
+        append_neuron(
+            deps.storage,
+            deps.api,
+            netuid,
+            &hotkey.clone(),
+            current_block_number,
+        )?;
         deps.api.debug(&format!("add new neuron account"));
     } else {
         // --- 11.1.1 Replacement required.
@@ -415,29 +466,48 @@ pub fn do_registration(
         subnetwork_uid = get_neuron_to_prune(deps.storage, deps.api, netuid, current_block_number);
 
         // --- 11.1.1 Replace the neuron account with the new info.
-        replace_neuron(deps.storage, deps.api, netuid, subnetwork_uid, hotkey.clone(), current_block_number)?;
+        replace_neuron(
+            deps.storage,
+            deps.api,
+            netuid,
+            subnetwork_uid,
+            &hotkey.clone(),
+            current_block_number,
+        )?;
         deps.api.debug(&format!("prune neuron"));
     }
 
     // --- 12. Record the registration and increment block and interval counters.
-    // POWRegistrationsThisInterval::<T>::mutate(netuid, |val| *val += 1);
-    // RegistrationsThisInterval::<T>::mutate(netuid, |val| *val += 1);
-    // RegistrationsThisBlock::<T>::mutate(netuid, |val| *val += 1);
+    POW_REGISTRATIONS_THIS_INTERVAL.update(deps.storage, netuid, |val| -> StdResult<_> {
+        match val {
+            Some(val) => Ok(val.saturating_add(1)),
+            None => Ok(1),
+        }
+    })?;
+    REGISTRATIONS_THIS_INTERVAL.update(deps.storage, netuid, |val| -> StdResult<_> {
+        match val {
+            Some(val) => Ok(val.saturating_add(1)),
+            None => Ok(1),
+        }
+    })?;
+    REGISTRATIONS_THIS_BLOCK.update(deps.storage, netuid, |val| -> StdResult<_> {
+        match val {
+            Some(val) => Ok(val.saturating_add(1)),
+            None => Ok(1),
+        }
+    })?;
 
     // --- 13. Deposit successful event.
     deps.api.debug(&format!(
         "NeuronRegistered( netuid:{:?} uid:{:?} hotkey:{:?}  ) ",
-        netuid,
-        subnetwork_uid,
-        hotkey
+        netuid, subnetwork_uid, hotkey
     ));
 
     // --- 14. Ok and done.
     Ok(Response::default()
         .add_attribute("action", "neuron_registered")
         .add_attribute("subnetwork_uid", format!("{}", subnetwork_uid))
-        .add_attribute("hotkey", hotkey)
-    )
+        .add_attribute("hotkey", hotkey))
 }
 
 pub fn do_faucet(
@@ -449,22 +519,26 @@ pub fn do_faucet(
     work: Vec<u8>,
 ) -> Result<Response, ContractError> {
     // --- 0. Ensure the faucet is enabled.
-    ensure!(ALLOW_FAUCET.load(deps.storage)?, ContractError::FaucetDisabled{});
+    ensure!(
+        ALLOW_FAUCET.load(deps.storage)?,
+        ContractError::FaucetDisabled {}
+    );
 
     // --- 1. Check that the caller has signed the transaction.
     let coldkey = info.sender;
-    deps.api.debug(&format!("do_faucet( coldkey:{:?} )", coldkey));
+    deps.api
+        .debug(&format!("do_faucet( coldkey:{:?} )", coldkey));
 
     // --- 2. Ensure the passed block number is valid, not in the future or too old.
     // Work must have been done within 3 blocks (stops long range attacks).
     let current_block_number: u64 = env.block.height;
     ensure!(
         block_number <= env.block.height,
-        ContractError::InvalidWorkBlock{}
+        ContractError::InvalidWorkBlock {}
     );
     ensure!(
         env.block.height - block_number < 3,
-        ContractError::InvalidWorkBlock{}
+        ContractError::InvalidWorkBlock {}
     );
 
     // --- 3. Ensure the supplied work passes the difficulty.
@@ -484,7 +558,7 @@ pub fn do_faucet(
     // --- 5. Add Balance via faucet.
     let balance_to_add: u64 = 100_000_000_000;
     let balance_to_be_added_as_balance = u64_to_balance(balance_to_add);
-    add_balance_to_coldkey_account(coldkey.clone(), balance_to_be_added_as_balance.unwrap());
+    add_balance_to_coldkey_account(&coldkey, balance_to_be_added_as_balance.unwrap());
     TOTAL_ISSUANCE.update(deps.storage, |total_issuance| -> StdResult<_> {
         Ok(total_issuance.saturating_add(balance_to_add))
     })?;
@@ -492,16 +566,14 @@ pub fn do_faucet(
     // --- 6. Deposit successful event.
     deps.api.debug(&format!(
         "Faucet( coldkey:{:?} amount:{:?} ) ",
-        coldkey,
-        balance_to_add
+        coldkey, balance_to_add
     ));
 
     // --- 7. Ok and done.
     Ok(Response::default()
         .add_attribute("action", "faucet")
         .add_attribute("coldkey", coldkey)
-        .add_attribute("amount", format!("{}", balance_to_add))
-    )
+        .add_attribute("amount", format!("{}", balance_to_add)))
 }
 
 // pub fn vec_to_hash(vec_hash: Vec<u8>) -> H256 {
@@ -514,7 +586,12 @@ pub fn do_faucet(
 // Determine which peer to prune from the network by finding the element with the lowest pruning score out of
 // immunity period. If all neurons are in immunity period, return node with lowest prunning score.
 // This function will always return an element to prune.
-pub fn get_neuron_to_prune(store: &mut dyn Storage, api: &dyn Api, netuid: u16, current_block: u64) -> u16 {
+pub fn get_neuron_to_prune(
+    store: &mut dyn Storage,
+    api: &dyn Api,
+    netuid: u16,
+    current_block: u64,
+) -> u16 {
     let mut min_score: u16 = u16::MAX;
     let mut min_score_in_immunity_period = u16::MAX;
     let mut uid_with_min_score = 0;
@@ -770,21 +847,22 @@ pub fn get_neuron_to_prune(store: &mut dyn Storage, api: &dyn Api, netuid: u16, 
 //     return seal_hash;
 // }
 //
-// // Helper function for creating nonce and work.
-// pub fn create_work_for_block_number(
-//     store: &dyn Storage,
-//     netuid: u16,
-//     block_number: u64,
-//     start_nonce: u64,
-//     hotkey: Addr,
-// ) -> (u64, Vec<u8>) {
-//     let difficulty = get_difficulty(store, netuid);
-//     let mut nonce: u64 = start_nonce;
-//     let mut work: H256 = create_seal_hash(block_number, nonce, hotkey.clone());
-//     while !hash_meets_difficulty(&work, difficulty) {
-//         nonce = nonce + 1;
-//         work = create_seal_hash(block_number, nonce, hotkey.clone());
-//     }
-//     let vec_work: Vec<u8> = hash_to_vec(work);
-//     return (nonce, vec_work);
-// }
+// Helper function for creating nonce and work.
+pub fn create_work_for_block_number(
+    store: &dyn Storage,
+    netuid: u16,
+    block_number: u64,
+    start_nonce: u64,
+    hotkey: &Addr,
+) -> (u64, Vec<u8>) {
+    // let difficulty = get_difficulty(store, netuid);
+    // let mut nonce: u64 = start_nonce;
+    // let mut work: H256 = create_seal_hash(block_number, nonce, hotkey.clone());
+    // while !hash_meets_difficulty(&work, difficulty) {
+    //     nonce = nonce + 1;
+    //     work = create_seal_hash(block_number, nonce, hotkey.clone());
+    // }
+    // let vec_work: Vec<u8> = hash_to_vec(work);
+    // return (nonce, vec_work);
+    return (0, vec![]);
+}

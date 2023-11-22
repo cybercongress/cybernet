@@ -1,10 +1,14 @@
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
 use crate::root::if_subnet_exist;
 use crate::serving::{get_axon_info, get_prometheus_info};
-use crate::state::{AxonInfo, BONDS, OWNER, PrometheusInfo, STAKE, WEIGHTS};
+use crate::state::{AxonInfo, PrometheusInfo, BONDS, OWNER, STAKE, WEIGHTS};
 use crate::uids::{get_hotkey_for_net_and_uid, get_subnetwork_n};
-use crate::utils::{get_active_for_uid, get_consensus_for_uid, get_dividends_for_uid, get_emission_for_uid, get_incentive_for_uid, get_last_update_for_uid, get_pruning_score_for_uid, get_rank_for_uid, get_trust_for_uid, get_validator_permit_for_uid, get_validator_trust_for_uid};
+use crate::utils::{
+    get_active_for_uid, get_consensus_for_uid, get_dividends_for_uid, get_emission_for_uid,
+    get_incentive_for_uid, get_last_update_for_uid, get_pruning_score_for_uid, get_rank_for_uid,
+    get_trust_for_uid, get_validator_permit_for_uid, get_validator_trust_for_uid,
+};
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
 
 #[cw_serde]
 pub struct NeuronInfo {
@@ -57,18 +61,18 @@ pub struct NeuronInfoLite {
     pruning_score: u16,
 }
 
-pub fn get_neurons(deps: Deps, netuid: u16) -> StdResult<Vec<NeuronInfo>> {
-    if !if_subnet_exist(deps.storage, netuid) {
+pub fn get_neurons(store: &dyn Storage, netuid: u16) -> StdResult<Vec<NeuronInfo>> {
+    if !if_subnet_exist(store, netuid) {
         return Ok(Vec::new());
     }
 
     let mut neurons = Vec::new();
-    let n = get_subnetwork_n(deps.storage, netuid);
+    let n = get_subnetwork_n(store, netuid);
     for uid in 0..n {
         let uid = uid;
         let netuid = netuid;
 
-        let _neuron = get_neuron_subnet_exists(deps.storage, netuid, uid)?;
+        let _neuron = get_neuron_subnet_exists(store, netuid, uid)?;
         let neuron;
         if _neuron.is_none() {
             break; // No more neurons
@@ -82,7 +86,11 @@ pub fn get_neurons(deps: Deps, netuid: u16) -> StdResult<Vec<NeuronInfo>> {
     Ok(neurons)
 }
 
-fn get_neuron_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> StdResult<Option<NeuronInfo>> {
+fn get_neuron_subnet_exists(
+    store: &dyn Storage,
+    netuid: u16,
+    uid: u16,
+) -> StdResult<Option<NeuronInfo>> {
     let _hotkey = get_hotkey_for_net_and_uid(store, netuid, uid);
     let hotkey;
     if _hotkey.is_err() {
@@ -96,9 +104,9 @@ fn get_neuron_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> StdRe
 
     let prometheus_info = get_prometheus_info(store, netuid, &hotkey.clone());
 
-    let coldkey = OWNER.load(store, hotkey.clone())?;
+    let coldkey = OWNER.load(store, &hotkey)?;
 
-    let active = get_active_for_uid(store,  netuid, uid as u16);
+    let active = get_active_for_uid(store, netuid, uid as u16);
     let rank = get_rank_for_uid(store, netuid, uid as u16);
     let emission = get_emission_for_uid(store, netuid, uid as u16);
     let incentive = get_incentive_for_uid(store, netuid, uid as u16);
@@ -113,21 +121,20 @@ fn get_neuron_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> StdRe
     let weights = WEIGHTS
         .load(store, (netuid, uid))?
         .iter()
-        // TODO revisit filter later
         .filter_map(|(i, w)| if *w > 0 { Some((*i, *w)) } else { None })
         .collect::<Vec<(u16, u16)>>();
 
     let bonds = BONDS
         .load(store, (netuid, uid))?
         .iter()
-        // TODO revisit filter later
         .filter_map(|(i, b)| if *b > 0 { Some((*i, *b)) } else { None })
         .collect::<Vec<(u16, u16)>>();
 
     let stake = STAKE
-        .prefix(hotkey.clone())
+        .prefix(&hotkey)
         .range(store, None, None, Order::Ascending)
-        .collect::<Result<Vec<(Addr, u64)>, _>>()?;
+        .map(|item| item.map(|(address, stake)| (address, stake.into())))
+        .collect::<StdResult<_>>()?;
 
     let neuron = NeuronInfo {
         hotkey: hotkey.clone(),
@@ -155,16 +162,20 @@ fn get_neuron_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> StdRe
     return Ok(Some(neuron));
 }
 
-pub fn get_neuron(deps: Deps, netuid: u16, uid: u16) -> StdResult<Option<NeuronInfo>> {
-    if !if_subnet_exist(deps.storage, netuid) {
+pub fn get_neuron(store: &dyn Storage, netuid: u16, uid: u16) -> StdResult<Option<NeuronInfo>> {
+    if !if_subnet_exist(store, netuid) {
         return Ok(None);
     }
 
-    let neuron = get_neuron_subnet_exists(deps.storage, netuid, uid);
+    let neuron = get_neuron_subnet_exists(store, netuid, uid);
     neuron
 }
 
-fn get_neuron_lite_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> StdResult<Option<NeuronInfoLite>> {
+fn get_neuron_lite_subnet_exists(
+    store: &dyn Storage,
+    netuid: u16,
+    uid: u16,
+) -> StdResult<Option<NeuronInfoLite>> {
     let _hotkey = get_hotkey_for_net_and_uid(store, netuid, uid);
     let hotkey;
     if _hotkey.is_err() {
@@ -178,8 +189,7 @@ fn get_neuron_lite_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> 
 
     let prometheus_info = get_prometheus_info(store, netuid, &hotkey.clone());
 
-
-    let coldkey = OWNER.load(store, hotkey.clone())?;
+    let coldkey = OWNER.load(store, &hotkey)?;
 
     let active = get_active_for_uid(store, netuid, uid as u16);
     let rank = get_rank_for_uid(store, netuid, uid as u16);
@@ -194,7 +204,7 @@ fn get_neuron_lite_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> 
     let validator_permit = get_validator_permit_for_uid(store, netuid, uid as u16);
 
     let stake = STAKE
-        .prefix(hotkey.clone())
+        .prefix(&hotkey)
         .range(store, None, None, Order::Ascending)
         .collect::<Result<Vec<(Addr, u64)>, _>>()?;
 
@@ -222,17 +232,17 @@ fn get_neuron_lite_subnet_exists(store: &dyn Storage, netuid: u16, uid: u16) -> 
     return Ok(Some(neuron));
 }
 
-pub fn get_neurons_lite(deps: Deps, netuid: u16) -> StdResult<Vec<NeuronInfoLite>> {
-    if !if_subnet_exist(deps.storage, netuid) {
+pub fn get_neurons_lite(store: &dyn Storage, netuid: u16) -> StdResult<Vec<NeuronInfoLite>> {
+    if !if_subnet_exist(store, netuid) {
         return Ok(Vec::new());
     }
 
     let mut neurons: Vec<NeuronInfoLite> = Vec::new();
-    let n = get_subnetwork_n(deps.storage, netuid);
+    let n = get_subnetwork_n(store, netuid);
     for uid in 0..n {
         let uid = uid;
 
-        let _neuron = get_neuron_lite_subnet_exists(deps.storage, netuid, uid)?;
+        let _neuron = get_neuron_lite_subnet_exists(store, netuid, uid)?;
         let neuron;
         if _neuron.is_none() {
             break; // No more neurons
@@ -246,13 +256,15 @@ pub fn get_neurons_lite(deps: Deps, netuid: u16) -> StdResult<Vec<NeuronInfoLite
     Ok(neurons)
 }
 
-pub fn get_neuron_lite(deps: Deps, netuid: u16, uid: u16) -> StdResult<Option<NeuronInfoLite>> {
-    if !if_subnet_exist(deps.storage, netuid) {
+pub fn get_neuron_lite(
+    store: &dyn Storage,
+    netuid: u16,
+    uid: u16,
+) -> StdResult<Option<NeuronInfoLite>> {
+    if !if_subnet_exist(store, netuid) {
         return Ok(None);
     }
 
-    let neuron = get_neuron_lite_subnet_exists(deps.storage, netuid, uid);
+    let neuron = get_neuron_lite_subnet_exists(store, netuid, uid);
     neuron
 }
-
-

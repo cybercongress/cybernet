@@ -18,7 +18,9 @@ pub enum ContractError {
     #[error("Thrown when an invalid modality attempted on serve.")]
     InvalidModality {},
 
-    #[error("Thrown when the user tries to serve an axon which is not of type	4 (IPv4) or 6 (IPv6).")]
+    #[error(
+        "Thrown when the user tries to serve an axon which is not of type	4 (IPv4) or 6 (IPv6)."
+    )]
     InvalidIpType {},
 
     #[error("Thrown when an invalid IP address is passed to the serve function.")]
@@ -48,7 +50,9 @@ pub enum ContractError {
     #[error("Thrown when the caller attempts to set the weight keys and values but these vectors have different size.")]
     WeightVecNotEqualSize {},
 
-    #[error("Thrown when the caller attempts to set weights with duplicate uids in the weight matrix.")]
+    #[error(
+        "Thrown when the caller attempts to set weights with duplicate uids in the weight matrix."
+    )]
     DuplicateUids {},
 
     #[error("Thrown when a caller attempts to set weight to at least one uid that does not exist in the metagraph.")]
@@ -84,7 +88,9 @@ pub enum ContractError {
     #[error("Thrown when the dispatch attempts to set weights on chain with where any normalized weight is more than MaxWeightLimit.")]
     MaxWeightExceeded {},
 
-    #[error("Thrown when the caller attempts to set a storage value outside of its allowed range.")]
+    #[error(
+        "Thrown when the caller attempts to set a storage value outside of its allowed range."
+    )]
     StorageValueOutOfRange {},
 
     #[error("Thrown when tempo has not set.")]
@@ -108,7 +114,9 @@ pub enum ContractError {
     #[error("Thrown when a validator attempts to set weights from a validator with incorrect code base key.")]
     IncorrectNetworkVersionKey {},
 
-    #[error("Thrown when an axon or prometheus serving exceeds the rate limit for a registered neuron.")]
+    #[error(
+        "Thrown when an axon or prometheus serving exceeds the rate limit for a registered neuron."
+    )]
     ServingRateLimitExceeded {},
 
     #[error("Thrown when an error occurs while setting a balance.")]
@@ -150,7 +158,6 @@ pub enum ContractError {
     //
     // #[error("Thrown when a hotkey attempts to join the senate without being a delegate first")]
     // NotDelegate {},
-
     #[error("Thrown when an incorrect amount of Netuids are passed as input")]
     IncorrectNetuidsLength {},
 

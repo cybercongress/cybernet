@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr};
+use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -21,15 +21,15 @@ pub const BLOCK_EMISSION: Item<u64> = Item::new("global_block_emission");
 // --- ITEM ( total_issuance )
 pub const TOTAL_ISSUANCE: Item<u64> = Item::new("total_issuance");
 // --- MAP ( hot ) --> stake | Returns the total amount of stake under a hotkey.
-pub const TOTAL_HOTKEY_STAKE: Map<Addr, u64> = Map::new("total_hotkey_stake");
+pub const TOTAL_HOTKEY_STAKE: Map<&Addr, u64> = Map::new("total_hotkey_stake");
 // --- MAP ( cold ) --> stake | Returns the total amount of stake under a coldkey.
-pub const TOTAL_COLDKEY_STAKE: Map<Addr, u64> = Map::new("total_coldkey_stake");
+pub const TOTAL_COLDKEY_STAKE: Map<&Addr, u64> = Map::new("total_coldkey_stake");
 // --- MAP ( hot ) --> cold | Returns the controlling coldkey for a hotkey.
-pub const OWNER: Map<Addr, Addr> = Map::new("hotkey_coldkey");
+pub const OWNER: Map<&Addr, Addr> = Map::new("hotkey_coldkey");
 // --- MAP ( hot ) --> stake | Returns the hotkey delegation stake. And signals that this key is open for delegation.
-pub const DELEGATES: Map<Addr, u16> = Map::new("hotkey_stake");
+pub const DELEGATES: Map<&Addr, u16> = Map::new("hotkey_stake");
 // --- DMAP ( hot, cold ) --> stake | Returns the stake under a coldkey prefixed by hotkey.
-pub const STAKE: Map<(Addr, Addr), u64> = Map::new("staked_hotkey_coldkey");
+pub const STAKE: Map<(&Addr, &Addr), u64> = Map::new("staked_hotkey_coldkey");
 
 // =====================================
 // ==== Difficulty / Registrations =====
@@ -147,13 +147,13 @@ pub struct PrometheusInfo {
 // --- ITEM ( tx_rate_limit )
 pub const TX_RATE_LIMIT: Item<u64> = Item::new("tx_rate_limit");
 // --- MAP ( key ) --> last_block
-pub const LAST_TX_BLOCK: Map<Addr, u64> = Map::new("last_tx_block");
+pub const LAST_TX_BLOCK: Map<&Addr, u64> = Map::new("last_tx_block");
 // --- MAP ( netuid ) --> serving_rate_limit
 pub const SERVING_RATE_LIMIT: Map<u16, u64> = Map::new("serving_rate_limit");
 // --- MAP ( netuid, hotkey ) --> axon_info
-pub const AXONS: Map<(u16, Addr), AxonInfo> = Map::new("axon_info");
+pub const AXONS: Map<(u16, &Addr), AxonInfo> = Map::new("axon_info");
 // --- MAP ( netuid, hotkey ) --> prometheus_info
-pub const PROMETHEUS: Map<(u16, Addr), PrometheusInfo> = Map::new("prometheus_info");
+pub const PROMETHEUS: Map<(u16, &Addr), PrometheusInfo> = Map::new("prometheus_info");
 
 // =======================================
 // ==== Subnetwork Hyperparam storage ====
@@ -164,13 +164,16 @@ pub const RHO: Map<u16, u16> = Map::new("rho");
 // --- MAP ( netuid ) --> Kappa
 pub const KAPPA: Map<u16, u16> = Map::new("kappa");
 // --- MAP ( netuid ) --> uid, we use to record uids to prune at next epoch.
-pub const NEURONS_TO_PRUNE_AT_NEXT_EPOCH: Map<u16, u16> = Map::new("neurons_to_prunet_at_next_epoch");
+pub const NEURONS_TO_PRUNE_AT_NEXT_EPOCH: Map<u16, u16> =
+    Map::new("neurons_to_prunet_at_next_epoch");
 // --- MAP ( netuid ) --> registrations_this_interval
 pub const REGISTRATIONS_THIS_INTERVAL: Map<u16, u16> = Map::new("registrations_this_interval");
 // --- MAP ( netuid ) --> pow_registrations_this_interval
-pub const POW_REGISTRATIONS_THIS_INTERVAL: Map<u16, u16> = Map::new("pow_registrations_this_interval");
+pub const POW_REGISTRATIONS_THIS_INTERVAL: Map<u16, u16> =
+    Map::new("pow_registrations_this_interval");
 // --- MAP ( netuid ) --> burn_registrations_this_interval
-pub const BURN_REGISTRATIONS_THIS_INTERVAL: Map<u16, u16> = Map::new("burn_registrations_this_interval");
+pub const BURN_REGISTRATIONS_THIS_INTERVAL: Map<u16, u16> =
+    Map::new("burn_registrations_this_interval");
 // --- MAP ( netuid ) --> max_allowed_uids
 pub const MAX_ALLOWED_UIDS: Map<u16, u16> = Map::new("max_allowed_uids");
 // --- MAP ( netuid ) --> immunity_period
@@ -196,7 +199,8 @@ pub const VALIDATOR_PRUNE_LEN: Map<u16, u64> = Map::new("validator_prune_len");
 // --- MAP ( netuid ) --> scaling_law_power
 pub const SCALING_LAW_POWER: Map<u16, u16> = Map::new("scaling_law_power");
 // --- MAP ( netuid ) --> target_registrations_this_interval
-pub const TARGET_REGISTRATIONS_PER_INTERVAL: Map<u16, u16> = Map::new("target_registrations_per_interval");
+pub const TARGET_REGISTRATIONS_PER_INTERVAL: Map<u16, u16> =
+    Map::new("target_registrations_per_interval");
 // --- DMAP ( netuid, uid ) --> block_at_registration
 pub const BLOCK_AT_REGISTRATION: Map<(u16, u16), u64> = Map::new("block_at_registration");
 // --- DMAP ( netuid ) --> adjustment_alpha
@@ -240,4 +244,3 @@ pub const WEIGHTS: Map<(u16, u16), Vec<(u16, u16)>> = Map::new("weights");
 pub const BONDS: Map<(u16, u16), Vec<(u16, u16)>> = Map::new("bonds");
 
 pub const ALLOW_FAUCET: Item<bool> = Item::new("allow_faucet");
-

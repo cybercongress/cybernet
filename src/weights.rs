@@ -2,16 +2,25 @@
 // ==== Helper functions ====
 // ==========================
 
-use cosmwasm_std::{Api, DepsMut, ensure, Env, MessageInfo, Order, Response, StdResult, Storage};
+use cosmwasm_std::{ensure, Api, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage};
 use substrate_fixed::types::I32F32;
 
-use crate::ContractError;
 use crate::epoch::get_weights;
 use crate::math::{check_vec_max_limited, vec_u16_max_upscale_to_u16};
 use crate::root::{contains_invalid_root_uids, get_root_netuid, if_subnet_exist};
-use crate::state::{KEYS, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY};
-use crate::uids::{get_subnetwork_n, get_uid_for_net_and_hotkey, is_hotkey_registered_on_network, is_uid_exist_on_network};
-use crate::utils::{get_last_update_for_uid, get_max_weight_limit, get_validator_permit_for_uid, get_weights_set_rate_limit, set_last_update_for_uid};
+use crate::state::{
+    KEYS, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, WEIGHTS, WEIGHTS_SET_RATE_LIMIT,
+    WEIGHTS_VERSION_KEY,
+};
+use crate::uids::{
+    get_subnetwork_n, get_uid_for_net_and_hotkey, is_hotkey_registered_on_network,
+    is_uid_exist_on_network,
+};
+use crate::utils::{
+    get_last_update_for_uid, get_max_weight_limit, get_validator_permit_for_uid,
+    get_weights_set_rate_limit, set_last_update_for_uid,
+};
+use crate::ContractError;
 
 // ---- The implementation for the extrinsic set_weights.
 //
@@ -80,34 +89,52 @@ pub fn do_set_weights(
 ) -> Result<Response, ContractError> {
     // --- 1. Check the caller's signature. This is the hotkey of a registered account.
     let hotkey = info.sender;
-    deps.api.debug(&format!(
-        "do_set_weights( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
-        hotkey,
-        netuid,
-        uids,
-        values
-    ));
+    // deps.api.debug(&format!(
+    //     "do_set_weights( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
+    //     hotkey,
+    //     netuid,
+    //     uids,
+    //     values
+    // ));
 
     // --- 2. Check that the length of uid list and value list are equal for this network.
-    ensure!(uids_match_values(&uids, &values), ContractError::WeightVecNotEqualSize {});
+    ensure!(
+        uids_match_values(&uids, &values),
+        ContractError::WeightVecNotEqualSize {}
+    );
 
     // --- 3. Check to see if this is a valid network.
-    ensure!(if_subnet_exist(deps.storage, netuid), ContractError::NetworkDoesNotExist {});
+    ensure!(
+        if_subnet_exist(deps.storage, netuid),
+        ContractError::NetworkDoesNotExist {}
+    );
 
     // --- 4. Check to see if the number of uids is within the max allowed uids for this network.
     // For the root network this number is the number of subnets.
     if netuid == get_root_netuid() {
         // --- 4.a. Ensure that the passed uids are valid for the network.
-        ensure!(contains_invalid_root_uids(deps.storage, deps.api, &uids), ContractError::InvalidUid{});
+        ensure!(
+            contains_invalid_root_uids(deps.storage, deps.api, &uids),
+            ContractError::InvalidUid {}
+        );
     } else {
-        ensure!(check_len_uids_within_allowed(deps.storage, netuid, &uids), ContractError::TooManyUids {});
+        ensure!(
+            check_len_uids_within_allowed(deps.storage, netuid, &uids),
+            ContractError::TooManyUids {}
+        );
     }
 
     // --- 5. Check to see if the hotkey is registered to the passed network.
-    ensure!(is_hotkey_registered_on_network(deps.storage, netuid, &hotkey), ContractError::NotRegistered {});
+    ensure!(
+        is_hotkey_registered_on_network(deps.storage, netuid, &hotkey),
+        ContractError::NotRegistered {}
+    );
 
     // --- 6. Ensure version_key is up-to-date.
-    ensure!(check_version_key(deps.storage, deps.api, netuid, version_key), ContractError::IncorrectNetworkVersionKey {});
+    ensure!(
+        check_version_key(deps.storage, deps.api, netuid, version_key),
+        ContractError::IncorrectNetworkVersionKey {}
+    );
 
     // --- 7. Get the neuron uid of associated hotkey on network netuid.
     let neuron_uid;
@@ -118,11 +145,17 @@ pub fn do_set_weights(
 
     // --- 8. Ensure the uid is not setting weights faster than the weights_set_rate_limit.
     let current_block: u64 = env.block.height;
-    ensure!(check_rate_limit(deps.storage, netuid, neuron_uid, current_block), ContractError::SettingWeightsTooFast {});
+    ensure!(
+        check_rate_limit(deps.storage, netuid, neuron_uid, current_block),
+        ContractError::SettingWeightsTooFast {}
+    );
 
     // --- 9. Check that the neuron uid is an allowed validator permitted to set non-self weights.
     if netuid != get_root_netuid() {
-        ensure!(check_validator_permit(deps.storage, netuid, neuron_uid, &uids, &values), ContractError::NoValidatorPermit {});
+        ensure!(
+            check_validator_permit(deps.storage, netuid, neuron_uid, &uids, &values),
+            ContractError::NoValidatorPermit {}
+        );
     }
 
     // --- 10. Ensure the passed uids contain no duplicates.
@@ -130,17 +163,32 @@ pub fn do_set_weights(
 
     // --- 11. Ensure that the passed uids are valid for the network.
     if netuid != get_root_netuid() {
-        ensure!(!contains_invalid_uids(deps.storage, deps.api, netuid, &uids), ContractError::InvalidUid {});
+        ensure!(
+            !contains_invalid_uids(deps.storage, deps.api, netuid, &uids),
+            ContractError::InvalidUid {}
+        );
     }
 
     // --- 12. Ensure that the weights have the required length.
-    ensure!(check_length(deps.storage, netuid, neuron_uid, &uids, &values), ContractError::NotSettingEnoughWeights {});
+    ensure!(
+        check_length(deps.storage, netuid, neuron_uid, &uids, &values),
+        ContractError::NotSettingEnoughWeights {}
+    );
 
     // --- 13. Max-upscale the weights.
     let max_upscaled_weights: Vec<u16> = vec_u16_max_upscale_to_u16(&values);
 
     // --- 14. Ensure the weights are max weight limited
-    ensure!(max_weight_limited(deps.storage, netuid, neuron_uid, &uids, &max_upscaled_weights), ContractError::MaxWeightExceeded {});
+    ensure!(
+        max_weight_limited(
+            deps.storage,
+            netuid,
+            neuron_uid,
+            &uids,
+            &max_upscaled_weights
+        ),
+        ContractError::MaxWeightExceeded {}
+    );
 
     // --- 15. Zip weights for sinking to storage map.
     let mut zipped_weights: Vec<(u16, u16)> = vec![];
@@ -157,26 +205,28 @@ pub fn do_set_weights(
     // --- 18. Emit the tracking event.
     deps.api.debug(&format!(
         "WeightsSet( netuid:{:?}, neuron_uid:{:?} )",
-        netuid,
-        neuron_uid
+        netuid, neuron_uid
     ));
 
     // --- 19. Return ok.
     Ok(Response::default()
         .add_attribute("active", "weights_set")
         .add_attribute("netuid", format!("{}", netuid))
-        .add_attribute("neuron_uid", format!("{}", neuron_uid))
-    )
+        .add_attribute("neuron_uid", format!("{}", neuron_uid)))
 }
 
 // ==========================
 // ==== Helper functions ====
 // ==========================
 
-
 // Returns true if version_key is up-to-date.
 //
-pub fn check_version_key(store: &dyn Storage, api: &dyn Api, netuid: u16, version_key: u64) -> bool {
+pub fn check_version_key(
+    store: &dyn Storage,
+    api: &dyn Api,
+    netuid: u16,
+    version_key: u64,
+) -> bool {
     let network_version_key: u64 = WEIGHTS_VERSION_KEY.load(store, netuid).unwrap();
     api.debug(&format!(
         "check_version_key( network_version_key:{:?}, version_key:{:?} )",
@@ -188,7 +238,12 @@ pub fn check_version_key(store: &dyn Storage, api: &dyn Api, netuid: u16, versio
 
 // Checks if the neuron has set weights within the weights_set_rate_limit.
 //
-pub fn check_rate_limit(store: &dyn Storage, netuid: u16, neuron_uid: u16, current_block: u64) -> bool {
+pub fn check_rate_limit(
+    store: &dyn Storage,
+    netuid: u16,
+    neuron_uid: u16,
+    current_block: u64,
+) -> bool {
     if is_uid_exist_on_network(store, netuid, neuron_uid) {
         // --- 1. Ensure that the diff between current and last_set weights is greater than limit.
         let last_set_weights: u64 = get_last_update_for_uid(store, netuid, neuron_uid);
@@ -203,13 +258,17 @@ pub fn check_rate_limit(store: &dyn Storage, netuid: u16, neuron_uid: u16, curre
 }
 
 // Checks for any invalid uids on this network.
-pub fn contains_invalid_uids(store: &dyn Storage, api: &dyn Api, netuid: u16, uids: &Vec<u16>) -> bool {
+pub fn contains_invalid_uids(
+    store: &dyn Storage,
+    api: &dyn Api,
+    netuid: u16,
+    uids: &Vec<u16>,
+) -> bool {
     for uid in uids {
         if !is_uid_exist_on_network(store, netuid, uid.clone()) {
             api.debug(&format!(
                 "contains_invalid_uids( netuid:{:?}, uid:{:?} does not exist on network. )",
-                netuid,
-                uids
+                netuid, uids
             ));
             return true;
         }
@@ -251,7 +310,13 @@ pub fn check_validator_permit(
 }
 
 // Returns True if the uids and weights are have a valid length for uid on network.
-pub fn check_length(store: &dyn Storage, netuid: u16, uid: u16, uids: &Vec<u16>, weights: &Vec<u16>) -> bool {
+pub fn check_length(
+    store: &dyn Storage,
+    netuid: u16,
+    uid: u16,
+    uids: &Vec<u16>,
+    weights: &Vec<u16>,
+) -> bool {
     let subnet_n: usize = get_subnetwork_n(store, netuid.clone()) as usize;
     let min_allowed_length: usize = MIN_ALLOWED_WEIGHTS.load(store, netuid).unwrap() as usize;
     let min_allowed: usize = {
@@ -288,7 +353,13 @@ pub fn normalize_weights(mut weights: Vec<u16>) -> Vec<u16> {
 }
 
 // Returns False if the weights exceed the max_weight_limit for this network.
-pub fn max_weight_limited(store: &dyn Storage, netuid: u16, uid: u16, uids: &Vec<u16>, weights: &Vec<u16>) -> bool {
+pub fn max_weight_limited(
+    store: &dyn Storage,
+    netuid: u16,
+    uid: u16,
+    uids: &Vec<u16>,
+    weights: &Vec<u16>,
+) -> bool {
     // Allow self weights to exceed max weight limit.
     if is_self_weight(uid, uids, weights) {
         return true;
@@ -323,11 +394,14 @@ pub fn check_len_uids_within_allowed(store: &dyn Storage, netuid: u16, uids: &Ve
     return uids.len() <= subnetwork_n as usize;
 }
 
-// TODO for debugging
+// TODO added for debugging, remove later
 pub fn get_network_weights(store: &dyn Storage, netuid: u16) -> StdResult<Vec<Vec<u16>>> {
     let n: usize = get_subnetwork_n(store, netuid) as usize;
     let mut weights: Vec<Vec<u16>> = vec![vec![0; n]; n];
-    for item in WEIGHTS.prefix(netuid).range(store, None, None, Order::Ascending) {
+    for item in WEIGHTS
+        .prefix(netuid)
+        .range(store, None, None, Order::Ascending)
+    {
         let (uid_i, weights_i) = item.unwrap();
         for (uid_j, weight_ij) in weights_i.iter() {
             weights[uid_i as usize][*uid_j as usize] = *weight_ij;

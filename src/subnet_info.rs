@@ -1,8 +1,15 @@
+use crate::root::if_subnet_exist;
+use crate::state::{
+    ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
+    DIFFICULTY, EMISSION_VALUES, IMMUNITY_PERIOD, KAPPA, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS,
+    MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS,
+    MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_MODALITY, NETWORK_REGISTRATION_ALLOWED, RHO,
+    SCALING_LAW_POWER, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO,
+    WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+};
+use crate::uids::get_subnetwork_n;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Deps, Order, StdResult};
-use crate::root::if_subnet_exist;
-use crate::state::{ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN, DIFFICULTY, EMISSION_VALUES, IMMUNITY_PERIOD, KAPPA, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORK_MODALITY, NETWORK_REGISTRATION_ALLOWED, NETWORKS_ADDED, RHO, SCALING_LAW_POWER, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY};
-use crate::uids::get_subnetwork_n;
 
 #[cw_serde]
 pub struct SubnetInfo {
@@ -48,7 +55,6 @@ pub struct SubnetHyperparams {
     pub max_regs_per_block: u16,
 }
 
-
 pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>> {
     if if_subnet_exist(deps.storage, netuid) {
         return Ok(None);
@@ -65,7 +71,7 @@ pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>>
     let subnetwork_n = get_subnetwork_n(deps.storage, netuid);
     let max_allowed_uids = MAX_ALLOWED_UIDS.load(deps.storage, netuid)?;
     let blocks_since_last_step = BLOCKS_SINCE_LAST_STEP.load(deps.storage, netuid)?;
-    let tempo = TEMPO.load(deps.storage,netuid)?;
+    let tempo = TEMPO.load(deps.storage, netuid)?;
     let network_modality = NETWORK_MODALITY.load(deps.storage, netuid)?;
     let emission_values = EMISSION_VALUES.load(deps.storage, netuid)?;
     let burn = BURN.load(deps.storage, netuid)?;
@@ -115,7 +121,7 @@ pub fn get_subnets_info(deps: Deps) -> StdResult<Vec<Option<SubnetInfo>>> {
     let mut subnets_info = Vec::<Option<SubnetInfo>>::new();
     for netuid_ in 0..(max_netuid + 1) {
         if subnet_netuids.contains(&netuid_) {
-            subnets_info.push(get_subnet_info(deps,netuid_).unwrap());
+            subnets_info.push(get_subnet_info(deps, netuid_).unwrap());
         }
     }
 
@@ -138,13 +144,13 @@ pub fn get_subnet_hyperparams(deps: Deps, netuid: u16) -> StdResult<Option<Subne
     let max_difficulty = MAX_DIFFICULTY.load(deps.storage, netuid)?;
     let weights_version = WEIGHTS_VERSION_KEY.load(deps.storage, netuid)?;
     let weights_rate_limit = WEIGHTS_SET_RATE_LIMIT.load(deps.storage, netuid)?;
-    let adjustment_interval = ADJUSTMENT_INTERVAL.load(deps.storage,netuid)?;
-    let activity_cutoff = ACTIVITY_CUTOFF.load(deps.storage,netuid)?;
+    let adjustment_interval = ADJUSTMENT_INTERVAL.load(deps.storage, netuid)?;
+    let activity_cutoff = ACTIVITY_CUTOFF.load(deps.storage, netuid)?;
     let registration_allowed = NETWORK_REGISTRATION_ALLOWED.load(deps.storage, netuid)?;
-    let target_regs_per_interval = TARGET_REGISTRATIONS_PER_INTERVAL.load(deps.storage,netuid)?;
-    let min_burn = MIN_BURN.load(deps.storage,netuid)?;
-    let max_burn = MAX_BURN.load(deps.storage,netuid)?;
-    let bonds_moving_avg = BONDS_MOVING_AVERAGE.load(deps.storage,netuid)?;
+    let target_regs_per_interval = TARGET_REGISTRATIONS_PER_INTERVAL.load(deps.storage, netuid)?;
+    let min_burn = MIN_BURN.load(deps.storage, netuid)?;
+    let max_burn = MAX_BURN.load(deps.storage, netuid)?;
+    let bonds_moving_avg = BONDS_MOVING_AVERAGE.load(deps.storage, netuid)?;
     let max_regs_per_block = MAX_REGISTRATION_PER_BLOCK.load(deps.storage, netuid)?;
 
     return Ok(Some(SubnetHyperparams {
@@ -168,4 +174,3 @@ pub fn get_subnet_hyperparams(deps: Deps, netuid: u16) -> StdResult<Option<Subne
         max_regs_per_block: max_regs_per_block.into(),
     }));
 }
-
