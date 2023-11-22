@@ -9,3 +9,7 @@ cargo build
 ```bash
 cargo test
 ```
+
+```bash
+cargo run --bin schema
+```
