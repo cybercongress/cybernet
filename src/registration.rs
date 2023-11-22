@@ -4,7 +4,7 @@ use crate::staking::{
 };
 use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, StdResult, Storage};
 use primitive_types::{H256, U256};
-// use sp_io::hashing::{keccak_256, sha2_256};
+use sp_io::hashing::{keccak_256, sha2_256};
 use crate::root::{get_root_netuid, if_subnet_allows_registration, if_subnet_exist};
 use crate::staking::{
     can_remove_balance_from_coldkey_account, coldkey_owns_hotkey,
@@ -16,12 +16,7 @@ use crate::state::{
     TOTAL_ISSUANCE, UIDS, USED_WORK,
 };
 use crate::uids::{append_neuron, get_subnetwork_n, replace_neuron};
-use crate::utils::{
-    burn_tokens, ensure_root, get_burn_as_u64, get_immunity_period, get_max_allowed_uids,
-    get_max_registrations_per_block, get_neuron_block_at_registration, get_pruning_score_for_uid,
-    get_registrations_this_block, get_registrations_this_interval,
-    get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid,
-};
+use crate::utils::{burn_tokens, ensure_root, get_burn_as_u64, get_difficulty_as_u64, get_immunity_period, get_max_allowed_uids, get_max_registrations_per_block, get_neuron_block_at_registration, get_pruning_score_for_uid, get_registrations_this_block, get_registrations_this_interval, get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid};
 use crate::ContractError;
 
 pub fn do_sudo_registration(
@@ -542,18 +537,17 @@ pub fn do_faucet(
     );
 
     // --- 3. Ensure the supplied work passes the difficulty.
-    // let difficulty = U256::from(1_000_000); // Base faucet difficulty.
-    // let work_hash: H256 = vec_to_hash(work.clone());
-    // ensure!(
-    //     hash_meets_difficulty(&work_hash, difficulty),
-    //     ContractError::InvalidDifficulty{}
-    // ); // Check that the work meets difficulty.
+    let difficulty = U256::from(1_000_000); // Base faucet difficulty.
+    let work_hash: H256 = vec_to_hash(work.clone());
+    ensure!(
+        hash_meets_difficulty(&work_hash, difficulty),
+        ContractError::InvalidDifficulty{}
+    ); // Check that the work meets difficulty.
 
     // --- 4. Check Work is the product of the nonce, the block number, and hotkey. Add this as used work.
-    // let seal: H256 = create_seal_hash(block_number, nonce, coldkey.clone());
-    // ensure!(seal == work_hash, ContractError::InvalidSeal{});
-    // UsedWork::<T>::insert(&work.clone(), current_block_number);
-    // USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
+    let seal: H256 = create_seal_hash(block_number, nonce, &coldkey);
+    ensure!(seal == work_hash, ContractError::InvalidSeal{});
+    USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
 
     // --- 5. Add Balance via faucet.
     let balance_to_add: u64 = 100_000_000_000;
@@ -576,12 +570,12 @@ pub fn do_faucet(
         .add_attribute("amount", format!("{}", balance_to_add)))
 }
 
-// pub fn vec_to_hash(vec_hash: Vec<u8>) -> H256 {
-//     let de_ref_hash = &vec_hash; // b: &Vec<u8>
-//     let de_de_ref_hash: &[u8] = &de_ref_hash; // c: &[u8]
-//     let real_hash: H256 = H256::from_slice(de_de_ref_hash);
-//     return real_hash;
-// }
+pub fn vec_to_hash(vec_hash: Vec<u8>) -> H256 {
+    let de_ref_hash = &vec_hash; // b: &Vec<u8>
+    let de_de_ref_hash: &[u8] = &de_ref_hash; // c: &[u8]
+    let real_hash: H256 = H256::from_slice(de_de_ref_hash);
+    return real_hash;
+}
 
 // Determine which peer to prune from the network by finding the element with the lowest pruning score out of
 // immunity period. If all neurons are in immunity period, return node with lowest prunning score.
@@ -650,204 +644,212 @@ pub fn get_neuron_to_prune(
     }
 }
 
-// // Determine whether the given hash satisfies the given difficulty.
-// // The test is done by multiplying the two together. If the product
-// // overflows the bounds of U256, then the product (and thus the hash)
-// // was too high.
-// pub fn hash_meets_difficulty(hash: &H256, difficulty: U256) -> bool {
-//     let bytes: &[u8] = &hash.as_bytes();
-//     let num_hash = U256::from(bytes);
-//     let (value, overflowed) = num_hash.overflowing_mul(difficulty);
-//
-//     // log::trace!(
-//     //     target: LOG_TARGET,
-//     //     "Difficulty: hash: {:?}, hash_bytes: {:?}, hash_as_num: {:?}, difficulty: {:?}, value: {:?} overflowed: {:?}",
-//     //     hash,
-//     //     bytes,
-//     //     num_hash,
-//     //     difficulty,
-//     //     value,
-//     //     overflowed
-//     // );
-//     !overflowed
-// }
-//
-// pub fn get_block_hash_from_u64(block_number: u64) -> H256 {
-//     // let block_number: T::BlockNumber = TryInto::<T::BlockNumber>::try_into(block_number)
-//     //     .ok()
-//     //     .expect("convert u64 to block number.");
-//     // let block_hash_at_number: <T as frame_system::Config>::Hash =
-//     //     system::Pallet::<T>::block_hash(block_number);
-//     // let vec_hash: Vec<u8> = block_hash_at_number.as_ref().into_iter().cloned().collect();
-//     // let deref_vec_hash: &[u8] = &vec_hash; // c: &[u8]
-//     // let real_hash: H256 = H256::from_slice(deref_vec_hash);
-//
-//     // log::trace!(
-//     //     target: LOG_TARGET,
-//     //     "block_number: {:?}, vec_hash: {:?}, real_hash: {:?}",
-//     //     block_number,
-//     //     vec_hash,
-//     //     real_hash
-//     // );
-//     let real_hash = H256::zero();
-//
-//     return real_hash;
-// }
-//
-// pub fn hash_to_vec(hash: H256) -> Vec<u8> {
-//     let hash_as_bytes: &[u8] = hash.as_bytes();
-//     let hash_as_vec: Vec<u8> = hash_as_bytes.iter().cloned().collect();
-//     return hash_as_vec;
-// }
-//
-// pub fn hash_block_and_hotkey(block_hash_bytes: &[u8], hotkey: Addr) -> H256 {
-//     // Get the public key from the account id.
-//     // let hotkey_pubkey: MultiAddress<Addr, ()> = MultiAddress::Id(hotkey.clone());
-//     // let binding = hotkey_pubkey.encode();
-//     // Skip extra 0th byte.
-//     // let hotkey_bytes: &[u8] = binding[1..].as_ref();
-//     let hotkey_bytes: &[u8] = b"key";
-//     let full_bytes: &[u8; 64] = &[
-//         block_hash_bytes[0],
-//         block_hash_bytes[1],
-//         block_hash_bytes[2],
-//         block_hash_bytes[3],
-//         block_hash_bytes[4],
-//         block_hash_bytes[5],
-//         block_hash_bytes[6],
-//         block_hash_bytes[7],
-//         block_hash_bytes[8],
-//         block_hash_bytes[9],
-//         block_hash_bytes[10],
-//         block_hash_bytes[11],
-//         block_hash_bytes[12],
-//         block_hash_bytes[13],
-//         block_hash_bytes[14],
-//         block_hash_bytes[15],
-//         block_hash_bytes[16],
-//         block_hash_bytes[17],
-//         block_hash_bytes[18],
-//         block_hash_bytes[19],
-//         block_hash_bytes[20],
-//         block_hash_bytes[21],
-//         block_hash_bytes[22],
-//         block_hash_bytes[23],
-//         block_hash_bytes[24],
-//         block_hash_bytes[25],
-//         block_hash_bytes[26],
-//         block_hash_bytes[27],
-//         block_hash_bytes[28],
-//         block_hash_bytes[29],
-//         block_hash_bytes[30],
-//         block_hash_bytes[31],
-//         hotkey_bytes[0],
-//         hotkey_bytes[1],
-//         hotkey_bytes[2],
-//         hotkey_bytes[3],
-//         hotkey_bytes[4],
-//         hotkey_bytes[5],
-//         hotkey_bytes[6],
-//         hotkey_bytes[7],
-//         hotkey_bytes[8],
-//         hotkey_bytes[9],
-//         hotkey_bytes[10],
-//         hotkey_bytes[11],
-//         hotkey_bytes[12],
-//         hotkey_bytes[13],
-//         hotkey_bytes[14],
-//         hotkey_bytes[15],
-//         hotkey_bytes[16],
-//         hotkey_bytes[17],
-//         hotkey_bytes[18],
-//         hotkey_bytes[19],
-//         hotkey_bytes[20],
-//         hotkey_bytes[21],
-//         hotkey_bytes[22],
-//         hotkey_bytes[23],
-//         hotkey_bytes[24],
-//         hotkey_bytes[25],
-//         hotkey_bytes[26],
-//         hotkey_bytes[27],
-//         hotkey_bytes[28],
-//         hotkey_bytes[29],
-//         hotkey_bytes[30],
-//         hotkey_bytes[31],
-//     ];
-//     let keccak_256_seal_hash_vec: [u8; 32] = keccak_256(full_bytes);
-//     let seal_hash: H256 = H256::from_slice(&keccak_256_seal_hash_vec);
-//
-//     return seal_hash;
-// }
-//
-// pub fn create_seal_hash(block_number_u64: u64, nonce_u64: u64, hotkey: Addr) -> H256 {
-//     let nonce = U256::from(nonce_u64);
-//     let block_hash_at_number: H256 = get_block_hash_from_u64(block_number_u64);
-//     let block_hash_bytes: &[u8] = block_hash_at_number.as_bytes();
-//     let binding = hash_block_and_hotkey(block_hash_bytes, hotkey);
-//     let block_and_hotkey_hash_bytes: &[u8] = binding.as_bytes();
-//
-//     let full_bytes: &[u8; 40] = &[
-//         nonce.byte(0),
-//         nonce.byte(1),
-//         nonce.byte(2),
-//         nonce.byte(3),
-//         nonce.byte(4),
-//         nonce.byte(5),
-//         nonce.byte(6),
-//         nonce.byte(7),
-//         block_and_hotkey_hash_bytes[0],
-//         block_and_hotkey_hash_bytes[1],
-//         block_and_hotkey_hash_bytes[2],
-//         block_and_hotkey_hash_bytes[3],
-//         block_and_hotkey_hash_bytes[4],
-//         block_and_hotkey_hash_bytes[5],
-//         block_and_hotkey_hash_bytes[6],
-//         block_and_hotkey_hash_bytes[7],
-//         block_and_hotkey_hash_bytes[8],
-//         block_and_hotkey_hash_bytes[9],
-//         block_and_hotkey_hash_bytes[10],
-//         block_and_hotkey_hash_bytes[11],
-//         block_and_hotkey_hash_bytes[12],
-//         block_and_hotkey_hash_bytes[13],
-//         block_and_hotkey_hash_bytes[14],
-//         block_and_hotkey_hash_bytes[15],
-//         block_and_hotkey_hash_bytes[16],
-//         block_and_hotkey_hash_bytes[17],
-//         block_and_hotkey_hash_bytes[18],
-//         block_and_hotkey_hash_bytes[19],
-//         block_and_hotkey_hash_bytes[20],
-//         block_and_hotkey_hash_bytes[21],
-//         block_and_hotkey_hash_bytes[22],
-//         block_and_hotkey_hash_bytes[23],
-//         block_and_hotkey_hash_bytes[24],
-//         block_and_hotkey_hash_bytes[25],
-//         block_and_hotkey_hash_bytes[26],
-//         block_and_hotkey_hash_bytes[27],
-//         block_and_hotkey_hash_bytes[28],
-//         block_and_hotkey_hash_bytes[29],
-//         block_and_hotkey_hash_bytes[30],
-//         block_and_hotkey_hash_bytes[31],
-//     ];
-//     let sha256_seal_hash_vec: [u8; 32] = sha2_256(full_bytes);
-//     let keccak_256_seal_hash_vec: [u8; 32] = keccak_256(&sha256_seal_hash_vec);
-//     let seal_hash: H256 = H256::from_slice(&keccak_256_seal_hash_vec);
-//
-//     // log::trace!(
-//     //     "\n hotkey:{:?} \nblock_number: {:?}, \nnonce_u64: {:?}, \nblock_hash: {:?}, \nfull_bytes: {:?}, \nsha256_seal_hash_vec: {:?},  \nkeccak_256_seal_hash_vec: {:?}, \nseal_hash: {:?}",
-//     //     hotkey,
-//     //     block_number_u64,
-//     //     nonce_u64,
-//     //     block_hash_at_number,
-//     //     full_bytes,
-//     //     sha256_seal_hash_vec,
-//     //     keccak_256_seal_hash_vec,
-//     //     seal_hash
-//     // );
-//
-//     return seal_hash;
-// }
-//
+// Determine whether the given hash satisfies the given difficulty.
+// The test is done by multiplying the two together. If the product
+// overflows the bounds of U256, then the product (and thus the hash)
+// was too high.
+pub fn hash_meets_difficulty(hash: &H256, difficulty: U256) -> bool {
+    let bytes: &[u8] = &hash.as_bytes();
+    let num_hash = U256::from(bytes);
+    let (value, overflowed) = num_hash.overflowing_mul(difficulty);
+
+    // log::trace!(
+    //     target: LOG_TARGET,
+    //     "Difficulty: hash: {:?}, hash_bytes: {:?}, hash_as_num: {:?}, difficulty: {:?}, value: {:?} overflowed: {:?}",
+    //     hash,
+    //     bytes,
+    //     num_hash,
+    //     difficulty,
+    //     value,
+    //     overflowed
+    // );
+    !overflowed
+}
+
+pub fn get_block_hash_from_u64(block_number: u64) -> H256 {
+    // TODO cosmwasm don't have api to access block hash, not possible to access hash because hash is result of execution
+    // let block_number: T::BlockNumber = TryInto::<T::BlockNumber>::try_into(block_number)
+    //     .ok()
+    //     .expect("convert u64 to block number.");
+    // let block_hash_at_number: <T as frame_system::Config>::Hash =
+    //     system::Pallet::<T>::block_hash(block_number);
+    // let vec_hash: Vec<u8> = block_hash_at_number.as_ref().into_iter().cloned().collect();
+    // let deref_vec_hash: &[u8] = &vec_hash; // c: &[u8]
+    // let real_hash: H256 = H256::from_slice(deref_vec_hash);
+
+    // log::trace!(
+    //     target: LOG_TARGET,
+    //     "block_number: {:?}, vec_hash: {:?}, real_hash: {:?}",
+    //     block_number,
+    //     vec_hash,
+    //     real_hash
+    // );
+    let real_hash = H256::zero();
+
+    return real_hash;
+}
+
+pub fn hash_to_vec(hash: H256) -> Vec<u8> {
+    let hash_as_bytes: &[u8] = hash.as_bytes();
+    let hash_as_vec: Vec<u8> = hash_as_bytes.iter().cloned().collect();
+    return hash_as_vec;
+}
+
+pub fn hash_block_and_hotkey(block_hash_bytes: &[u8], hotkey: &Addr) -> H256 {
+    // Get the public key from the account id.
+    // let hotkey_pubkey: MultiAddress<Addr, ()> = MultiAddress::Id(hotkey.clone());
+    // let binding = hotkey_pubkey.encode();
+    // Skip extra 0th byte.
+    // let hotkey_bytes: &[u8] = binding[1..].as_ref();
+
+    let hotkey_bytes: [u8; 32] = keccak_256(hotkey.as_bytes());
+
+    let full_bytes: &[u8; 64] = &[
+        block_hash_bytes[0],
+        block_hash_bytes[1],
+        block_hash_bytes[2],
+        block_hash_bytes[3],
+        block_hash_bytes[4],
+        block_hash_bytes[5],
+        block_hash_bytes[6],
+        block_hash_bytes[7],
+        block_hash_bytes[8],
+        block_hash_bytes[9],
+        block_hash_bytes[10],
+        block_hash_bytes[11],
+        block_hash_bytes[12],
+        block_hash_bytes[13],
+        block_hash_bytes[14],
+        block_hash_bytes[15],
+        block_hash_bytes[16],
+        block_hash_bytes[17],
+        block_hash_bytes[18],
+        block_hash_bytes[19],
+        block_hash_bytes[20],
+        block_hash_bytes[21],
+        block_hash_bytes[22],
+        block_hash_bytes[23],
+        block_hash_bytes[24],
+        block_hash_bytes[25],
+        block_hash_bytes[26],
+        block_hash_bytes[27],
+        block_hash_bytes[28],
+        block_hash_bytes[29],
+        block_hash_bytes[30],
+        block_hash_bytes[31],
+        hotkey_bytes[0],
+        hotkey_bytes[1],
+        hotkey_bytes[2],
+        hotkey_bytes[3],
+        hotkey_bytes[4],
+        hotkey_bytes[5],
+        hotkey_bytes[6],
+        hotkey_bytes[7],
+        hotkey_bytes[8],
+        hotkey_bytes[9],
+        hotkey_bytes[10],
+        hotkey_bytes[11],
+        hotkey_bytes[12],
+        hotkey_bytes[13],
+        hotkey_bytes[14],
+        hotkey_bytes[15],
+        hotkey_bytes[16],
+        hotkey_bytes[17],
+        hotkey_bytes[18],
+        hotkey_bytes[19],
+        hotkey_bytes[20],
+        hotkey_bytes[21],
+        hotkey_bytes[22],
+        hotkey_bytes[23],
+        hotkey_bytes[24],
+        hotkey_bytes[25],
+        hotkey_bytes[26],
+        hotkey_bytes[27],
+        hotkey_bytes[28],
+        hotkey_bytes[29],
+        hotkey_bytes[30],
+        hotkey_bytes[31],
+    ];
+    let keccak_256_seal_hash_vec: [u8; 32] = keccak_256(full_bytes);
+    let seal_hash: H256 = H256::from_slice(&keccak_256_seal_hash_vec);
+
+    return seal_hash;
+}
+
+pub fn create_seal_hash(block_number_u64: u64, nonce_u64: u64, hotkey: &Addr) -> H256 {
+    let nonce = U256::from(nonce_u64);
+    let block_hash_at_number: H256 = get_block_hash_from_u64(block_number_u64);
+    let block_hash_bytes: &[u8] = block_hash_at_number.as_bytes();
+    let binding = hash_block_and_hotkey(block_hash_bytes, hotkey);
+    let block_and_hotkey_hash_bytes: &[u8] = binding.as_bytes();
+
+    let full_bytes: &[u8; 40] = &[
+        nonce.byte(0),
+        nonce.byte(1),
+        nonce.byte(2),
+        nonce.byte(3),
+        nonce.byte(4),
+        nonce.byte(5),
+        nonce.byte(6),
+        nonce.byte(7),
+        block_and_hotkey_hash_bytes[0],
+        block_and_hotkey_hash_bytes[1],
+        block_and_hotkey_hash_bytes[2],
+        block_and_hotkey_hash_bytes[3],
+        block_and_hotkey_hash_bytes[4],
+        block_and_hotkey_hash_bytes[5],
+        block_and_hotkey_hash_bytes[6],
+        block_and_hotkey_hash_bytes[7],
+        block_and_hotkey_hash_bytes[8],
+        block_and_hotkey_hash_bytes[9],
+        block_and_hotkey_hash_bytes[10],
+        block_and_hotkey_hash_bytes[11],
+        block_and_hotkey_hash_bytes[12],
+        block_and_hotkey_hash_bytes[13],
+        block_and_hotkey_hash_bytes[14],
+        block_and_hotkey_hash_bytes[15],
+        block_and_hotkey_hash_bytes[16],
+        block_and_hotkey_hash_bytes[17],
+        block_and_hotkey_hash_bytes[18],
+        block_and_hotkey_hash_bytes[19],
+        block_and_hotkey_hash_bytes[20],
+        block_and_hotkey_hash_bytes[21],
+        block_and_hotkey_hash_bytes[22],
+        block_and_hotkey_hash_bytes[23],
+        block_and_hotkey_hash_bytes[24],
+        block_and_hotkey_hash_bytes[25],
+        block_and_hotkey_hash_bytes[26],
+        block_and_hotkey_hash_bytes[27],
+        block_and_hotkey_hash_bytes[28],
+        block_and_hotkey_hash_bytes[29],
+        block_and_hotkey_hash_bytes[30],
+        block_and_hotkey_hash_bytes[31],
+    ];
+    let sha256_seal_hash_vec: [u8; 32] = sha2_256(full_bytes);
+    let keccak_256_seal_hash_vec: [u8; 32] = keccak_256(&sha256_seal_hash_vec);
+    let seal_hash: H256 = H256::from_slice(&keccak_256_seal_hash_vec);
+
+    // log::trace!(
+    //     "\n hotkey:{:?} \nblock_number: {:?}, \nnonce_u64: {:?}, \nblock_hash: {:?}, \nfull_bytes: {:?}, \nsha256_seal_hash_vec: {:?},  \nkeccak_256_seal_hash_vec: {:?}, \nseal_hash: {:?}",
+    //     hotkey,
+    //     block_number_u64,
+    //     nonce_u64,
+    //     block_hash_at_number,
+    //     full_bytes,
+    //     sha256_seal_hash_vec,
+    //     keccak_256_seal_hash_vec,
+    //     seal_hash
+    // );
+
+    return seal_hash;
+}
+
+pub fn get_difficulty(store: &dyn Storage, netuid: u16) -> U256 {
+    U256::from(get_difficulty_as_u64(store, netuid))
+}
+
 // Helper function for creating nonce and work.
+// TODO rewrite to use only address and nonce
 pub fn create_work_for_block_number(
     store: &dyn Storage,
     netuid: u16,
@@ -855,14 +857,13 @@ pub fn create_work_for_block_number(
     start_nonce: u64,
     hotkey: &Addr,
 ) -> (u64, Vec<u8>) {
-    // let difficulty = get_difficulty(store, netuid);
-    // let mut nonce: u64 = start_nonce;
-    // let mut work: H256 = create_seal_hash(block_number, nonce, hotkey.clone());
-    // while !hash_meets_difficulty(&work, difficulty) {
-    //     nonce = nonce + 1;
-    //     work = create_seal_hash(block_number, nonce, hotkey.clone());
-    // }
-    // let vec_work: Vec<u8> = hash_to_vec(work);
-    // return (nonce, vec_work);
-    return (0, vec![]);
+    let difficulty = get_difficulty(store, netuid);
+    let mut nonce: u64 = start_nonce;
+    let mut work: H256 = create_seal_hash(block_number, nonce, &hotkey);
+    while !hash_meets_difficulty(&work, difficulty) {
+        nonce = nonce + 1;
+        work = create_seal_hash(block_number, nonce, &hotkey);
+    }
+    let vec_work: Vec<u8> = hash_to_vec(work);
+    return (nonce, vec_work);
 }

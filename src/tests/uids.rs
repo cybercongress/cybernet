@@ -18,6 +18,7 @@ use crate::uids::{
     get_hotkey_for_net_and_uid, get_uid_for_net_and_hotkey, is_hotkey_registered_on_any_network,
     is_hotkey_registered_on_network, replace_neuron,
 };
+use crate::utils::set_difficulty;
 
 #[test]
 fn test_replace_neuron() {
@@ -26,6 +27,12 @@ fn test_replace_neuron() {
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let hotkey_account_id = Addr::unchecked("1".to_string());
+    let coldkey_account_id = Addr::unchecked("1234".to_string());
+
+    //add network
+    add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
     let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
         &mut deps.storage,
         netuid,
@@ -33,16 +40,12 @@ fn test_replace_neuron() {
         111111,
         &hotkey_account_id,
     );
-    let coldkey_account_id = Addr::unchecked("1234".to_string());
 
     let new_hotkey_account_id = Addr::unchecked("2");
     let _new_colkey_account_id = Addr::unchecked("12345");
 
-    //add network
-    add_network(&mut deps.storage, netuid, tempo, 0);
-
     // Register a neuron.
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -97,6 +100,13 @@ fn test_replace_neuron_multiple_subnets() {
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let new_hotkey_account_id = Addr::unchecked("2".to_string());
 
+    //add network
+    add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
+    add_network(&mut deps.storage, netuid1, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid1, 1000);
+
     let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
         &mut deps.storage,
         netuid,
@@ -116,12 +126,8 @@ fn test_replace_neuron_multiple_subnets() {
 
     let _new_colkey_account_id = Addr::unchecked("12345".to_string());
 
-    //add network
-    add_network(&mut deps.storage, netuid, tempo, 0);
-    add_network(&mut deps.storage, netuid1, tempo, 0);
-
     // Register a neuron on both networks.
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -132,7 +138,7 @@ fn test_replace_neuron_multiple_subnets() {
         &coldkey_account_id,
     );
 
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid1,
@@ -202,6 +208,13 @@ fn test_replace_neuron_multiple_subnets_unstake_all() {
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let new_hotkey_account_id = Addr::unchecked("2".to_string());
 
+    //add network
+    add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
+    add_network(&mut deps.storage, netuid1, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid1, 1000);
+
     let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
         &mut deps.storage,
         netuid,
@@ -223,12 +236,8 @@ fn test_replace_neuron_multiple_subnets_unstake_all() {
 
     let stake_amount = 1000;
 
-    //add network
-    add_network(&mut deps.storage, netuid, tempo, 0);
-    add_network(&mut deps.storage, netuid1, tempo, 0);
-
     // Register a neuron on both networks.
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -239,7 +248,7 @@ fn test_replace_neuron_multiple_subnets_unstake_all() {
         &coldkey_account_id,
     );
 
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid1,

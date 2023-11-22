@@ -11,11 +11,7 @@ use crate::test_helpers::{
     add_network, burned_register_ok_neuron, instantiate_contract, pow_register_ok_neuron,
     step_block, sudo_register_ok_neuron,
 };
-use crate::utils::{
-    get_adjustment_interval, get_burn_as_u64, get_difficulty_as_u64, set_adjustment_alpha,
-    set_adjustment_interval, set_burn, set_difficulty, set_max_allowed_uids,
-    set_max_registrations_per_block, set_target_registrations_per_interval,
-};
+use crate::utils::{get_adjustment_interval, get_burn_as_u64, get_difficulty_as_u64, set_adjustment_alpha, set_adjustment_interval, set_burn, set_difficulty, set_max_allowed_uids, set_max_registrations_per_block, set_min_difficulty, set_target_registrations_per_interval};
 
 #[test]
 fn test_loaded_emission() {
@@ -260,10 +256,11 @@ fn test_burn_adjustment_case_a() {
     let burn_cost: u64 = 1000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 1;
-    let start_diff: u64 = 20_000_000;
+    let start_diff: u64 = 10_000;
     let mut curr_block_num = env.block.height;
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_burn(&mut deps.storage, netuid, burn_cost);
+    set_min_difficulty(&mut deps.storage, netuid, 1);
     set_difficulty(&mut deps.storage, netuid, start_diff);
     set_adjustment_interval(&mut deps.storage, netuid, adjustment_interval);
     set_target_registrations_per_interval(
@@ -288,7 +285,7 @@ fn test_burn_adjustment_case_a() {
         0,
         &hotkey_account_id_2,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -309,7 +306,7 @@ fn test_burn_adjustment_case_a() {
         11231312312,
         &hotkey_account_id_3,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -333,7 +330,7 @@ fn test_burn_adjustment_case_a() {
 
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
     assert!(adjusted_diff > start_diff);
-    assert_eq!(adjusted_diff, 40_000_000);
+    assert_eq!(adjusted_diff, 20_000);
 }
 
 #[test]
@@ -350,10 +347,11 @@ fn test_burn_adjustment_case_b() {
     let burn_cost: u64 = 1000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 1;
-    let start_diff: u64 = 20_000_000;
+    let start_diff: u64 = 20_000;
     let mut curr_block_num = 0;
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_burn(&mut deps.storage, netuid, burn_cost);
+    set_min_difficulty(&mut deps.storage, netuid, 1);
     set_difficulty(&mut deps.storage, netuid, start_diff);
     set_adjustment_interval(&mut deps.storage, netuid, adjustment_interval);
     set_target_registrations_per_interval(
@@ -384,7 +382,7 @@ fn test_burn_adjustment_case_b() {
         0,
         &hotkey_account_id_3,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -425,10 +423,11 @@ fn test_burn_adjustment_case_c() {
     let burn_cost: u64 = 1000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 4; // Needs registrations < 4 to trigger
-    let start_diff: u64 = 20_000_000;
+    let start_diff: u64 = 20_000;
     let mut curr_block_num = 0;
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_burn(&mut deps.storage, netuid, burn_cost);
+    set_min_difficulty(&mut deps.storage, netuid, 1);
     set_difficulty(&mut deps.storage, netuid, start_diff);
     set_adjustment_interval(&mut deps.storage, netuid, adjustment_interval);
     set_target_registrations_per_interval(
@@ -453,7 +452,7 @@ fn test_burn_adjustment_case_c() {
         0,
         &hotkey_account_id_2,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -474,7 +473,7 @@ fn test_burn_adjustment_case_c() {
         11231312312,
         &hotkey_account_id_3,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -515,10 +514,11 @@ fn test_burn_adjustment_case_d() {
     let burn_cost: u64 = 1000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 4; // Needs registrations < 4 to trigger
-    let start_diff: u64 = 20_000_000;
+    let start_diff: u64 = 20_000;
     let mut curr_block_num = 0;
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_burn(&mut deps.storage, netuid, burn_cost);
+    set_min_difficulty(&mut deps.storage, netuid, 1);
     set_difficulty(&mut deps.storage, netuid, start_diff);
     set_adjustment_interval(&mut deps.storage, netuid, adjustment_interval);
     set_target_registrations_per_interval(
@@ -549,7 +549,7 @@ fn test_burn_adjustment_case_d() {
         11231312312,
         &hotkey_account_id_3,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -573,7 +573,7 @@ fn test_burn_adjustment_case_d() {
 
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
     assert!(adjusted_diff < start_diff);
-    assert_eq!(adjusted_diff, 17_500_000);
+    assert_eq!(adjusted_diff, 17_500);
 }
 
 #[test]
@@ -590,11 +590,12 @@ fn test_burn_adjustment_case_e() {
     let burn_cost: u64 = 1000;
     let adjustment_interval = 1;
     let target_registrations_per_interval: u16 = 3;
-    let start_diff: u64 = 20_000_000;
+    let start_diff: u64 = 20_000;
     let mut curr_block_num = 0;
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_max_registrations_per_block(&mut deps.storage, netuid, 10);
     set_burn(&mut deps.storage, netuid, burn_cost);
+    set_min_difficulty(&mut deps.storage, netuid, 1);
     set_difficulty(&mut deps.storage, netuid, start_diff);
     set_adjustment_interval(&mut deps.storage, netuid, adjustment_interval);
     set_target_registrations_per_interval(
@@ -613,7 +614,7 @@ fn test_burn_adjustment_case_e() {
         11231312312,
         &hotkey_account_id_1,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -643,7 +644,7 @@ fn test_burn_adjustment_case_e() {
     // Check the adjusted POW difficulty has DECREASED.
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
     assert!(adjusted_diff < start_diff);
-    assert_eq!(adjusted_diff, 16_666_666);
+    assert_eq!(adjusted_diff, 16_666);
 }
 
 #[test]
@@ -660,11 +661,12 @@ fn test_burn_adjustment_case_f() {
     let burn_cost: u64 = 1000;
     let adjustment_interval = 1;
     let target_registrations_per_interval: u16 = 1;
-    let start_diff: u64 = 20_000_000;
+    let start_diff: u64 = 20_000;
     let mut curr_block_num = 0;
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_max_registrations_per_block(&mut deps.storage, netuid, 10);
     set_burn(&mut deps.storage, netuid, burn_cost);
+    set_min_difficulty(&mut deps.storage, netuid, 1);
     set_difficulty(&mut deps.storage, netuid, start_diff);
     set_adjustment_interval(&mut deps.storage, netuid, adjustment_interval);
     set_target_registrations_per_interval(
@@ -683,7 +685,7 @@ fn test_burn_adjustment_case_f() {
         11231312312,
         &hotkey_account_id_1,
     );
-    pow_register_ok_neuron(
+    let _ = pow_register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
@@ -713,7 +715,7 @@ fn test_burn_adjustment_case_f() {
     // Check the adjusted POW difficulty has INCREASED.
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
     assert!(adjusted_diff > start_diff);
-    assert_eq!(adjusted_diff, 30_000_000);
+    assert_eq!(adjusted_diff, 30_000);
 }
 
 #[test]
@@ -732,10 +734,11 @@ fn test_burn_adjustment_case_e_zero_registrations() {
     let burn_cost: u64 = 1000;
     let adjustment_interval = 0;
     let target_registrations_per_interval: u16 = 1;
-    let start_diff: u64 = 20_000_000;
+    let start_diff: u64 = 20_000;
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_max_registrations_per_block(&mut deps.storage, netuid, 10);
     set_burn(&mut deps.storage, netuid, burn_cost);
+    set_min_difficulty(&mut deps.storage, netuid, 1);
     set_difficulty(&mut deps.storage, netuid, start_diff);
     set_adjustment_interval(&mut deps.storage, netuid, adjustment_interval);
     set_target_registrations_per_interval(
@@ -759,5 +762,5 @@ fn test_burn_adjustment_case_e_zero_registrations() {
     // Check the adjusted POW difficulty has DECREASED.
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
     assert!(adjusted_diff < start_diff);
-    assert_eq!(adjusted_diff, 10_000_000);
+    assert_eq!(adjusted_diff, 10_000);
 }

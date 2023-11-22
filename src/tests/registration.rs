@@ -15,15 +15,7 @@ use crate::uids::{
     get_hotkey_for_net_and_uid, get_stake_for_uid_and_subnetwork, get_subnetwork_n,
     get_uid_for_net_and_hotkey, is_uid_exist_on_network,
 };
-use crate::utils::{
-    get_burn_as_u64, get_difficulty_as_u64, get_emission_value, get_immunity_period,
-    get_max_allowed_uids, get_max_registrations_per_block, get_neuron_block_at_registration,
-    get_pruning_score_for_uid, get_rao_recycled, get_registrations_this_block,
-    get_registrations_this_interval, get_target_registrations_per_interval, get_tempo,
-    set_adjustment_interval, set_burn, set_difficulty, set_immunity_period, set_max_allowed_uids,
-    set_max_registrations_per_block, set_network_registration_allowed, set_pruning_score_for_uid,
-    set_target_registrations_per_interval,
-};
+use crate::utils::{get_burn_as_u64, get_difficulty_as_u64, get_emission_value, get_immunity_period, get_max_allowed_uids, get_max_registrations_per_block, get_neuron_block_at_registration, get_pruning_score_for_uid, get_rao_recycled, get_registrations_this_block, get_registrations_this_interval, get_target_registrations_per_interval, get_tempo, set_adjustment_interval, set_burn, set_difficulty, set_immunity_period, set_max_allowed_uids, set_max_registrations_per_block, set_min_difficulty, set_network_registration_allowed, set_pruning_score_for_uid, set_target_registrations_per_interval};
 use crate::ContractError;
 
 /********************************************
@@ -99,6 +91,10 @@ fn test_registration_ok() {
     let tempo: u16 = 13;
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let coldkey_account_id = Addr::unchecked("667".to_string()); // Neighbour of the beast, har har
+
+    add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
     let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -106,8 +102,6 @@ fn test_registration_ok() {
         129123813,
         &hotkey_account_id,
     );
-
-    add_network(&mut deps.storage, netuid, tempo, 0);
 
     let result = pow_register_ok_neuron(
         deps.as_mut(),
@@ -717,11 +711,13 @@ fn test_registration_already_active_hotkey() {
     let tempo: u16 = 13;
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let coldkey_account_id = Addr::unchecked("667".to_string());
-    let (nonce, work): (u64, Vec<u8>) =
-        create_work_for_block_number(&deps.storage, netuid, block_number, 0, &hotkey_account_id);
 
     //add network
     add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
+    let (nonce, work): (u64, Vec<u8>) =
+        create_work_for_block_number(&deps.storage, netuid, block_number, 0, &hotkey_account_id);
 
     let result = pow_register_ok_neuron(
         deps.as_mut(),
@@ -944,6 +940,11 @@ fn test_registration_pruning() {
     let tempo: u16 = 13;
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let coldkey_account_id = Addr::unchecked("667".to_string());
+
+    //add network
+    add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
     let (nonce0, work0): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -951,9 +952,6 @@ fn test_registration_pruning() {
         3942084,
         &hotkey_account_id,
     );
-
-    //add network
-    add_network(&mut deps.storage, netuid, tempo, 0);
 
     let result = pow_register_ok_neuron(
         deps.as_mut(),
@@ -1028,6 +1026,10 @@ fn test_registration_get_neuron_metadata() {
     let tempo: u16 = 13;
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let coldkey_account_id = Addr::unchecked("667".to_string());
+
+    add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
     let (nonce0, work0): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -1035,8 +1037,6 @@ fn test_registration_get_neuron_metadata() {
         3942084,
         &hotkey_account_id,
     );
-
-    add_network(&mut deps.storage, netuid, tempo, 0);
 
     let result = pow_register_ok_neuron(
         deps.as_mut(),
@@ -1068,6 +1068,15 @@ fn test_registration_add_network_size() {
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let hotkey_account_id1 = Addr::unchecked("2".to_string());
     let hotkey_account_id2 = Addr::unchecked("3".to_string());
+
+    add_network(&mut deps.storage, netuid, 13, 0);
+    assert_eq!(get_subnetwork_n(&deps.storage, netuid), 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
+    add_network(&mut deps.storage, netuid2, 13, 0);
+    assert_eq!(get_subnetwork_n(&deps.storage, netuid2), 0);
+    set_difficulty(&mut deps.storage, netuid2, 1000);
+
     let (nonce0, work0): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -1090,12 +1099,6 @@ fn test_registration_add_network_size() {
         &hotkey_account_id2,
     );
     let coldkey_account_id = Addr::unchecked("667".to_string());
-
-    add_network(&mut deps.storage, netuid, 13, 0);
-    assert_eq!(get_subnetwork_n(&deps.storage, netuid), 0);
-
-    add_network(&mut deps.storage, netuid2, 13, 0);
-    assert_eq!(get_subnetwork_n(&deps.storage, netuid2), 0);
 
     let result = pow_register_ok_neuron(
         deps.as_mut(),
@@ -1487,11 +1490,13 @@ fn test_registration_origin_hotkey_mismatch() {
     let hotkey_account_id_1 = Addr::unchecked("1".to_string());
     let hotkey_account_id_2 = Addr::unchecked("2".to_string());
     let coldkey_account_id = Addr::unchecked("668".to_string());
-    let (nonce, work): (u64, Vec<u8>) =
-        create_work_for_block_number(&deps.storage, netuid, block_number, 0, &hotkey_account_id_1);
 
     //add network
     add_network(&mut deps.storage, netuid, tempo, 0);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
+    let (nonce, work): (u64, Vec<u8>) =
+        create_work_for_block_number(&deps.storage, netuid, block_number, 0, &hotkey_account_id_1);
 
     let msg = ExecuteMsg::Register {
         netuid,
@@ -1516,12 +1521,14 @@ fn test_registration_disabled() {
     let tempo: u16 = 13;
     let hotkey_account_id = Addr::unchecked("1".to_string());
     let coldkey_account_id = Addr::unchecked("668".to_string());
-    let (nonce, work): (u64, Vec<u8>) =
-        create_work_for_block_number(&deps.storage, netuid, block_number, 0, &hotkey_account_id);
 
     //add network
     add_network(&mut deps.storage, netuid, tempo, 0);
     set_network_registration_allowed(&mut deps.storage, netuid, false);
+    set_difficulty(&mut deps.storage, netuid, 1000);
+
+    let (nonce, work): (u64, Vec<u8>) =
+        create_work_for_block_number(&deps.storage, netuid, block_number, 0, &hotkey_account_id);
 
     let result = pow_register_ok_neuron(
         deps.as_mut(),

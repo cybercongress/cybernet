@@ -12,14 +12,7 @@ use crate::test_helpers::{
     step_block, TestDeps, ROOT,
 };
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n};
-use crate::utils::{
-    do_sudo_set_max_allowed_validators, get_activity_cutoff, get_consensus_for_uid,
-    get_dividends_for_uid, get_emission_for_uid, get_incentive_for_uid, get_max_allowed_uids,
-    get_max_allowed_validators, get_rank_for_uid, get_trust_for_uid, get_validator_permit_for_uid,
-    set_activity_cutoff, set_max_allowed_uids, set_max_allowed_validators,
-    set_max_registrations_per_block, set_max_weight_limit, set_min_allowed_weights,
-    set_target_registrations_per_interval, set_weights_set_rate_limit,
-};
+use crate::utils::{do_sudo_set_max_allowed_validators, get_activity_cutoff, get_consensus_for_uid, get_dividends_for_uid, get_emission_for_uid, get_incentive_for_uid, get_max_allowed_uids, get_max_allowed_validators, get_rank_for_uid, get_trust_for_uid, get_validator_permit_for_uid, set_activity_cutoff, set_difficulty, set_max_allowed_uids, set_max_allowed_validators, set_max_registrations_per_block, set_max_weight_limit, set_min_allowed_weights, set_min_difficulty, set_target_registrations_per_interval, set_weights_set_rate_limit};
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{Addr, Api, Deps, DepsMut, Env, Storage};
 use rand::{distributions::Uniform, rngs::StdRng, seq::SliceRandom, thread_rng, Rng, SeedableRng};
@@ -1087,6 +1080,8 @@ fn test_bonds() {
     set_weights_set_rate_limit(&mut deps.storage, netuid, 0);
     set_min_allowed_weights(&mut deps.storage, netuid, 1);
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
+    set_min_difficulty(&mut deps.storage, netuid, 1_000);
+    set_difficulty(&mut deps.storage, netuid, 1_000);
 
     // === Register [validator1, validator2, validator3, validator4, server1, server2, server3, server4]
     for key in 0..n as u64 {
@@ -1534,6 +1529,8 @@ fn test_active_stake() {
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
     set_weights_set_rate_limit(&mut deps.storage, netuid, 0);
     set_activity_cutoff(&mut deps.storage, netuid, 50);
+    set_min_difficulty(&mut deps.storage, netuid, 1_000);
+    set_difficulty(&mut deps.storage, netuid, 1_000);
 
     // === Register [validator1, validator2, server1, server2]
     for key in 0..n as u64 {
@@ -1781,6 +1778,8 @@ fn test_outdated_weights() {
     set_target_registrations_per_interval(&mut deps.storage, netuid, n);
     set_min_allowed_weights(&mut deps.storage, netuid, 0);
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
+    set_min_difficulty(&mut deps.storage, netuid, 1_000);
+    set_difficulty(&mut deps.storage, netuid, 1_000);
 
     // === Register [validator1, validator2, server1, server2]
     for key in 0..n as u64 {
@@ -1995,6 +1994,8 @@ fn test_zero_weights() {
     set_target_registrations_per_interval(&mut deps.storage, netuid, n);
     set_min_allowed_weights(&mut deps.storage, netuid, 0);
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
+    set_min_difficulty(&mut deps.storage, netuid, 1_000);
+    set_difficulty(&mut deps.storage, netuid, 1_000);
 
     // === Register [validator, server]
     for key in 0..n as u64 {
@@ -2239,8 +2240,10 @@ fn test_validator_permits() {
                 }
                 let (mut deps, mut env) = instantiate_contract();
 
-                let block_number: u64 = 0;
+                let block_number: u64 = env.block.height;
                 add_network(&mut deps.storage, netuid, tempo, 0);
+                set_min_difficulty(&mut deps.storage, netuid, 1_000);
+                set_difficulty(&mut deps.storage, netuid, 1_000);
                 set_max_allowed_uids(&mut deps.storage, netuid, network_n as u16);
                 assert_eq!(
                     get_max_allowed_uids(&deps.storage, netuid),
