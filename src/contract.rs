@@ -16,6 +16,8 @@ use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys}
 use crate::staking::{
     do_add_stake, do_become_delegate, do_remove_stake, increase_stake_on_coldkey_hotkey_account,
 };
+use crate::state_info::get_state_info;
+
 use crate::state::{
     ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ALLOW_FAUCET, BLOCKS_SINCE_LAST_STEP,
     BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
@@ -560,6 +562,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetWeights { netuid } => {
             to_json_binary(&get_network_weights(deps.storage, netuid)?)
         }
+        QueryMsg::GetState {} => to_json_binary(&get_state_info(deps.storage)?),
     }
 }
 

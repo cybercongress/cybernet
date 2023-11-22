@@ -13,6 +13,7 @@ mod serving;
 mod stake_info;
 mod staking;
 pub mod state;
+mod state_info;
 mod subnet_info;
 #[cfg(test)]
 mod test_helpers;

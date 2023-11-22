@@ -5,11 +5,15 @@ use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier};
 use cosmwasm_std::{Addr, Coin, DepsMut, Empty, Env, MemoryStorage, OwnedDeps, Response, Storage};
 use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
 use cw_storage_gas_meter::MemoryStorageWithGas;
+use schemars::_serde_json;
+use schemars::_serde_json::json;
+use serde::Serialize;
 
 use crate::contract::{execute, instantiate, query};
 use crate::msg::ExecuteMsg;
 use crate::registration::create_work_for_block_number;
 use crate::root::init_new_network;
+use crate::state_info::{get_state_info, StateInfo};
 use crate::utils::{get_difficulty_as_u64, set_difficulty, set_network_registration_allowed};
 use crate::ContractError;
 
@@ -245,14 +249,25 @@ pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: 
 }
 
 // TODO revisit block increasing logic before or after step
-pub fn step_block(deps: DepsMut, mut env: &mut Env) -> Result<Response, ContractError> {
+pub fn step_block(mut deps: DepsMut, mut env: &mut Env) -> Result<Response, ContractError> {
     env.block.height += 1;
     let result = execute(
-        deps,
+        deps.branch(),
         env.clone(),
         mock_info("ROOT", &[]),
         ExecuteMsg::BlockStep {},
     );
+
+    // let state = get_state_info(deps.storage);
+    // println!("{:?}", _serde_json::to_string(&state.unwrap()).unwrap());
+
+    // let mut buf = Vec::new();
+    // let formatter = _serde_json::ser::PrettyFormatter::with_indent(b"    ");
+    // let mut ser = _serde_json::Serializer::with_formatter(&mut buf, formatter);
+    // let obj = json!(&state.unwrap());
+    // obj.serialize(&mut ser).unwrap();
+    // println!("{}", String::from_utf8(buf).unwrap());
+
     result
 }
 
