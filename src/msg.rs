@@ -219,6 +219,11 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
+pub enum SudoMsg {
+    BlockStep {},
+}
+
+#[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     #[returns(Vec<crate::delegate_info::DelegateInfo>)]
@@ -256,3 +261,6 @@ pub enum QueryMsg {
     #[returns(Vec<Vec<u16>>)]
     GetWeights { netuid: u16 },
 }
+
+#[cw_serde]
+pub struct MigrateMsg {}

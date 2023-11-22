@@ -3,10 +3,11 @@ use crate::delegate_info::{get_delegate, get_delegated, get_delegates};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cw2::{get_contract_version, set_contract_version, ContractVersion};
 // use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 use crate::neuron_info::{get_neuron, get_neuron_lite, get_neurons, get_neurons_lite};
 use crate::registration::{do_burned_registration, do_registration, do_sudo_registration};
 use crate::root::{do_root_register, get_network_lock_cost, user_add_network, user_remove_network};
@@ -67,6 +68,8 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+
     ROOT.save(deps.storage, &info.sender)?;
     ALLOW_FAUCET.save(deps.storage, &true)?;
 
@@ -510,6 +513,13 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::BlockStep {} => block_step(deps, env),
+    }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetDelegates {} => to_json_binary(&get_delegates(deps)?),
@@ -551,4 +561,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_json_binary(&get_network_weights(deps.storage, netuid)?)
         }
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    let storage_version: ContractVersion = get_contract_version(deps.storage)?;
+
+    // Only migrate if newer
+    if storage_version.version.as_str() < CONTRACT_VERSION {
+        // Set contract to version to latest
+        set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    }
+
+    Ok(Response::new().add_attribute("action", "migrate"))
 }

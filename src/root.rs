@@ -552,7 +552,7 @@ pub fn do_root_register(
         ));
     }
 
-    // TODO revisit this as we don't have a senate and subnetwork n is 0 and account don't have stake
+    // TODO revisit this as we don't have a senate and need migration to dao
     // let current_stake = get_total_stake_for_hotkey(deps.storage, hotkey.clone());
     // If we're full, we'll swap out the lowest stake member.
     // let members = T::SenateMembers::members();
