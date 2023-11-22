@@ -59,7 +59,7 @@ primitive-types = {version = "0.12.2", default-features = false, features = ["by
 #sha2 = { version = "0.9.5", default-features = false }
 #sha3 = "0.9"
 #sp-core = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39", features = ["serde", "std"] }
-#sp-io = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39", features = ["std"] }
+sp-io = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39", features = ["std"] }
 cw-utils = { version = "1.0.2" }
 
 [dev-dependencies]

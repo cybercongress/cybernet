@@ -24,8 +24,8 @@ fn test_get_neuron_some() {
     let modality: u16 = 2;
 
     let uid: u16 = 0;
-    let hotkey0 = Addr::unchecked("0");
-    let coldkey0 = Addr::unchecked("0");
+    let hotkey0 = "addr0";
+    let coldkey0 = "addr0";
 
     add_network(&mut deps.storage, netuid, tempo, modality);
     register_ok_neuron(deps.as_mut(), env, netuid, &hotkey0, &coldkey0, 39420842);
@@ -49,10 +49,17 @@ fn test_get_neurons_list() {
 
     let neuron_count = 1;
     for index in 0..neuron_count {
-        let hotkey = Addr::unchecked((0 + index).to_string());
-        let coldkey = Addr::unchecked((0 + index).to_string());
+        let hotkey = Addr::unchecked((1000 + index).to_string());
+        let coldkey = Addr::unchecked((2000 + index).to_string());
         let nonce: u64 = 39420842 + index;
-        register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey, &coldkey, nonce);
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey.as_str(),
+            coldkey.as_str(),
+            nonce,
+        );
     }
 
     let neurons = get_neurons(&deps.storage, netuid).unwrap();

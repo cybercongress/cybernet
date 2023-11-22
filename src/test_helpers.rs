@@ -8,20 +8,21 @@ use cw_storage_gas_meter::MemoryStorageWithGas;
 
 use crate::contract::{execute, instantiate, query};
 use crate::msg::ExecuteMsg;
+use crate::registration::create_work_for_block_number;
 use crate::root::init_new_network;
 use crate::utils::{get_difficulty_as_u64, set_difficulty, set_network_registration_allowed};
 use crate::ContractError;
 
 const CT_ADDR: &str = "contract0";
 pub(crate) const ROOT: &str = "root";
-const ADDR1: &str = "addr1";
-const ADDR2: &str = "addr2";
-const ADDR3: &str = "addr3";
-const ADDR4: &str = "addr4";
-const ADDR5: &str = "addr5";
-const ADDR6: &str = "addr6";
-const ADDR7: &str = "addr7";
-const ADDR8: &str = "addr8";
+const ADDR1: &str = "addr41";
+const ADDR2: &str = "addr42";
+const ADDR3: &str = "addr43";
+const ADDR4: &str = "addr44";
+const ADDR5: &str = "addr45";
+const ADDR6: &str = "addr46";
+const ADDR7: &str = "addr47";
+const ADDR8: &str = "addr48";
 
 fn mock_app(contract_balance: &[Coin]) -> App {
     AppBuilder::new()
@@ -40,7 +41,7 @@ fn mock_app(contract_balance: &[Coin]) -> App {
 pub fn mock_dependencies(
     contract_balance: &[Coin],
 ) -> OwnedDeps<MemoryStorageWithGas, MockApi, MockQuerier> {
-    let contract_addr = Addr::unchecked(CT_ADDR);
+    let contract_addr = CT_ADDR.to_string();
     OwnedDeps {
         storage: MemoryStorageWithGas::new(),
         api: MockApi::default(),
@@ -60,18 +61,9 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
     let mut deps = mock_dependencies(&[]);
     let msg = crate::msg::InstantiateMsg {
         stakes: vec![
-            (
-                Addr::unchecked(ROOT),
-                vec![(Addr::unchecked(ROOT), (100, 1))],
-            ),
-            (
-                Addr::unchecked(ADDR1),
-                vec![(Addr::unchecked(ADDR2), (100, 1))],
-            ),
-            (
-                Addr::unchecked(ADDR3),
-                vec![(Addr::unchecked(ADDR4), (100, 1))],
-            ),
+            (ROOT.to_string(), vec![(ROOT.to_string(), (100, 1))]),
+            (ADDR1.to_string(), vec![(ADDR2.to_string(), (100, 1))]),
+            (ADDR3.to_string(), vec![(ADDR4.to_string(), (100, 1))]),
         ],
         balances_issuance: 300,
     };
@@ -81,7 +73,7 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
 
     let info = mock_info(ROOT, &[]);
     let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
-    root_register(deps.as_mut(), env.clone(), Addr::unchecked(ROOT));
+    root_register(deps.as_mut(), env.clone(), ROOT);
     assert_eq!(res.messages.len(), 0);
     (deps, env)
 }
@@ -90,28 +82,46 @@ pub fn instantiate_contract_app(app: &mut App) -> Addr {
     let cn_id = app.store_code(cn_contract());
     let msg = crate::msg::InstantiateMsg {
         stakes: vec![
-            // (Addr::unchecked(ROOT), vec![(Addr::unchecked(ROOT), (100, 1))]),
-            // (Addr::unchecked(ADDR1), vec![(Addr::unchecked(ADDR2), (100, 1))]),
-            // (Addr::unchecked(ADDR3), vec![(Addr::unchecked(ADDR4), (100, 1))]),
+            (ROOT.to_string(), vec![(ROOT.to_string(), (100, 1))]),
+            (ADDR1.to_string(), vec![(ADDR2.to_string(), (100, 1))]),
+            (ADDR3.to_string(), vec![(ADDR4.to_string(), (100, 1))]),
         ],
         balances_issuance: 300,
     };
 
-    app.instantiate_contract(cn_id, Addr::unchecked(ROOT), &msg, &[], "cybernet", None)
-        .unwrap()
+    app.instantiate_contract(
+        cn_id,
+        Addr::unchecked(ROOT.to_string()),
+        &msg,
+        &[],
+        "cybernet",
+        None,
+    )
+    .unwrap()
 }
 
-pub fn register_ok_neuron_app(app: &mut App, netuid: u16, hotkey: Addr, coldkey: Addr, nonce: u64) {
+pub fn register_ok_neuron_app(
+    app: &mut App,
+    netuid: u16,
+    hotkey: &str,
+    coldkey: String,
+    nonce: u64,
+) {
     let msg = ExecuteMsg::Register {
         netuid,
         block_number: app.block_info().height,
         nonce,
         work: vec![],
-        hotkey: hotkey.clone(),
+        hotkey: hotkey.to_string(),
         coldkey,
     };
 
-    let res = app.execute_contract(hotkey, Addr::unchecked(CT_ADDR), &msg, &[]);
+    let res = app.execute_contract(
+        Addr::unchecked(hotkey),
+        Addr::unchecked(CT_ADDR.to_string()),
+        &msg,
+        &[],
+    );
     // app.update_block(|block| block.height += 100);
     assert_eq!(res.is_ok(), true);
 }
@@ -120,20 +130,28 @@ pub fn register_ok_neuron(
     deps: DepsMut,
     env: Env,
     netuid: u16,
-    hotkey: &Addr,
-    coldkey: &Addr,
+    hotkey: &str,
+    coldkey: &str,
     start_nonce: u64,
 ) {
+    let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
+        deps.as_ref().storage,
+        netuid,
+        env.block.height,
+        start_nonce,
+        hotkey,
+    );
+
     let msg = ExecuteMsg::Register {
         netuid,
         block_number: env.block.height,
-        nonce: start_nonce,
-        work: vec![],
-        hotkey: hotkey.clone(),
-        coldkey: coldkey.clone(),
+        nonce: nonce,
+        work: work,
+        hotkey: hotkey.to_string(),
+        coldkey: coldkey.to_string(),
     };
 
-    let info = mock_info(hotkey.as_str(), &[]);
+    let info = mock_info(hotkey, &[]);
     let res = execute(deps, env, info, msg);
     assert_eq!(res.is_ok(), true);
 }
@@ -145,28 +163,28 @@ pub fn pow_register_ok_neuron(
     block_number: u64,
     start_nonce: u64,
     work: Vec<u8>,
-    hotkey: &Addr,
-    coldkey: &Addr,
+    hotkey: &str,
+    coldkey: &str,
 ) -> Result<Response, ContractError> {
     let msg = ExecuteMsg::Register {
         netuid,
         block_number,
         nonce: start_nonce,
         work,
-        hotkey: hotkey.clone(),
-        coldkey: coldkey.clone(),
+        hotkey: hotkey.to_string(),
+        coldkey: coldkey.to_string(),
     };
 
-    let info = mock_info(hotkey.as_str(), &[]);
+    let info = mock_info(hotkey, &[]);
     let result = execute(deps, env, info, msg);
     result
 }
 
-pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: Addr, coldkey: Addr) {
+pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: &str, coldkey: &str) {
     let msg = ExecuteMsg::SudoRegister {
         netuid,
-        hotkey: hotkey.clone(),
-        coldkey,
+        hotkey: hotkey.to_string(),
+        coldkey: coldkey.to_string(),
         stake: 300,
         balance: 300,
     };
@@ -177,9 +195,9 @@ pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: Add
     assert_eq!(res.is_ok(), true);
 }
 
-pub fn root_register(deps: DepsMut, env: Env, hotkey: Addr) {
+pub fn root_register(deps: DepsMut, env: Env, hotkey: &str) {
     let msg = ExecuteMsg::RootRegister {
-        hotkey: hotkey.clone(),
+        hotkey: hotkey.to_string(),
     };
 
     let info = mock_info(&ROOT, &[]);
@@ -187,14 +205,21 @@ pub fn root_register(deps: DepsMut, env: Env, hotkey: Addr) {
     assert_eq!(res.is_ok(), true);
 }
 
-pub fn burned_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: &Addr) {
+pub fn burned_register_ok_neuron(
+    deps: DepsMut,
+    env: Env,
+    netuid: u16,
+    hotkey: &str,
+    coldkey: &str,
+) {
     let msg = ExecuteMsg::BurnedRegister {
         netuid,
-        hotkey: hotkey.clone(),
+        hotkey: hotkey.to_string(),
     };
 
-    let info = mock_info(hotkey.as_str(), &[]);
+    let info = mock_info(coldkey, &[]);
     let res = execute(deps, env, info, msg);
+    println!("{:?}", res);
     assert_eq!(res.is_ok(), true);
 }
 
@@ -202,7 +227,12 @@ pub fn add_network_app(app: &mut App) -> u16 {
     let msg = ExecuteMsg::RegisterNetwork {};
 
     let res = app
-        .execute_contract(Addr::unchecked(ROOT), Addr::unchecked(CT_ADDR), &msg, &[])
+        .execute_contract(
+            Addr::unchecked(ROOT.to_string()),
+            Addr::unchecked(CT_ADDR.to_string()),
+            &msg,
+            &[],
+        )
         .unwrap();
     // let attrs = res.custom_attrs(res.events.len() - 1);
     return res.custom_attrs(1)[1].value.parse().unwrap();
@@ -210,6 +240,7 @@ pub fn add_network_app(app: &mut App) -> u16 {
 
 pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: u16) {
     init_new_network(store, netuid, tempo).unwrap();
+    set_difficulty(store, netuid, 1); // Reinitialize difficulty for tests mock
     set_network_registration_allowed(store, netuid, true);
 }
 
@@ -247,7 +278,7 @@ pub fn run_step_to_block(
 pub fn set_weights(
     deps: DepsMut,
     env: Env,
-    address: &Addr,
+    address: &str,
     netuid: u16,
     dests: Vec<u16>,
     weights: Vec<u16>,
@@ -256,7 +287,7 @@ pub fn set_weights(
     let result = execute(
         deps,
         env.clone(),
-        mock_info(address.as_str(), &[]),
+        mock_info(address, &[]),
         ExecuteMsg::SetWeights {
             netuid,
             dests,
@@ -270,7 +301,7 @@ pub fn set_weights(
 pub fn serve_axon(
     deps: DepsMut,
     env: Env,
-    address: &Addr,
+    address: &str,
     netuid: u16,
     version: u32,
     ip: u128,
@@ -283,7 +314,7 @@ pub fn serve_axon(
     let result = execute(
         deps,
         env.clone(),
-        mock_info(address.as_str(), &[]),
+        mock_info(address, &[]),
         ExecuteMsg::ServeAxon {
             netuid,
             version,
@@ -301,7 +332,7 @@ pub fn serve_axon(
 pub fn serve_prometheus(
     deps: DepsMut,
     env: Env,
-    address: &Addr,
+    address: &str,
     netuid: u16,
     version: u32,
     ip: u128,
@@ -311,7 +342,7 @@ pub fn serve_prometheus(
     let result = execute(
         deps,
         env.clone(),
-        mock_info(address.as_str(), &[]),
+        mock_info(address, &[]),
         ExecuteMsg::ServePrometheus {
             netuid,
             version,
@@ -323,11 +354,11 @@ pub fn serve_prometheus(
     result
 }
 
-pub fn print_state(app: &mut App, cn_addr: Addr) {
+pub fn print_state(app: &mut App, cn_addr: &Addr) {
     let mut file = File::create("state_dump.md").unwrap();
     let mut data = String::new();
 
-    let state = app.dump_wasm_raw(&cn_addr);
+    let state = app.dump_wasm_raw(cn_addr);
 
     data += "| Key | Value |\n | --- | ----- |\n";
     for (k, v) in state.iter() {
@@ -349,7 +380,7 @@ fn test_instantiate() {
     let mut app = mock_app(&[]);
 
     let cn_addr = instantiate_contract_app(&mut app);
-    assert_eq!(cn_addr, Addr::unchecked("contract0"))
+    assert_eq!(cn_addr, Addr::unchecked("contract0"));
 }
 
 #[test]

@@ -12,7 +12,14 @@ use crate::test_helpers::{
     step_block, TestDeps, ROOT,
 };
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n};
-use crate::utils::{do_sudo_set_max_allowed_validators, get_activity_cutoff, get_consensus_for_uid, get_dividends_for_uid, get_emission_for_uid, get_incentive_for_uid, get_max_allowed_uids, get_max_allowed_validators, get_rank_for_uid, get_trust_for_uid, get_validator_permit_for_uid, set_activity_cutoff, set_difficulty, set_max_allowed_uids, set_max_allowed_validators, set_max_registrations_per_block, set_max_weight_limit, set_min_allowed_weights, set_min_difficulty, set_target_registrations_per_interval, set_weights_set_rate_limit};
+use crate::utils::{
+    do_sudo_set_max_allowed_validators, get_activity_cutoff, get_consensus_for_uid,
+    get_dividends_for_uid, get_emission_for_uid, get_incentive_for_uid, get_max_allowed_uids,
+    get_max_allowed_validators, get_rank_for_uid, get_trust_for_uid, get_validator_permit_for_uid,
+    set_activity_cutoff, set_difficulty, set_max_allowed_uids, set_max_allowed_validators,
+    set_max_registrations_per_block, set_max_weight_limit, set_min_allowed_weights,
+    set_min_difficulty, set_target_registrations_per_interval, set_weights_set_rate_limit,
+};
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{Addr, Api, Deps, DepsMut, Env, Storage};
 use rand::{distributions::Uniform, rngs::StdRng, seq::SliceRandom, thread_rng, Rng, SeedableRng};
@@ -127,7 +134,7 @@ fn distribute_nodes(
 fn uid_stats(store: &dyn Storage, netuid: u16, uid: u16) {
     log::info!(
         "stake: {:?}",
-        get_total_stake_for_hotkey(store, &Addr::unchecked(uid.to_string()))
+        get_total_stake_for_hotkey(store, &Addr::unchecked((1000 + uid).to_string()))
     );
     log::info!("rank: {:?}", get_rank_for_uid(store, netuid, uid));
     log::info!("trust: {:?}", get_trust_for_uid(store, netuid, uid));
@@ -173,19 +180,19 @@ fn init_run_epochs(
             }; // only validators receive stake
         }
         // let stake: u64 = 1; // alternative test: all nodes receive stake, should be same outcome, except stake
-        add_balance_to_coldkey_account(&Addr::unchecked(key.to_string()), stake);
+        add_balance_to_coldkey_account(&Addr::unchecked((1000 + key).to_string()), stake);
         append_neuron(
             deps.storage,
             deps.api,
             netuid,
-            &(Addr::unchecked(key.to_string())),
+            &(Addr::unchecked((1000 + key).to_string())),
             0,
         )
         .unwrap();
         increase_stake_on_coldkey_hotkey_account(
             deps.storage,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
             stake as u64,
         );
     }
@@ -229,7 +236,7 @@ fn init_run_epochs(
                 weights: weights.clone(),
                 version_key: 0,
             };
-            let info = mock_info(uid.to_string().as_str(), &[]);
+            let info = mock_info((1000 + uid).to_string().as_str(), &[]);
             let res = execute(deps.branch(), env.clone(), info, msg);
             assert_eq!(res.is_ok(), true);
         } else {
@@ -239,7 +246,7 @@ fn init_run_epochs(
                 weights: weights.clone(),
                 version_key: 0,
             };
-            let info = mock_info(uid.to_string().as_str(), &[]);
+            let info = mock_info((1000 + uid).to_string().as_str(), &[]);
             let res = execute(deps.branch(), env.clone(), info, msg);
             assert_eq!(res.is_ok(), true);
         }
@@ -252,7 +259,7 @@ fn init_run_epochs(
                 weights: vec![u16::MAX],
                 version_key: 0,
             }; // server self-weight
-            let info = mock_info(uid.to_string().as_str(), &[]);
+            let info = mock_info((1000 + uid).to_string().as_str(), &[]);
             let res = execute(deps.branch(), env.clone(), info, msg);
             assert_eq!(res.is_ok(), true);
         }
@@ -518,42 +525,42 @@ fn split_graph(
 //         add_network(netuid, 0, 0);
 //         set_max_allowed_uids(netuid, 3);
 //         increase_stake_on_coldkey_hotkey_account(
-//             Addr::unchecked(0.to_string()),
-//             Addr::unchecked(0.to_string()),
+//             Addr::unchecked(1000.to_string()),
+//             Addr::unchecked(1000.to_string()),
 //             10,
 //         );
 //         increase_stake_on_coldkey_hotkey_account(
-//             Addr::unchecked(1.to_string()),
-//             Addr::unchecked(1.to_string()),
+//             Addr::unchecked(1001.to_string()),
+//             Addr::unchecked(1001.to_string()),
 //             10,
 //         );
 //         increase_stake_on_coldkey_hotkey_account(
-//             Addr::unchecked(2.to_string()),
-//             Addr::unchecked(2.to_string()),
+//             Addr::unchecked(1002.to_string()),
+//             Addr::unchecked(1002.to_string()),
 //             10,
 //         );
-//         append_neuron(netuid, Addr::unchecked(0.to_string()), 0);
-//         append_neuron(netuid, Addr::unchecked(1.to_string()), 0);
-//         append_neuron(netuid, Addr::unchecked(2.to_string()), 0);
+//         append_neuron(netuid, Addr::unchecked(1000.to_string()), 0);
+//         append_neuron(netuid, Addr::unchecked(1001.to_string()), 0);
+//         append_neuron(netuid, Addr::unchecked(1002.to_string()), 0);
 //         set_validator_permit_for_uid(0, 0, true);
 //         set_validator_permit_for_uid(0, 1, true);
 //         set_validator_permit_for_uid(0, 2, true);
 //         assert_ok!(set_weights(
-//             Addr::unchecked(0.to_string())),
+//             Addr::unchecked(1000.to_string())),
 //             netuid,
 //             vec![0, 1, 2],
 //             vec![u16::MAX / 3, u16::MAX / 3, u16::MAX],
 //             0
 //         ));
 //         assert_ok!(set_weights(
-//             Addr::unchecked(1.to_string())),
+//             Addr::unchecked(1001.to_string())),
 //             netuid,
 //             vec![1, 2],
 //             vec![u16::MAX / 2, u16::MAX / 2],
 //             0
 //         ));
 //         assert_ok!(set_weights(
-//             Addr::unchecked(2.to_string())),
+//             Addr::unchecked(1002.to_string())),
 //             netuid,
 //             vec![2],
 //             vec![u16::MAX],
@@ -579,15 +586,27 @@ fn test_1_graph() {
 
     log::info!("test_1_graph:");
     let netuid: u16 = 2;
-    let coldkey = Addr::unchecked(0.to_string());
-    let hotkey = Addr::unchecked(0.to_string());
+    let coldkey = "addr0";
+    let hotkey = "addr0";
     let uid: u16 = 0;
     let stake_amount: u64 = 1;
     add_network(&mut deps.storage, netuid, u16::MAX - 1, 0); // set higher tempo to avoid built-in epoch, then manual epoch instead
     set_max_allowed_uids(&mut deps.storage, netuid, 1);
-    add_balance_to_coldkey_account(&coldkey, stake_amount);
-    append_neuron(&mut deps.storage, &deps.api, netuid, &hotkey, 0).unwrap();
-    increase_stake_on_coldkey_hotkey_account(&mut deps.storage, &coldkey, &hotkey, stake_amount);
+    add_balance_to_coldkey_account(&Addr::unchecked(hotkey), stake_amount);
+    append_neuron(
+        &mut deps.storage,
+        &deps.api,
+        netuid,
+        &Addr::unchecked(hotkey),
+        0,
+    )
+    .unwrap();
+    increase_stake_on_coldkey_hotkey_account(
+        &mut deps.storage,
+        &Addr::unchecked(coldkey),
+        &Addr::unchecked(hotkey),
+        stake_amount,
+    );
     assert_eq!(get_subnetwork_n(&deps.storage, netuid), 1);
     // run_to_block(1);
     step_block(deps.as_mut(), &mut env).unwrap(); // run to next block to ensure weights are set on nodes after their registration block
@@ -595,12 +614,13 @@ fn test_1_graph() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(uid.to_string()),
+        hotkey,
         netuid,
         vec![uid as u16],
         vec![u16::MAX],
         0,
-    );
+    )
+    .unwrap();
 
     // set_weights_for_testing( netuid, i as u16, vec![ ( 0, u16::MAX )]); // doesn't set update status
     // set_bonds_for_testing( netuid, uid, vec![ ( 0, u16::MAX )]); // rather, bonds are calculated in epoch
@@ -609,7 +629,8 @@ fn test_1_graph() {
         &deps.api,
         &vec![netuid],
         vec![1_000_000_000],
-    );
+    )
+    .unwrap();
     assert_eq!(
         get_subnet_emission_value(&deps.storage, netuid),
         1_000_000_000
@@ -620,9 +641,10 @@ fn test_1_graph() {
         netuid,
         1_000_000_000,
         env.block.height,
-    );
+    )
+    .unwrap();
     assert_eq!(
-        get_total_stake_for_hotkey(&deps.storage, &hotkey),
+        get_total_stake_for_hotkey(&deps.storage, &Addr::unchecked(hotkey)),
         stake_amount
     );
     assert_eq!(get_rank_for_uid(&deps.storage, netuid, uid), 0);
@@ -765,7 +787,10 @@ fn test_512_graph() {
             let bonds = get_bonds(&deps.storage, netuid);
             for uid in validators {
                 assert_eq!(
-                    get_total_stake_for_hotkey(&deps.storage, &Addr::unchecked(uid.to_string())),
+                    get_total_stake_for_hotkey(
+                        &deps.storage,
+                        &Addr::unchecked((1000 + uid).to_string())
+                    ),
                     max_stake_per_validator
                 );
                 assert_eq!(get_rank_for_uid(&deps.storage, netuid, uid), 0);
@@ -780,7 +805,10 @@ fn test_512_graph() {
             }
             for uid in servers {
                 assert_eq!(
-                    get_total_stake_for_hotkey(&deps.storage, &Addr::unchecked(uid.to_string())),
+                    get_total_stake_for_hotkey(
+                        &deps.storage,
+                        &Addr::unchecked((1000 + uid).to_string())
+                    ),
                     0
                 );
                 assert_eq!(get_rank_for_uid(&deps.storage, netuid, uid), 146); // Note R = floor(1 / (512 - 64) * 65_535) = 146
@@ -1030,7 +1058,7 @@ fn test_16384_graph_sparse() {
     let bonds = get_bonds(&deps.storage, netuid);
     for uid in validators {
         assert_eq!(
-            get_total_stake_for_hotkey(&deps.storage, &Addr::unchecked(uid.to_string())),
+            get_total_stake_for_hotkey(&deps.storage, &Addr::unchecked((1000 + uid).to_string())),
             1
         );
         assert_eq!(get_rank_for_uid(&deps.storage, netuid, uid), 0);
@@ -1047,7 +1075,7 @@ fn test_16384_graph_sparse() {
     }
     for uid in servers {
         assert_eq!(
-            get_total_stake_for_hotkey(&deps.storage, &Addr::unchecked(uid.to_string())),
+            get_total_stake_for_hotkey(&deps.storage, &Addr::unchecked((1000 + uid).to_string())),
             0
         );
         assert_eq!(get_rank_for_uid(&deps.storage, netuid, uid), 4); // Note R = floor(1 / (16384 - 512) * 65_535) = 4
@@ -1085,13 +1113,13 @@ fn test_bonds() {
 
     // === Register [validator1, validator2, validator3, validator4, server1, server2, server3, server4]
     for key in 0..n as u64 {
-        add_balance_to_coldkey_account(&Addr::unchecked(key.to_string()), max_stake);
+        add_balance_to_coldkey_account(&Addr::unchecked((1000 + key).to_string()), max_stake);
         let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
             &deps.storage,
             netuid,
             block_number,
             key * 1_000_000,
-            &Addr::unchecked(key.to_string()),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
         );
         pow_register_ok_neuron(
             deps.as_mut(),
@@ -1100,13 +1128,14 @@ fn test_bonds() {
             block_number,
             nonce,
             work,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
-        );
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+        )
+        .unwrap();
         increase_stake_on_coldkey_hotkey_account(
             &mut deps.storage,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
             stakes[key as usize],
         );
     }
@@ -1131,12 +1160,13 @@ fn test_bonds() {
         set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(uid.to_string()),
+            Addr::unchecked((1000 + uid).to_string()).as_str(),
             netuid,
             ((n / 2)..n).collect(),
             vec![u16::MAX / 4, u16::MAX / 2, (u16::MAX / 4) * 3, u16::MAX],
             0,
-        );
+        )
+        .unwrap();
     }
     if sparse {
         epoch(
@@ -1194,12 +1224,13 @@ fn test_bonds() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(uid.to_string()),
+        Addr::unchecked((1000 + uid).to_string()).as_str(),
         netuid,
         vec![uid],
         vec![u16::MAX],
         0,
-    );
+    )
+    .unwrap();
 
     step_block(deps.as_mut(), &mut env).unwrap();
     if sparse {
@@ -1260,12 +1291,13 @@ fn test_bonds() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(uid.to_string()),
+        Addr::unchecked((1000 + uid).to_string()).as_str(),
         netuid,
         vec![uid],
         vec![u16::MAX],
         0,
-    );
+    )
+    .unwrap();
 
     step_block(deps.as_mut(), &mut env).unwrap();
     if sparse {
@@ -1315,12 +1347,13 @@ fn test_bonds() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(uid.to_string()),
+        Addr::unchecked((1000 + uid).to_string()).as_str(),
         netuid,
         vec![uid],
         vec![u16::MAX],
         0,
-    );
+    )
+    .unwrap();
 
     step_block(deps.as_mut(), &mut env).unwrap();
     if sparse {
@@ -1369,12 +1402,13 @@ fn test_bonds() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(2.to_string()),
+        Addr::unchecked(1002.to_string()).as_str(),
         netuid,
         vec![7],
         vec![u16::MAX],
         0,
-    );
+    )
+    .unwrap();
 
     step_block(deps.as_mut(), &mut env).unwrap();
     if sparse {
@@ -1534,13 +1568,13 @@ fn test_active_stake() {
 
     // === Register [validator1, validator2, server1, server2]
     for key in 0..n as u64 {
-        add_balance_to_coldkey_account(&Addr::unchecked(key.to_string()), stake);
+        add_balance_to_coldkey_account(&Addr::unchecked((1000 + key).to_string()), stake);
         let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
             &deps.storage,
             netuid,
             block_number,
             key * 1_000_000,
-            &Addr::unchecked(key.to_string()),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
         );
         pow_register_ok_neuron(
             deps.as_mut(),
@@ -1549,13 +1583,14 @@ fn test_active_stake() {
             block_number,
             nonce,
             work,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
-        );
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+        )
+        .unwrap();
         increase_stake_on_coldkey_hotkey_account(
             &mut deps.storage,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
             stake,
         );
     }
@@ -1580,12 +1615,13 @@ fn test_active_stake() {
         set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(uid.to_string()),
+            Addr::unchecked((1000 + uid).to_string()).as_str(),
             netuid,
             ((n / 2)..n).collect(),
             vec![u16::MAX / (n / 2); (n / 2) as usize],
             0,
-        );
+        )
+        .unwrap();
     }
 
     if sparse {
@@ -1629,12 +1665,13 @@ fn test_active_stake() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(0.to_string()),
+        Addr::unchecked(1000.to_string()).as_str(),
         netuid,
         ((n / 2)..n).collect(),
         vec![u16::MAX / (n / 2); (n / 2) as usize],
         0,
-    );
+    )
+    .unwrap();
     if sparse {
         epoch(
             &mut deps.storage,
@@ -1698,12 +1735,13 @@ fn test_active_stake() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(1.to_string()),
+        Addr::unchecked(1001.to_string()).as_str(),
         netuid,
         ((n / 2)..n).collect(),
         vec![u16::MAX / (n / 2); (n / 2) as usize],
         0,
-    );
+    )
+    .unwrap();
 
     // run_to_block(activity_cutoff + 3); // run to block where validator (uid 0, 1) weights become outdated
     // run_step_to_block(deps.as_mut(), &mut env, activity_cutoff + 4).unwrap();
@@ -1783,13 +1821,13 @@ fn test_outdated_weights() {
 
     // === Register [validator1, validator2, server1, server2]
     for key in 0..n as u64 {
-        add_balance_to_coldkey_account(&Addr::unchecked(key.to_string()), stake);
+        add_balance_to_coldkey_account(&Addr::unchecked((1000 + key).to_string()), stake);
         let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
             &deps.storage,
             netuid,
             env.block.height,
             key * 1_000_000,
-            &Addr::unchecked(key.to_string()),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
         );
         pow_register_ok_neuron(
             deps.as_mut(),
@@ -1798,13 +1836,14 @@ fn test_outdated_weights() {
             env.block.height,
             nonce,
             work,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
-        );
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+        )
+        .unwrap();
         increase_stake_on_coldkey_hotkey_account(
             &mut deps.storage,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
+            &Addr::unchecked((1000 + key).to_string()),
             stake,
         );
     }
@@ -1829,23 +1868,25 @@ fn test_outdated_weights() {
         set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(uid.to_string()),
+            Addr::unchecked((1000 + uid).to_string()).as_str(),
             netuid,
             ((n / 2)..n).collect(),
             vec![2 * (u16::MAX / 3), u16::MAX / 3],
             0,
-        );
+        )
+        .unwrap();
     }
     for uid in ((n / 2) as u64)..n as u64 {
         set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(uid.to_string()),
+            Addr::unchecked((1000 + uid).to_string()).as_str(),
             netuid,
             vec![uid as u16],
             vec![u16::MAX],
             0,
-        );
+        )
+        .unwrap();
     }
     if sparse {
         epoch(
@@ -1894,7 +1935,7 @@ fn test_outdated_weights() {
         netuid,
         env.block.height,
         0,
-        &Addr::unchecked(new_key.to_string()),
+        Addr::unchecked((1000 + new_key).to_string()).as_str(),
     );
     pow_register_ok_neuron(
         deps.as_mut(),
@@ -1903,12 +1944,13 @@ fn test_outdated_weights() {
         env.block.height,
         nonce,
         work,
-        &Addr::unchecked(new_key.to_string()),
-        &Addr::unchecked(new_key.to_string()),
-    );
+        Addr::unchecked((1000 + new_key).to_string()).as_str(),
+        Addr::unchecked((1000 + new_key).to_string()).as_str(),
+    )
+    .unwrap();
     let deregistered_uid: u16 = n - 1; // since uid=n-1 only recieved 1/3 of weight, it will get pruned first
     assert_eq!(
-        Addr::unchecked(new_key.to_string()),
+        Addr::unchecked((1000 + new_key).to_string()),
         get_hotkey_for_net_and_uid(&deps.storage, netuid, deregistered_uid)
             .expect("Not registered")
     );
@@ -1918,12 +1960,13 @@ fn test_outdated_weights() {
     set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(0.to_string()),
+        Addr::unchecked(1000.to_string()).as_str(),
         netuid,
         ((n / 2)..n).collect(),
         vec![2 * (u16::MAX / 3), u16::MAX / 3],
         0,
-    );
+    )
+    .unwrap();
     if sparse {
         epoch(
             &mut deps.storage,
@@ -2004,7 +2047,7 @@ fn test_zero_weights() {
             netuid,
             env.block.height,
             key * 1_000_000,
-            &Addr::unchecked(key.to_string()),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
         );
         pow_register_ok_neuron(
             deps.as_mut(),
@@ -2013,16 +2056,17 @@ fn test_zero_weights() {
             env.block.height,
             nonce,
             work,
-            &Addr::unchecked(key.to_string()),
-            &Addr::unchecked(key.to_string()),
-        );
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+            Addr::unchecked((1000 + key).to_string()).as_str(),
+        )
+        .unwrap();
     }
     for validator in 0..(n / 2) as u64 {
-        add_balance_to_coldkey_account(&Addr::unchecked(validator.to_string()), stake);
+        add_balance_to_coldkey_account(&Addr::unchecked((1000 + validator).to_string()), stake);
         increase_stake_on_coldkey_hotkey_account(
             &mut deps.storage,
-            &Addr::unchecked(validator.to_string()),
-            &Addr::unchecked(validator.to_string()),
+            &Addr::unchecked((1000 + validator).to_string()),
+            &Addr::unchecked((1000 + validator).to_string()),
             stake,
         );
     }
@@ -2065,12 +2109,13 @@ fn test_zero_weights() {
         set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(uid.to_string()),
+            Addr::unchecked((1000 + uid).to_string()).as_str(),
             netuid,
             vec![uid as u16],
             vec![u16::MAX],
             0,
-        );
+        )
+        .unwrap();
     }
     if sparse {
         epoch(
@@ -2109,12 +2154,13 @@ fn test_zero_weights() {
         set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(uid.to_string()),
+            Addr::unchecked((1000 + uid).to_string()).as_str(),
             netuid,
             ((n / 2)..n).collect(),
             vec![u16::MAX / (n / 2); (n / 2) as usize],
             0,
-        );
+        )
+        .unwrap();
     }
 
     // === Outdate weights by reregistering servers
@@ -2125,7 +2171,7 @@ fn test_zero_weights() {
             netuid,
             env.block.height,
             new_key as u64 * 1_000_000,
-            &Addr::unchecked(new_key.to_string()),
+            Addr::unchecked((1000 + new_key).to_string()).as_str(),
         );
         pow_register_ok_neuron(
             deps.as_mut(),
@@ -2134,9 +2180,10 @@ fn test_zero_weights() {
             env.block.height,
             nonce,
             work,
-            &Addr::unchecked(new_key.to_string()),
-            &Addr::unchecked(new_key.to_string()),
-        );
+            Addr::unchecked((1000 + new_key).to_string()).as_str(),
+            Addr::unchecked((1000 + new_key).to_string()).as_str(),
+        )
+        .unwrap();
     }
     if sparse {
         epoch(
@@ -2174,12 +2221,13 @@ fn test_zero_weights() {
         set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(uid.to_string()),
+            Addr::unchecked((1000 + uid).to_string()).as_str(),
             netuid,
             ((n / 2)..n).collect(),
             vec![u16::MAX / (n / 2); (n / 2) as usize],
             0,
-        );
+        )
+        .unwrap();
     }
     if sparse {
         epoch(
@@ -2255,7 +2303,7 @@ fn test_validator_permits() {
                 // === Register [validator1, validator2, server1, server2]
                 for key in 0..network_n as u64 {
                     add_balance_to_coldkey_account(
-                        &Addr::unchecked(key.to_string()),
+                        &Addr::unchecked((1000 + key).to_string()),
                         stake[key as usize],
                     );
                     let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
@@ -2263,7 +2311,7 @@ fn test_validator_permits() {
                         netuid,
                         block_number,
                         key * 1_000_000,
-                        &Addr::unchecked(key.to_string()),
+                        &Addr::unchecked((1000 + key).to_string()).as_str(),
                     );
                     pow_register_ok_neuron(
                         deps.as_mut(),
@@ -2272,13 +2320,14 @@ fn test_validator_permits() {
                         block_number,
                         nonce,
                         work,
-                        &Addr::unchecked(key.to_string()),
-                        &Addr::unchecked(key.to_string()),
-                    );
+                        Addr::unchecked((1000 + key).to_string()).as_str(),
+                        Addr::unchecked((1000 + key).to_string()).as_str(),
+                    )
+                    .unwrap();
                     increase_stake_on_coldkey_hotkey_account(
                         &mut deps.storage,
-                        &Addr::unchecked(key.to_string()),
-                        &Addr::unchecked(key.to_string()),
+                        &Addr::unchecked((1000 + key).to_string()),
+                        &Addr::unchecked((1000 + key).to_string()),
                         stake[key as usize],
                     );
                 }
@@ -2314,13 +2363,13 @@ fn test_validator_permits() {
                 // === Increase server stake above validators
                 for server in &servers {
                     add_balance_to_coldkey_account(
-                        &Addr::unchecked((*server as u64).to_string()),
+                        &Addr::unchecked((1000 + (*server as u64)).to_string()),
                         2 * network_n as u64,
                     );
                     increase_stake_on_coldkey_hotkey_account(
                         &mut deps.storage,
-                        &Addr::unchecked((*server as u64).to_string()),
-                        &Addr::unchecked((*server as u64).to_string()),
+                        &Addr::unchecked((1000 + (*server as u64)).to_string()),
+                        &Addr::unchecked((1000 + (*server as u64)).to_string()),
                         2 * network_n as u64,
                     );
                 }

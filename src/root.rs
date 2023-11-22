@@ -440,8 +440,10 @@ pub fn do_root_register(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    hotkey: Addr,
+    hotkey_address: String,
 ) -> Result<Response, ContractError> {
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+
     // --- 0. Get the unique identifier (UID) for the root network.
     let root_netuid: u16 = get_root_netuid();
     let current_block_number: u64 = env.block.height;

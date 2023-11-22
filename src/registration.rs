@@ -1,11 +1,8 @@
+use crate::root::{get_root_netuid, if_subnet_allows_registration, if_subnet_exist};
 use crate::staking::{
     add_balance_to_coldkey_account, create_account_if_non_existent,
     increase_stake_on_coldkey_hotkey_account, u64_to_balance,
 };
-use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, StdResult, Storage};
-use primitive_types::{H256, U256};
-use sp_io::hashing::{keccak_256, sha2_256};
-use crate::root::{get_root_netuid, if_subnet_allows_registration, if_subnet_exist};
 use crate::staking::{
     can_remove_balance_from_coldkey_account, coldkey_owns_hotkey,
     remove_balance_from_coldkey_account,
@@ -16,19 +13,30 @@ use crate::state::{
     TOTAL_ISSUANCE, UIDS, USED_WORK,
 };
 use crate::uids::{append_neuron, get_subnetwork_n, replace_neuron};
-use crate::utils::{burn_tokens, ensure_root, get_burn_as_u64, get_difficulty_as_u64, get_immunity_period, get_max_allowed_uids, get_max_registrations_per_block, get_neuron_block_at_registration, get_pruning_score_for_uid, get_registrations_this_block, get_registrations_this_interval, get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid};
+use crate::utils::{
+    burn_tokens, ensure_root, get_burn_as_u64, get_difficulty_as_u64, get_immunity_period,
+    get_max_allowed_uids, get_max_registrations_per_block, get_neuron_block_at_registration,
+    get_pruning_score_for_uid, get_registrations_this_block, get_registrations_this_interval,
+    get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid,
+};
 use crate::ContractError;
+use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, StdResult, Storage};
+use primitive_types::{H256, U256};
+use sp_io::hashing::{keccak_256, sha2_256};
 
 pub fn do_sudo_registration(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
     netuid: u16,
-    hotkey: Addr,
-    coldkey: Addr,
+    hotkey_address: String,
+    coldkey_address: String,
     stake: u64,
     balance: u64,
 ) -> Result<Response, ContractError> {
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+    let coldkey = deps.api.addr_validate(&coldkey_address)?;
+
     ensure_root(deps.storage, &info.sender)?;
 
     ensure!(
@@ -137,10 +145,12 @@ pub fn do_burned_registration(
     env: Env,
     info: MessageInfo,
     netuid: u16,
-    hotkey: Addr,
+    hotkey_address: String,
 ) -> Result<Response, ContractError> {
     // --- 1. Check that the caller has signed the transaction. (the coldkey of the pairing)
     let coldkey = info.sender;
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+
     deps.api.debug(&format!(
         "do_registration( coldkey:{:?} netuid:{:?} hotkey:{:?} )",
         coldkey, netuid, hotkey
@@ -343,13 +353,16 @@ pub fn do_registration(
     block_number: u64,
     nonce: u64,
     work: Vec<u8>,
-    hotkey: Addr,
-    coldkey: Addr,
+    hotkey_address: String,
+    coldkey_address: String,
 ) -> Result<Response, ContractError> {
     // --- 1. Check that the caller has signed the transaction.
     // TODO( const ): This not be the hotkey signature or else an exterior actor can register the hotkey and potentially control it?
     // TODO seriously consider this. Add signatures to the registration.
     let signing_origin = info.sender;
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+    let coldkey = deps.api.addr_validate(&coldkey_address)?;
+
     deps.api.debug(&format!(
         "do_registration( origin:{:?} netuid:{:?} hotkey:{:?}, coldkey:{:?} )",
         signing_origin, netuid, hotkey, coldkey
@@ -410,17 +423,17 @@ pub fn do_registration(
     );
 
     // --- 8. Ensure the supplied work passes the difficulty.
-    // let difficulty = get_difficulty(deps.storage, netuid);
-    // let work_hash: H256 = vec_to_hash(work.clone());
-    // ensure!(
-    //     hash_meets_difficulty(&work_hash, difficulty),
-    //     ContractError::InvalidDifficulty{}
-    // ); // Check that the work meets difficulty.
+    let difficulty = get_difficulty(deps.storage, netuid);
+    let work_hash: H256 = vec_to_hash(work.clone());
+    ensure!(
+        hash_meets_difficulty(&work_hash, difficulty),
+        ContractError::InvalidDifficulty {}
+    ); // Check that the work meets difficulty.
 
     // --- 7. Check Work is the product of the nonce, the block number, and hotkey. Add this as used work.
-    // let seal: H256 = create_seal_hash(block_number, nonce, hotkey.clone());
-    // ensure!(seal == work_hash, ContractError::InvalidSeal{});
-    // USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
+    let seal: H256 = create_seal_hash(block_number, nonce, hotkey.as_str());
+    ensure!(seal == work_hash, ContractError::InvalidSeal {});
+    USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
 
     // --- 9. If the network account does not exist we will create it here.
     create_account_if_non_existent(deps.storage, &coldkey, &hotkey);
@@ -541,12 +554,12 @@ pub fn do_faucet(
     let work_hash: H256 = vec_to_hash(work.clone());
     ensure!(
         hash_meets_difficulty(&work_hash, difficulty),
-        ContractError::InvalidDifficulty{}
+        ContractError::InvalidDifficulty {}
     ); // Check that the work meets difficulty.
 
     // --- 4. Check Work is the product of the nonce, the block number, and hotkey. Add this as used work.
-    let seal: H256 = create_seal_hash(block_number, nonce, &coldkey);
-    ensure!(seal == work_hash, ContractError::InvalidSeal{});
+    let seal: H256 = create_seal_hash(block_number, nonce, coldkey.as_str());
+    ensure!(seal == work_hash, ContractError::InvalidSeal {});
     USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
 
     // --- 5. Add Balance via faucet.
@@ -695,7 +708,7 @@ pub fn hash_to_vec(hash: H256) -> Vec<u8> {
     return hash_as_vec;
 }
 
-pub fn hash_block_and_hotkey(block_hash_bytes: &[u8], hotkey: &Addr) -> H256 {
+pub fn hash_block_and_hotkey(block_hash_bytes: &[u8], hotkey: &str) -> H256 {
     // Get the public key from the account id.
     // let hotkey_pubkey: MultiAddress<Addr, ()> = MultiAddress::Id(hotkey.clone());
     // let binding = hotkey_pubkey.encode();
@@ -776,7 +789,7 @@ pub fn hash_block_and_hotkey(block_hash_bytes: &[u8], hotkey: &Addr) -> H256 {
     return seal_hash;
 }
 
-pub fn create_seal_hash(block_number_u64: u64, nonce_u64: u64, hotkey: &Addr) -> H256 {
+pub fn create_seal_hash(block_number_u64: u64, nonce_u64: u64, hotkey: &str) -> H256 {
     let nonce = U256::from(nonce_u64);
     let block_hash_at_number: H256 = get_block_hash_from_u64(block_number_u64);
     let block_hash_bytes: &[u8] = block_hash_at_number.as_bytes();
@@ -855,14 +868,14 @@ pub fn create_work_for_block_number(
     netuid: u16,
     block_number: u64,
     start_nonce: u64,
-    hotkey: &Addr,
+    hotkey: &str,
 ) -> (u64, Vec<u8>) {
     let difficulty = get_difficulty(store, netuid);
     let mut nonce: u64 = start_nonce;
-    let mut work: H256 = create_seal_hash(block_number, nonce, &hotkey);
+    let mut work: H256 = create_seal_hash(block_number, nonce, hotkey);
     while !hash_meets_difficulty(&work, difficulty) {
         nonce = nonce + 1;
-        work = create_seal_hash(block_number, nonce, &hotkey);
+        work = create_seal_hash(block_number, nonce, hotkey);
     }
     let vec_work: Vec<u8> = hash_to_vec(work);
     return (nonce, vec_work);

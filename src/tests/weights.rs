@@ -6,7 +6,7 @@ use crate::epoch::get_weights;
 use crate::test_helpers::{add_network, instantiate_contract, register_ok_neuron, set_weights};
 use crate::uids::{get_subnetwork_n, get_uid_for_net_and_hotkey};
 use crate::utils::{
-    set_max_allowed_uids, set_max_registrations_per_block, set_max_weight_limit,
+    set_difficulty, set_max_allowed_uids, set_max_registrations_per_block, set_max_weight_limit,
     set_min_allowed_weights, set_target_registrations_per_interval, set_validator_permit_for_uid,
     set_weights_set_rate_limit, set_weights_version_key,
 };
@@ -20,7 +20,7 @@ use crate::ContractError;
 fn test_weights_err_no_validator_permit() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("55");
+    let hotkey_account_id = "addr55";
     let netuid: u16 = 2;
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
@@ -33,28 +33,14 @@ fn test_weights_err_no_validator_permit() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id.clone(),
-        &Addr::unchecked("55"),
+        hotkey_account_id,
+        "addr55",
         0,
     );
     env.block.height += 1;
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("5".to_string()),
-        &Addr::unchecked("5".to_string()),
-        65555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr5", "addr5", 65555);
     env.block.height += 1;
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("6".to_string()),
-        &Addr::unchecked("6".to_string()),
-        75555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr6", "addr6", 75555);
 
     let weights_keys: Vec<u16> = vec![1, 2];
     let weight_values: Vec<u16> = vec![1, 2];
@@ -62,7 +48,7 @@ fn test_weights_err_no_validator_permit() {
     let err = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey_account_id.to_string()),
+        hotkey_account_id,
         netuid,
         weights_keys.clone(),
         weight_values.clone(),
@@ -72,7 +58,8 @@ fn test_weights_err_no_validator_permit() {
     assert_eq!(ContractError::NoValidatorPermit {}, err);
 
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey_account_id.clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id))
+            .unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
@@ -81,7 +68,7 @@ fn test_weights_err_no_validator_permit() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey_account_id.to_string()),
+        hotkey_account_id,
         netuid,
         weights_keys.clone(),
         weight_values.clone(),
@@ -94,21 +81,22 @@ fn test_weights_err_no_validator_permit() {
 fn test_weights_version_key() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey = Addr::unchecked("55");
-    let coldkey = Addr::unchecked("66");
+    let hotkey = "addr55";
+    let coldkey = "addr66";
     let netuid0: u16 = 2;
     let netuid1: u16 = 3;
     let tempo: u16 = 13;
 
     add_network(&mut deps.storage, netuid0, tempo, 0);
+
     add_network(&mut deps.storage, netuid1, tempo, 0);
 
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid0,
-        &hotkey.clone(),
-        &coldkey.clone(),
+        hotkey,
+        coldkey,
         2143124,
     );
     env.block.height += 1;
@@ -116,8 +104,8 @@ fn test_weights_version_key() {
         deps.as_mut(),
         env.clone(),
         netuid1,
-        &hotkey.clone(),
-        &coldkey.clone(),
+        hotkey,
+        coldkey,
         2143124,
     );
     env.block.height += 1;
@@ -127,7 +115,7 @@ fn test_weights_version_key() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid0,
         weights_keys.clone(),
         weight_values.clone(),
@@ -139,7 +127,7 @@ fn test_weights_version_key() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid1,
         weights_keys.clone(),
         weight_values.clone(),
@@ -159,7 +147,7 @@ fn test_weights_version_key() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid0,
         weights_keys.clone(),
         weight_values.clone(),
@@ -171,7 +159,7 @@ fn test_weights_version_key() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid1,
         weights_keys.clone(),
         weight_values.clone(),
@@ -184,7 +172,7 @@ fn test_weights_version_key() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid0,
         weights_keys.clone(),
         weight_values.clone(),
@@ -198,7 +186,7 @@ fn test_weights_version_key() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid1,
         weights_keys.clone(),
         weight_values.clone(),
@@ -211,7 +199,7 @@ fn test_weights_version_key() {
 fn test_weights_err_setting_weights_too_fast() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey = Addr::unchecked("55");
+    let hotkey = "addr55";
 
     let netuid = 2;
     let tempo: u16 = 13;
@@ -221,35 +209,15 @@ fn test_weights_err_setting_weights_too_fast() {
     set_max_allowed_uids(&mut deps.storage, netuid, 3);
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &hotkey.clone(),
-        &Addr::unchecked("66"),
-        0,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, hotkey, "addr66", 0);
     env.block.height += 1;
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("1"),
-        &Addr::unchecked("1"),
-        65555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 65555);
     env.block.height += 1;
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("2"),
-        &Addr::unchecked("2"),
-        75555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr2", "addr2", 75555);
     env.block.height += 1;
 
-    let neuron_uid = get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey.clone()).unwrap();
+    let neuron_uid =
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey)).unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
@@ -262,7 +230,7 @@ fn test_weights_err_setting_weights_too_fast() {
         let result = set_weights(
             deps.as_mut(),
             env.clone(),
-            &Addr::unchecked(hotkey.to_string()),
+            hotkey,
             netuid,
             weights_keys.clone(),
             weight_values.clone(),
@@ -281,23 +249,17 @@ fn test_weights_err_setting_weights_too_fast() {
 fn test_weights_err_weights_vec_not_equal_size() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey = Addr::unchecked("55");
+    let hotkey = "addr55";
 
     let netuid = 2;
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &hotkey.clone(),
-        &Addr::unchecked("66"),
-        0,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, hotkey, "addr66", 0);
     env.block.height += 1;
 
-    let neuron_uid = get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey.clone()).unwrap();
+    let neuron_uid =
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey)).unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
@@ -307,7 +269,7 @@ fn test_weights_err_weights_vec_not_equal_size() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid,
         weights_keys.clone(),
         weight_values.clone(),
@@ -320,7 +282,7 @@ fn test_weights_err_weights_vec_not_equal_size() {
 fn test_weights_err_has_duplicate_ids() {
     let (mut deps, env) = instantiate_contract();
 
-    let hotkey = Addr::unchecked("666");
+    let hotkey = "addr666";
 
     let netuid = 2;
     let tempo: u16 = 13;
@@ -332,53 +294,26 @@ fn test_weights_err_has_duplicate_ids() {
     set_target_registrations_per_interval(&mut deps.storage, netuid, 100);
 
     // uid 0
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &hotkey.clone(),
-        &Addr::unchecked("77"),
-        0,
-    );
-    let neuron_uid = get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey.clone()).unwrap();
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, hotkey, "addr77", 0);
+    let neuron_uid =
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey)).unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
     // uid 1
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("1"),
-        &Addr::unchecked("1"),
-        100000,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 100000);
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("1").clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr1")).unwrap();
 
     // uid 2
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("2"),
-        &Addr::unchecked("2"),
-        100000,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr2", "addr2", 100000);
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("2").clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr2")).unwrap();
 
     // uid 3
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("3"),
-        100000,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr3", 100000);
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("3").clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr3")).unwrap();
 
     let weights_keys: Vec<u16> = vec![1, 1, 1]; // Contains duplicates
     let weight_values: Vec<u16> = vec![1, 2, 3];
@@ -386,7 +321,7 @@ fn test_weights_err_has_duplicate_ids() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey.to_string()),
+        hotkey,
         netuid,
         weights_keys.clone(),
         weight_values.clone(),
@@ -410,51 +345,16 @@ fn test_weights_err_max_weight_limit() {
     set_max_registrations_per_block(&mut deps.storage, netuid, 100);
 
     // uid 0
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("0"),
-        &Addr::unchecked("0"),
-        55555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr0", "addr0", 55555);
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("0").clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr0")).unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("1"),
-        &Addr::unchecked("1"),
-        65555,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("2"),
-        &Addr::unchecked("2"),
-        75555,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("3"),
-        95555,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("4"),
-        &Addr::unchecked("4"),
-        35555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 65555);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr2", "addr2", 75555);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr3", 95555);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr4", "addr4", 35555);
 
     // Non self-weight fails.
     let uids: Vec<u16> = vec![1, 2, 3, 4];
@@ -462,7 +362,7 @@ fn test_weights_err_max_weight_limit() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(0.to_string()),
+        "addr0",
         netuid,
         uids.clone(),
         values.clone(),
@@ -476,7 +376,7 @@ fn test_weights_err_max_weight_limit() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(0.to_string()),
+        "addr0",
         netuid,
         uids.clone(),
         values.clone(),
@@ -498,12 +398,12 @@ fn test_set_weights_err_not_active() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("666"),
-        &Addr::unchecked("2"),
+        "addr666",
+        "addr2",
         100000,
     );
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("666").clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr666")).unwrap();
 
     let weights_keys: Vec<u16> = vec![0]; // Uid 0 is valid.
     let weight_values: Vec<u16> = vec![1];
@@ -511,7 +411,7 @@ fn test_set_weights_err_not_active() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked("1".to_string()),
+        "1",
         netuid,
         weights_keys.clone(),
         weight_values.clone(),
@@ -528,18 +428,19 @@ fn test_set_weights_err_invalid_uid() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("55");
+    let hotkey_account = "addr55";
 
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account.clone(),
-        &Addr::unchecked("66"),
+        hotkey_account,
+        "addr66",
         100000,
     );
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey_account.clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey_account))
+            .unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
@@ -548,7 +449,7 @@ fn test_set_weights_err_invalid_uid() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey_account.to_string()),
+        hotkey_account,
         netuid,
         weight_keys.clone(),
         weight_values.clone(),
@@ -565,29 +466,23 @@ fn test_set_weight_not_enough_values() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("1");
+    let hotkey_account = "addr1";
 
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account.clone(),
-        &Addr::unchecked("2"),
+        hotkey_account,
+        "addr2",
         100000,
     );
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey_account.clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey_account))
+            .unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("4"),
-        300000,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr4", 300000);
 
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
 
@@ -599,7 +494,7 @@ fn test_set_weight_not_enough_values() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey_account.to_string()),
+        hotkey_account,
         netuid,
         weight_keys.clone(),
         weight_values.clone(),
@@ -616,7 +511,7 @@ fn test_set_weight_not_enough_values() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey_account.to_string()),
+        hotkey_account,
         netuid,
         weight_keys.clone(),
         weight_values.clone(),
@@ -633,7 +528,7 @@ fn test_set_weight_not_enough_values() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey_account.to_string()),
+        hotkey_account,
         netuid,
         weight_keys.clone(),
         weight_values.clone(),
@@ -650,29 +545,23 @@ fn test_set_weight_too_many_uids() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("1");
+    let hotkey_account = "addr1";
 
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account.clone(),
-        &Addr::unchecked("2"),
+        hotkey_account,
+        "addr2",
         100000,
     );
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey_account.clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey_account))
+            .unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("4"),
-        300000,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr4", 300000);
 
     set_min_allowed_weights(&mut deps.storage, netuid, 2);
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
@@ -683,7 +572,7 @@ fn test_set_weight_too_many_uids() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(1.to_string()),
+        "addr1",
         netuid,
         weight_keys.clone(),
         weight_values.clone(),
@@ -697,7 +586,7 @@ fn test_set_weight_too_many_uids() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(1.to_string()),
+        "addr1",
         netuid,
         weight_keys.clone(),
         weight_values.clone(),
@@ -714,29 +603,23 @@ fn test_set_weights_sum_larger_than_u16_max() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("1");
+    let hotkey_account = "addr1";
 
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account.clone(),
-        &Addr::unchecked("2"),
+        hotkey_account,
+        "addr2",
         100000,
     );
     let neuron_uid =
-        get_uid_for_net_and_hotkey(&deps.storage, netuid, &hotkey_account.clone()).unwrap();
+        get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked(hotkey_account))
+            .unwrap();
 
     set_validator_permit_for_uid(&mut deps.storage, netuid, neuron_uid, true);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("4"),
-        300000,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr4", 300000);
 
     set_max_weight_limit(&mut deps.storage, netuid, u16::MAX);
     set_min_allowed_weights(&mut deps.storage, netuid, 2);
@@ -750,7 +633,7 @@ fn test_set_weights_sum_larger_than_u16_max() {
     let result = set_weights(
         deps.as_mut(),
         env.clone(),
-        &Addr::unchecked(hotkey_account.to_string()),
+        hotkey_account,
         netuid,
         weight_keys.clone(),
         weight_values.clone(),
@@ -774,7 +657,7 @@ fn test_check_length_allows_singleton() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("1");
+    let hotkey_account = Addr::unchecked("addr1");
 
     let max_allowed: u16 = 1;
     let min_allowed_weights = max_allowed;
@@ -799,7 +682,7 @@ fn test_check_length_weights_length_exceeds_min_allowed() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("1");
+    let hotkey_account = Addr::unchecked("addr1");
 
     let max_allowed: u16 = 3;
     let min_allowed_weights = max_allowed;
@@ -831,62 +714,13 @@ fn test_check_length_to_few_weights() {
     set_target_registrations_per_interval(&mut deps.storage, netuid, 100);
 
     // register morw than min allowed
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("1"),
-        &Addr::unchecked("1"),
-        300001,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("2"),
-        &Addr::unchecked("2"),
-        300002,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("3"),
-        300003,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("4"),
-        &Addr::unchecked("4"),
-        300004,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("5"),
-        &Addr::unchecked("5"),
-        300005,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("6"),
-        &Addr::unchecked("6"),
-        300006,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("7"),
-        &Addr::unchecked("7"),
-        300007,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 300001);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr2", "addr2", 300002);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr3", 300003);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr4", "addr4", 300004);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr5", "addr5", 300005);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr6", "addr6", 300006);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr7", "addr7", 300007);
 
     set_min_allowed_weights(&mut deps.storage, netuid, min_allowed_weights);
 
@@ -1086,30 +920,9 @@ fn test_check_len_uids_within_allowed_within_network_pool() {
 
     let max_registrations_per_block: u16 = 100;
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("1"),
-        &Addr::unchecked("1"),
-        0,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("3"),
-        65555,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("5"),
-        &Addr::unchecked("5"),
-        75555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 0);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr3", 65555);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr5", "addr5", 75555);
 
     let max_allowed = get_subnetwork_n(&deps.storage, netuid);
 
@@ -1134,36 +947,11 @@ fn test_check_len_uids_within_allowed_not_within_network_pool() {
 
     let max_registrations_per_block: u16 = 100;
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("1"),
-        &Addr::unchecked("1"),
-        0,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("3"),
-        &Addr::unchecked("3"),
-        65555,
-    );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        &Addr::unchecked("5"),
-        &Addr::unchecked("5"),
-        75555,
-    );
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 0);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr3", 65555);
+    register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr5", "addr5", 75555);
 
     let max_allowed = get_subnetwork_n(&deps.storage, netuid);
-
-    // let mut deps: OwnedDeps<MemoryStorage, MockApi, MockQuerier> = mock_dependencies();
-    // set_difficulty(deps.storage, 1, 1);
-    // get_difficulty_as_u64()
 
     let max_default_allowed = 256; // set during add_network as default
     let uids: Vec<u16> = Vec::from_iter((0..(max_default_allowed + 1)).map(|uid| uid));

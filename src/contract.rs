@@ -188,8 +188,10 @@ pub fn instantiate(
             None => Ok(vec![0]),
         }
     };
-    for (coldkey, hotkeys) in msg.stakes.iter() {
-        for (hotkey, stake_uid) in hotkeys.iter() {
+    for (coldkey_address, hotkeys) in msg.stakes.iter() {
+        let coldkey = deps.api.addr_validate(&coldkey_address)?;
+        for (hotkey_address, stake_uid) in hotkeys.iter() {
+            let hotkey = deps.api.addr_validate(&hotkey_address)?;
             let (stake, uid) = stake_uid;
             RANK.update(deps.storage, netuid.clone(), action)?;
             TRUST.update(deps.storage, netuid.clone(), action)?;
@@ -235,13 +237,13 @@ pub fn instantiate(
                 }
             })?;
             KEYS.save(deps.storage, (netuid.clone(), uid.clone()), &hotkey.clone())?; // Make hotkey - uid association.
-            UIDS.save(deps.storage, (netuid.clone(), hotkey), &uid.clone())?; // Make uid - hotkey association.
+            UIDS.save(deps.storage, (netuid.clone(), &hotkey), &uid.clone())?; // Make uid - hotkey association.
             BLOCK_AT_REGISTRATION.save(
                 deps.storage,
                 (netuid.clone(), uid.clone()),
                 &env.block.height,
             )?;
-            IS_NETWORK_MEMBER.save(deps.storage, (hotkey, netuid), &true)?;
+            IS_NETWORK_MEMBER.save(deps.storage, (&hotkey, netuid), &true)?;
             OWNER.save(deps.storage, &hotkey, &coldkey)?;
 
             increase_stake_on_coldkey_hotkey_account(

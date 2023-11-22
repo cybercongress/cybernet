@@ -11,7 +11,11 @@ use crate::test_helpers::{
     add_network, burned_register_ok_neuron, instantiate_contract, pow_register_ok_neuron,
     step_block, sudo_register_ok_neuron,
 };
-use crate::utils::{get_adjustment_interval, get_burn_as_u64, get_difficulty_as_u64, set_adjustment_alpha, set_adjustment_interval, set_burn, set_difficulty, set_max_allowed_uids, set_max_registrations_per_block, set_min_difficulty, set_target_registrations_per_interval};
+use crate::utils::{
+    get_adjustment_interval, get_burn_as_u64, get_difficulty_as_u64, set_adjustment_alpha,
+    set_adjustment_interval, set_burn, set_difficulty, set_max_allowed_uids,
+    set_max_registrations_per_block, set_min_difficulty, set_target_registrations_per_interval,
+};
 
 #[test]
 fn test_loaded_emission() {
@@ -31,8 +35,8 @@ fn test_loaded_emission() {
             deps.as_mut(),
             env.clone(),
             netuid,
-            Addr::unchecked(i.to_string()),
-            Addr::unchecked(i.to_string()),
+            (1000 + i).to_string().as_str(),
+            (1000 + i).to_string().as_str(),
         );
     }
     assert!(!has_loaded_emission_tuples(&deps.storage, netuid));
@@ -182,16 +186,28 @@ fn test_burn_adjustment() {
     ); // Sanity check the adjustment interval.
 
     // Register key 1.
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_1, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_1);
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_1), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_1,
+        coldkey_account_id_1,
+    );
 
     // Register key 2.
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_2, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_2);
+    let hotkey_account_id_2 = "1002";
+    let coldkey_account_id_2 = "1002";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_2), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_2,
+        coldkey_account_id_2,
+    );
 
     // We are over the number of regs allowed this interval.
     // Step the block and trigger the adjustment.
@@ -222,16 +238,28 @@ fn test_burn_adjustment_with_moving_average() {
     set_adjustment_alpha(&mut deps.storage, netuid, u64::MAX / 2);
 
     // Register key 1.
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_1, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_1);
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_1), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_1,
+        coldkey_account_id_1,
+    );
 
     // Register key 2.
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_2, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_2);
+    let hotkey_account_id_2 = "addr2";
+    let coldkey_account_id_2 = "addr2";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_2), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_2,
+        coldkey_account_id_2,
+    );
 
     // We are over the number of regs allowed this interval.
     // Step the block and trigger the adjustment.
@@ -270,14 +298,20 @@ fn test_burn_adjustment_case_a() {
     );
 
     // Register key 1. This is a burn registration.
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_1, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_1);
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_1), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_1,
+        coldkey_account_id_1,
+    );
 
     // Register key 2. This is a POW registration
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
+    let hotkey_account_id_2 = "addr2";
+    let coldkey_account_id_2 = "addr2";
     let (nonce0, work0): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -297,8 +331,8 @@ fn test_burn_adjustment_case_a() {
     );
 
     // Register key 3. This is a POW registration
-    let hotkey_account_id_3 = Addr::unchecked(3.to_string());
-    let coldkey_account_id_3 = Addr::unchecked(3.to_string());
+    let hotkey_account_id_3 = "addr3";
+    let coldkey_account_id_3 = "addr3";
     let (nonce1, work1): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -361,26 +395,38 @@ fn test_burn_adjustment_case_b() {
     );
 
     // Register key 1.
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_1, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_1);
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_1), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_1,
+        coldkey_account_id_1,
+    );
 
     // Register key 2.
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_2, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_2);
+    let hotkey_account_id_2 = "addr2";
+    let coldkey_account_id_2 = "addr2";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_2), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_2,
+        coldkey_account_id_2,
+    );
 
     // Register key 3. This one is a POW registration
-    let hotkey_account_id_3 = Addr::unchecked(3.to_string());
-    let coldkey_account_id_3 = Addr::unchecked(3.to_string());
+    let hotkey_account_id_3 = "addr3";
+    let coldkey_account_id_3 = "addr3";
     let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
         curr_block_num,
         0,
-        &hotkey_account_id_3,
+        hotkey_account_id_3,
     );
     let _ = pow_register_ok_neuron(
         deps.as_mut(),
@@ -389,8 +435,8 @@ fn test_burn_adjustment_case_b() {
         curr_block_num,
         nonce,
         work,
-        &hotkey_account_id_3,
-        &coldkey_account_id_3,
+        hotkey_account_id_3,
+        coldkey_account_id_3,
     );
 
     // We are over the number of regs allowed this interval.
@@ -437,14 +483,20 @@ fn test_burn_adjustment_case_c() {
     );
 
     // Register key 1. This is a BURN registration
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_1, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_1);
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_1), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        &hotkey_account_id_1,
+        coldkey_account_id_1,
+    );
 
     // Register key 2. This is a POW registration
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
+    let hotkey_account_id_2 = "addr2";
+    let coldkey_account_id_2 = "addr2";
     let (nonce0, work0): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -464,8 +516,8 @@ fn test_burn_adjustment_case_c() {
     );
 
     // Register key 3. This is a POW registration
-    let hotkey_account_id_3 = Addr::unchecked(3.to_string());
-    let coldkey_account_id_3 = Addr::unchecked(3.to_string());
+    let hotkey_account_id_3 = "addr3";
+    let coldkey_account_id_3 = "addr3";
     let (nonce1, work1): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -528,20 +580,32 @@ fn test_burn_adjustment_case_d() {
     );
 
     // Register key 1. This is a BURN registration
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_1, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_1);
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_1), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_1,
+        coldkey_account_id_1,
+    );
 
     // Register key 2. This is a BURN registration
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_2, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_2);
+    let hotkey_account_id_2 = "addr2";
+    let coldkey_account_id_2 = "addr2";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_2), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_2,
+        coldkey_account_id_2,
+    );
 
     // Register key 3. This is a POW registration
-    let hotkey_account_id_3 = Addr::unchecked(3.to_string());
-    let coldkey_account_id_3 = Addr::unchecked(3.to_string());
+    let hotkey_account_id_3 = "addr3";
+    let coldkey_account_id_3 = "addr3";
     let (nonce1, work1): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -605,8 +669,8 @@ fn test_burn_adjustment_case_e() {
     );
 
     // Register key 1. This is a POW registration
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
     let (nonce1, work1): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -626,10 +690,16 @@ fn test_burn_adjustment_case_e() {
     );
 
     // Register key 2. This is a BURN registration
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_2, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_2);
+    let hotkey_account_id_2 = "addr2";
+    let coldkey_account_id_2 = "addr2";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_2), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        &hotkey_account_id_2,
+        coldkey_account_id_2,
+    );
     step_block(deps.as_mut(), &mut env).unwrap();
     curr_block_num += 1;
 
@@ -676,8 +746,8 @@ fn test_burn_adjustment_case_f() {
     );
 
     // Register key 1. This is a POW registration
-    let hotkey_account_id_1 = Addr::unchecked(1.to_string());
-    let coldkey_account_id_1 = Addr::unchecked(1.to_string());
+    let hotkey_account_id_1 = "addr1";
+    let coldkey_account_id_1 = "addr1";
     let (nonce1, work1): (u64, Vec<u8>) = create_work_for_block_number(
         &deps.storage,
         netuid,
@@ -697,10 +767,16 @@ fn test_burn_adjustment_case_f() {
     );
 
     // Register key 2. This is a BURN registration
-    let hotkey_account_id_2 = Addr::unchecked(2.to_string());
-    let coldkey_account_id_2 = Addr::unchecked(2.to_string());
-    add_balance_to_coldkey_account(&coldkey_account_id_2, 10000);
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid, &hotkey_account_id_2);
+    let hotkey_account_id_2 = "addr2";
+    let coldkey_account_id_2 = "addr2";
+    add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_2), 10000);
+    burned_register_ok_neuron(
+        deps.as_mut(),
+        env.clone(),
+        netuid,
+        hotkey_account_id_2,
+        coldkey_account_id_2,
+    );
 
     step_block(deps.as_mut(), &mut env).unwrap();
     curr_block_num += 1;

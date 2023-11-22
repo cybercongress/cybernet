@@ -38,11 +38,13 @@ pub fn do_become_delegate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    hotkey: Addr,
+    hotkey_address: String,
     take: u16,
 ) -> Result<Response, ContractError> {
     // --- 1. We check the coldkey signuture.
     let coldkey = info.sender;
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+
     deps.api.debug(&format!(
         "do_become_delegate( origin:{:?} hotkey:{:?}, take:{:?} )",
         coldkey, hotkey, take
@@ -133,11 +135,13 @@ pub fn do_add_stake(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    hotkey: Addr,
+    hotkey_address: String,
     stake_to_be_added: u64,
 ) -> Result<Response, ContractError> {
     // --- 1. We check that the transaction is signed by the caller and retrieve the T::AccountId coldkey information.
     let coldkey = info.sender;
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+
     deps.api.debug(&format!(
         "do_add_stake( origin:{:?} hotkey:{:?}, stake_to_be_added:{:?} )",
         coldkey, hotkey, stake_to_be_added
@@ -238,11 +242,13 @@ pub fn do_remove_stake(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    hotkey: Addr,
+    hotkey_address: String,
     stake_to_be_removed: u64,
 ) -> Result<Response, ContractError> {
     // --- 1. We check the transaction is signed by the caller and retrieve the T::AccountId coldkey information.
     let coldkey = info.sender;
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+
     deps.api.debug(&format!(
         "do_remove_stake( origin:{:?} hotkey:{:?}, stake_to_be_removed:{:?} )",
         coldkey, hotkey, stake_to_be_removed

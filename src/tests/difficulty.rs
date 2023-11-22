@@ -12,6 +12,7 @@ use crate::utils::{
     set_network_registration_allowed, set_target_registrations_per_interval,
 };
 
+// TODO adjust difficulty in tests to make it faster tests to pass.
 #[test]
 #[cfg(not(tarpaulin))]
 fn test_registration_difficulty_adjustment() {
@@ -58,49 +59,49 @@ fn test_registration_difficulty_adjustment() {
     ); // Check set registration allowed
 
     // Lets register 3 neurons...
-    let hotkey0 = Addr::unchecked("0".to_string());
-    let hotkey1 = Addr::unchecked("100".to_string());
-    let hotkey2 = Addr::unchecked("2000".to_string());
-    let coldkey0 = Addr::unchecked("0".to_string());
-    let coldkey1 = Addr::unchecked("1000".to_string());
-    let coldkey2 = Addr::unchecked("20000".to_string());
+    let hotkey0 = "addr0";
+    let hotkey1 = "addr100";
+    let hotkey2 = "addr2000";
+    let coldkey0 = "addr0";
+    let coldkey1 = "addr1000";
+    let coldkey2 = "addr20000";
 
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey0,
-        &coldkey0,
+        hotkey0,
+        coldkey0,
         39420842,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey1,
-        &coldkey1,
+        hotkey1,
+        coldkey1,
         12412392,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey2,
-        &coldkey2,
+        hotkey2,
+        coldkey2,
         21813123,
     );
 
     assert_eq!(
         get_hotkey_for_net_and_uid(&deps.storage, netuid, 0).unwrap(),
-        hotkey0
+        Addr::unchecked(hotkey0.to_string())
     );
     assert_eq!(
         get_hotkey_for_net_and_uid(&deps.storage, netuid, 1).unwrap(),
-        hotkey1
+        Addr::unchecked(hotkey1.to_string())
     );
     assert_eq!(
         get_hotkey_for_net_and_uid(&deps.storage, netuid, 2).unwrap(),
-        hotkey2
+        Addr::unchecked(hotkey2.to_string())
     );
 
     assert_eq!(get_subnetwork_n(&deps.storage, netuid), 3); // All 3 are registered.
@@ -130,37 +131,37 @@ fn test_registration_difficulty_adjustment() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("1".to_string()),
-        &Addr::unchecked("1".to_string()),
+        "addr1",
+        "addr1",
         3942084,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("101".to_string()),
-        &Addr::unchecked("1001".to_string()),
+        "addr101",
+        "addr1001",
         1241239,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("2001".to_string()),
-        &Addr::unchecked("20001".to_string()),
+        "addr2001",
+        "addr20001",
         2181312,
     );
     assert_eq!(
         get_hotkey_for_net_and_uid(&deps.storage, netuid, 0).unwrap(),
-        Addr::unchecked("1".to_string())
+        Addr::unchecked("addr1".to_string())
     ); // replace 0
     assert_eq!(
         get_hotkey_for_net_and_uid(&deps.storage, netuid, 1).unwrap(),
-        Addr::unchecked("101".to_string())
+        Addr::unchecked("addr101".to_string())
     ); // replace 1
     assert_eq!(
         get_hotkey_for_net_and_uid(&deps.storage, netuid, 2).unwrap(),
-        Addr::unchecked("2001".to_string())
+        Addr::unchecked("addr2001".to_string())
     ); // replace 2
     assert_eq!(get_registrations_this_block(&deps.storage, netuid), 3); // Registrations have been erased.
     assert_eq!(get_registrations_this_interval(&deps.storage, netuid), 3); // Registrations this interval = 3
@@ -175,24 +176,24 @@ fn test_registration_difficulty_adjustment() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("2".to_string()),
-        &Addr::unchecked("2".to_string()),
+        "addr2",
+        "addr2",
         394208420,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("102".to_string()),
-        &Addr::unchecked("1002".to_string()),
+        "addr102",
+        "addr1002",
         124123920,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("2002".to_string()),
-        &Addr::unchecked("20002".to_string()),
+        "addr2002",
+        "addr20002",
         218131230,
     );
     assert_eq!(get_registrations_this_block(&deps.storage, netuid), 3); // Registrations have been erased.
@@ -228,32 +229,32 @@ fn test_registration_difficulty_adjustment() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("3".to_string()),
-        &Addr::unchecked("3".to_string()),
+        "addr3",
+        "addr3",
         294208420,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("103".to_string()),
-        &Addr::unchecked("1003".to_string()),
+        "addr103",
+        "addr1003",
         824123920,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("2003".to_string()),
-        &Addr::unchecked("20003".to_string()),
+        "addr2003",
+        "addr20003",
         324123920,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("2004".to_string()),
-        &Addr::unchecked("20004".to_string()),
+        "addr2004",
+        "addr20004",
         524123920,
     );
     assert_eq!(get_registrations_this_interval(&deps.storage, netuid), 4);
@@ -268,24 +269,24 @@ fn test_registration_difficulty_adjustment() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("4".to_string()),
-        &Addr::unchecked("4".to_string()),
+        "addr4",
+        "addr4",
         124208420,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("104".to_string()),
-        &Addr::unchecked("1004".to_string()),
+        "addr104",
+        "addr1004",
         314123920,
     );
     register_ok_neuron(
         deps.as_mut(),
         env.clone(),
         netuid,
-        &Addr::unchecked("2004".to_string()),
-        &Addr::unchecked("20004".to_string()),
+        "addr2004",
+        "addr20004",
         834123920,
     );
     step_block(deps.as_mut(), &mut env).unwrap();

@@ -27,7 +27,7 @@ mod test {
 fn test_serving_ok() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -44,15 +44,15 @@ fn test_serving_ok() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
 
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -64,7 +64,7 @@ fn test_serving_ok() {
     );
     assert!(result.is_ok());
 
-    let neuron = get_axon_info(&deps.storage, netuid, &hotkey_account_id);
+    let neuron = get_axon_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
     assert_eq!(neuron.ip, ip);
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
@@ -78,7 +78,7 @@ fn test_serving_ok() {
 fn test_serving_set_metadata_update() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -95,8 +95,8 @@ fn test_serving_set_metadata_update() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
 
@@ -105,7 +105,7 @@ fn test_serving_set_metadata_update() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id.clone(),
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -117,7 +117,7 @@ fn test_serving_set_metadata_update() {
     );
     assert!(result.is_ok());
 
-    let neuron = get_axon_info(&deps.storage, netuid, &hotkey_account_id.clone());
+    let neuron = get_axon_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
     assert_eq!(neuron.ip, ip);
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
@@ -136,7 +136,7 @@ fn test_serving_set_metadata_update() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version2,
         ip2,
@@ -148,7 +148,7 @@ fn test_serving_set_metadata_update() {
     );
     assert!(result.is_ok());
 
-    let neuron = get_axon_info(&deps.storage, netuid, &hotkey_account_id);
+    let neuron = get_axon_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
     assert_eq!(neuron.ip, ip2);
     assert_eq!(neuron.version, version2);
     assert_eq!(neuron.port, port2);
@@ -163,7 +163,7 @@ fn test_serving_set_metadata_update() {
 fn test_axon_serving_rate_limit_exceeded() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -180,8 +180,8 @@ fn test_axon_serving_rate_limit_exceeded() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
     step_block(deps.as_mut(), &mut env).unwrap(); // Go to block 1
@@ -192,7 +192,7 @@ fn test_axon_serving_rate_limit_exceeded() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -207,7 +207,7 @@ fn test_axon_serving_rate_limit_exceeded() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -222,7 +222,7 @@ fn test_axon_serving_rate_limit_exceeded() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -237,7 +237,7 @@ fn test_axon_serving_rate_limit_exceeded() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -256,7 +256,7 @@ fn test_axon_serving_rate_limit_exceeded() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -276,7 +276,7 @@ fn test_axon_serving_rate_limit_exceeded() {
 fn test_axon_invalid_port() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -293,8 +293,8 @@ fn test_axon_invalid_port() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
 
@@ -303,7 +303,7 @@ fn test_axon_invalid_port() {
     let result = serve_axon(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -320,7 +320,7 @@ fn test_axon_invalid_port() {
 fn test_prometheus_serving_ok() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -334,15 +334,15 @@ fn test_prometheus_serving_ok() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
 
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -351,7 +351,7 @@ fn test_prometheus_serving_ok() {
     );
     assert!(result.is_ok());
 
-    let neuron = get_prometheus_info(&deps.storage, netuid, &hotkey_account_id);
+    let neuron = get_prometheus_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
     assert_eq!(neuron.ip, ip);
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
@@ -362,7 +362,7 @@ fn test_prometheus_serving_ok() {
 fn test_prometheus_serving_set_metadata_update() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -376,8 +376,8 @@ fn test_prometheus_serving_set_metadata_update() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
 
@@ -386,7 +386,7 @@ fn test_prometheus_serving_set_metadata_update() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -395,7 +395,7 @@ fn test_prometheus_serving_set_metadata_update() {
     );
     assert!(result.is_ok());
 
-    let neuron = get_prometheus_info(&deps.storage, netuid, &hotkey_account_id);
+    let neuron = get_prometheus_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
     assert_eq!(neuron.ip, ip);
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
@@ -409,7 +409,7 @@ fn test_prometheus_serving_set_metadata_update() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version2,
         ip2,
@@ -418,7 +418,7 @@ fn test_prometheus_serving_set_metadata_update() {
     );
     assert!(result.is_ok());
 
-    let neuron = get_prometheus_info(&deps.storage, netuid, &hotkey_account_id);
+    let neuron = get_prometheus_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
     assert_eq!(neuron.ip, ip2);
     assert_eq!(neuron.version, version2);
     assert_eq!(neuron.port, port2);
@@ -430,7 +430,7 @@ fn test_prometheus_serving_set_metadata_update() {
 fn test_prometheus_serving_rate_limit_exceeded() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -444,8 +444,8 @@ fn test_prometheus_serving_rate_limit_exceeded() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
     step_block(deps.as_mut(), &mut env).unwrap(); // Go to block 1
@@ -456,7 +456,7 @@ fn test_prometheus_serving_rate_limit_exceeded() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -468,7 +468,7 @@ fn test_prometheus_serving_rate_limit_exceeded() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -480,7 +480,7 @@ fn test_prometheus_serving_rate_limit_exceeded() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -492,7 +492,7 @@ fn test_prometheus_serving_rate_limit_exceeded() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -506,7 +506,7 @@ fn test_prometheus_serving_rate_limit_exceeded() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,
@@ -523,7 +523,7 @@ fn test_prometheus_serving_rate_limit_exceeded() {
 fn test_prometheus_invalid_port() {
     let (mut deps, mut env) = instantiate_contract();
 
-    let hotkey_account_id = Addr::unchecked("1".to_string());
+    let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
     let tempo: u16 = 13;
     let version: u32 = 2;
@@ -537,8 +537,8 @@ fn test_prometheus_invalid_port() {
         deps.as_mut(),
         env.clone(),
         netuid,
-        &hotkey_account_id,
-        &Addr::unchecked("66"),
+        hotkey_account_id,
+        "addr66",
         0,
     );
     step_block(deps.as_mut(), &mut env).unwrap(); // Go to block 1
@@ -546,7 +546,7 @@ fn test_prometheus_invalid_port() {
     let result = serve_prometheus(
         deps.as_mut(),
         env.clone(),
-        &hotkey_account_id,
+        hotkey_account_id,
         netuid,
         version,
         ip,

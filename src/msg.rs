@@ -3,7 +3,7 @@ use cosmwasm_std::{Addr, CosmosMsg, Empty};
 
 #[cw_serde]
 pub struct InstantiateMsg {
-    pub stakes: Vec<(Addr, Vec<(Addr, (u64, u16))>)>,
+    pub stakes: Vec<(String, Vec<(String, (u64, u16))>)>,
     pub balances_issuance: u64,
 }
 
@@ -19,15 +19,15 @@ pub enum ExecuteMsg {
         version_key: u64,
     },
     BecomeDelegate {
-        hotkey: Addr,
+        hotkey: String,
         take: u16,
     },
     AddStake {
-        hotkey: Addr,
+        hotkey: String,
         amount_staked: u64,
     },
     RemoveStake {
-        hotkey: Addr,
+        hotkey: String,
         amount_unstaked: u64,
     },
     ServeAxon {
@@ -52,15 +52,15 @@ pub enum ExecuteMsg {
         block_number: u64,
         nonce: u64,
         work: Vec<u8>,
-        hotkey: Addr,
-        coldkey: Addr,
+        hotkey: String,
+        coldkey: String,
     },
     RootRegister {
-        hotkey: Addr,
+        hotkey: String,
     },
     BurnedRegister {
         netuid: u16,
-        hotkey: Addr,
+        hotkey: String,
     },
 
     RegisterNetwork {},
@@ -70,8 +70,8 @@ pub enum ExecuteMsg {
     // Faucet { block_number: u64, nonce: u64, work: Vec<u8> },
     SudoRegister {
         netuid: u16,
-        hotkey: Addr,
-        coldkey: Addr,
+        hotkey: String,
+        coldkey: String,
         stake: u64,
         balance: u64,
     },
