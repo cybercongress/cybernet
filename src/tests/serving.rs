@@ -1,3 +1,5 @@
+use cosmwasm_std::Addr;
+
 use crate::serving::{get_axon_info, get_prometheus_info, is_valid_ip_address, is_valid_ip_type};
 use crate::test_helpers::{
     add_network, instantiate_contract, register_ok_neuron, run_step_to_block, serve_axon,
@@ -5,7 +7,6 @@ use crate::test_helpers::{
 };
 use crate::utils::set_serving_rate_limit;
 use crate::ContractError;
-use cosmwasm_std::Addr;
 
 mod test {
     use std::net::{Ipv4Addr, Ipv6Addr};
@@ -289,13 +290,17 @@ fn test_axon_invalid_port() {
     let placeholder2: u8 = 0;
 
     add_network(&mut deps.storage, netuid, tempo, modality);
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id,
-        "addr66",
-        0,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id,
+            "addr66",
+            0,
+        )
+        .is_ok(),
+        true
     );
 
     step_block(deps.as_mut(), &mut env).unwrap(); // Go to block 1
@@ -330,13 +335,17 @@ fn test_prometheus_serving_ok() {
     let modality: u16 = 0;
 
     add_network(&mut deps.storage, netuid, tempo, modality);
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id,
-        "addr66",
-        0,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id,
+            "addr66",
+            0,
+        )
+        .is_ok(),
+        true
     );
 
     let result = serve_prometheus(
@@ -372,13 +381,17 @@ fn test_prometheus_serving_set_metadata_update() {
     let modality: u16 = 0;
 
     add_network(&mut deps.storage, netuid, tempo, modality);
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id,
-        "addr66",
-        0,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id,
+            "addr66",
+            0,
+        )
+        .is_ok(),
+        true
     );
 
     set_serving_rate_limit(&mut deps.storage, netuid, 0);
@@ -440,13 +453,17 @@ fn test_prometheus_serving_rate_limit_exceeded() {
     let modality: u16 = 0;
 
     add_network(&mut deps.storage, netuid, tempo, modality);
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id,
-        "addr66",
-        0,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id,
+            "addr66",
+            0,
+        )
+        .is_ok(),
+        true
     );
     step_block(deps.as_mut(), &mut env).unwrap(); // Go to block 1
 
@@ -533,13 +550,17 @@ fn test_prometheus_invalid_port() {
     let modality: u16 = 0;
 
     add_network(&mut deps.storage, netuid, tempo, modality);
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id,
-        "addr66",
-        0,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id,
+            "addr66",
+            0,
+        )
+        .is_ok(),
+        true
     );
     step_block(deps.as_mut(), &mut env).unwrap(); // Go to block 1
 
@@ -558,35 +579,26 @@ fn test_prometheus_invalid_port() {
 
 #[test]
 fn test_serving_is_valid_ip_type_ok_ipv4() {
-    let (mut deps, mut env) = instantiate_contract();
-
     assert_eq!(is_valid_ip_type(4), true);
 }
 
 #[test]
 fn test_serving_is_valid_ip_type_ok_ipv6() {
-    let (mut deps, mut env) = instantiate_contract();
-
     assert_eq!(is_valid_ip_type(6), true);
 }
 
 #[test]
 fn test_serving_is_valid_ip_type_nok() {
-    let (mut deps, mut env) = instantiate_contract();
-
     assert_eq!(is_valid_ip_type(10), false);
 }
 
 #[test]
 fn test_serving_is_valid_ip_address_ipv4() {
-    let (mut deps, mut env) = instantiate_contract();
     assert_eq!(is_valid_ip_address(4, test::ipv4(8, 8, 8, 8)), true);
 }
 
 #[test]
 fn test_serving_is_valid_ip_address_ipv6() {
-    let (mut deps, mut env) = instantiate_contract();
-
     assert_eq!(
         is_valid_ip_address(6, test::ipv6(1, 2, 3, 4, 5, 6, 7, 8)),
         true
@@ -599,8 +611,6 @@ fn test_serving_is_valid_ip_address_ipv6() {
 
 #[test]
 fn test_serving_is_invalid_ipv4_address() {
-    let (mut deps, mut env) = instantiate_contract();
-
     assert_eq!(is_valid_ip_address(4, test::ipv4(0, 0, 0, 0)), false);
     assert_eq!(
         is_valid_ip_address(4, test::ipv4(255, 255, 255, 255)),
@@ -615,8 +625,6 @@ fn test_serving_is_invalid_ipv4_address() {
 
 #[test]
 fn test_serving_is_invalid_ipv6_address() {
-    let (mut deps, mut env) = instantiate_contract();
-
     assert_eq!(
         is_valid_ip_address(6, test::ipv6(0, 0, 0, 0, 0, 0, 0, 0)),
         false

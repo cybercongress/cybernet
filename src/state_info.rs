@@ -1,3 +1,6 @@
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Order, StdResult, Storage};
+
 use crate::state::{
     AxonInfo, PrometheusInfo, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
     ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS,
@@ -18,8 +21,6 @@ use crate::state::{
     USED_WORK, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST, WEIGHTS,
     WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Order, StdResult, Storage};
 
 #[cw_serde]
 pub struct StateInfo {

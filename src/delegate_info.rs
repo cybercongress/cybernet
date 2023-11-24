@@ -1,7 +1,7 @@
 use crate::staking::{
     get_owning_coldkey_for_hotkey, get_stake_for_coldkey_and_hotkey, get_total_stake_for_hotkey,
 };
-use crate::state::{DELEGATES, STAKE, TEMPO};
+use crate::state::{DELEGATES, STAKE};
 use crate::uids::{get_registered_networks_for_hotkey, get_uid_for_net_and_hotkey};
 use crate::utils::{get_emission_for_uid, get_tempo, get_validator_permit_for_uid};
 use cosmwasm_schema::cw_serde;

@@ -13,12 +13,12 @@ use crate::test_helpers::{
 };
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n};
 use crate::utils::{
-    do_sudo_set_max_allowed_validators, get_activity_cutoff, get_consensus_for_uid,
-    get_dividends_for_uid, get_emission_for_uid, get_incentive_for_uid, get_max_allowed_uids,
-    get_max_allowed_validators, get_rank_for_uid, get_trust_for_uid, get_validator_permit_for_uid,
-    set_activity_cutoff, set_difficulty, set_max_allowed_uids, set_max_allowed_validators,
-    set_max_registrations_per_block, set_max_weight_limit, set_min_allowed_weights,
-    set_min_difficulty, set_target_registrations_per_interval, set_weights_set_rate_limit,
+    get_activity_cutoff, get_consensus_for_uid, get_dividends_for_uid, get_emission_for_uid,
+    get_incentive_for_uid, get_max_allowed_uids, get_max_allowed_validators, get_rank_for_uid,
+    get_trust_for_uid, get_validator_permit_for_uid, set_activity_cutoff, set_difficulty,
+    set_max_allowed_uids, set_max_allowed_validators, set_max_registrations_per_block,
+    set_max_weight_limit, set_min_allowed_weights, set_min_difficulty,
+    set_target_registrations_per_interval, set_weights_set_rate_limit,
 };
 use cosmwasm_std::testing::mock_info;
 use cosmwasm_std::{Addr, Api, Deps, DepsMut, Env, Storage};
@@ -2260,8 +2260,6 @@ fn test_zero_weights() {
 #[test]
 #[cfg(not(tarpaulin))]
 fn test_validator_permits() {
-    let (mut deps, mut env) = instantiate_contract();
-
     let netuid: u16 = 2;
     let tempo: u16 = u16::MAX - 1; // high tempo to skip automatic epochs in on_initialize, use manual epochs instead
     for interleave in 0..3 {

@@ -1,12 +1,13 @@
+use cosmwasm_std::{Addr, Api, Order, StdError, StdResult, Storage};
+
 use crate::staking::unstake_all_coldkeys_from_hotkey_account;
 use crate::state::{
     ACTIVE, BLOCK_AT_REGISTRATION, BONDS, CONSENSUS, DIVIDENDS, EMISSION, INCENTIVE,
-    IS_NETWORK_MEMBER, KEYS, LAST_UPDATE, PRUNING_SCORES, RANK, SUBNETWORK_N, TOTAL_COLDKEY_STAKE,
-    TOTAL_HOTKEY_STAKE, TRUST, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS,
+    IS_NETWORK_MEMBER, KEYS, LAST_UPDATE, PRUNING_SCORES, RANK, SUBNETWORK_N, TOTAL_HOTKEY_STAKE,
+    TRUST, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS,
 };
 use crate::utils::set_active_for_uid;
 use crate::ContractError;
-use cosmwasm_std::{Addr, Api, Order, StdError, StdResult, Storage};
 
 pub fn get_subnetwork_n(store: &dyn Storage, netuid: u16) -> u16 {
     SUBNETWORK_N.load(store, netuid.clone()).unwrap()
@@ -122,7 +123,7 @@ pub fn append_neuron(
     LAST_UPDATE.update(store, netuid.clone(), |vec| -> StdResult<_> {
         match vec {
             Some(mut v) => {
-                v.push(block_number);
+                v.push(0);
                 Ok(v)
             }
             None => Ok(vec![0]),

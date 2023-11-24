@@ -1,3 +1,6 @@
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Order, StdResult, Storage};
+
 use crate::root::if_subnet_exist;
 use crate::serving::{get_axon_info, get_prometheus_info};
 use crate::state::{AxonInfo, PrometheusInfo, BONDS, OWNER, STAKE, WEIGHTS};
@@ -7,8 +10,6 @@ use crate::utils::{
     get_incentive_for_uid, get_last_update_for_uid, get_pruning_score_for_uid, get_rank_for_uid,
     get_trust_for_uid, get_validator_permit_for_uid, get_validator_trust_for_uid,
 };
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
 
 #[cw_serde]
 pub struct NeuronInfo {

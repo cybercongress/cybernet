@@ -1,3 +1,7 @@
+use std::ops::Deref;
+
+use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, Storage};
+
 use crate::root::if_subnet_exist;
 use crate::state::{
     ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP,
@@ -17,9 +21,6 @@ use crate::state::{
 };
 use crate::uids::get_subnetwork_n;
 use crate::ContractError;
-use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, Storage};
-use primitive_types::U256;
-use std::ops::Deref;
 
 pub fn ensure_subnet_owner_or_root(
     store: &dyn Storage,
@@ -397,7 +398,7 @@ pub fn set_last_tx_block(store: &mut dyn Storage, key: &Addr, block: u64) {
 }
 
 pub fn get_last_tx_block(store: &dyn Storage, key: &Addr) -> u64 {
-    LAST_TX_BLOCK.load(store, key).unwrap()
+    LAST_TX_BLOCK.load(store, key).unwrap_or_default()
 }
 
 pub fn exceeds_tx_rate_limit(store: &dyn Storage, prev_tx_block: u64, current_block: u64) -> bool {

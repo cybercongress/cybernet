@@ -1,11 +1,10 @@
-use crate::block_step::block_step;
-use crate::delegate_info::{get_delegate, get_delegated, get_delegates};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
-// use cw2::set_contract_version;
 
+use crate::block_step::block_step;
+use crate::delegate_info::{get_delegate, get_delegated, get_delegates};
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 use crate::neuron_info::{get_neuron, get_neuron_lite, get_neurons, get_neurons_lite};
@@ -16,27 +15,25 @@ use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys}
 use crate::staking::{
     do_add_stake, do_become_delegate, do_remove_stake, increase_stake_on_coldkey_hotkey_account,
 };
-use crate::state_info::get_state_info;
-
 use crate::state::{
-    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ALLOW_FAUCET, BLOCKS_SINCE_LAST_STEP,
-    BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
+    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, ALLOW_FAUCET,
+    BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
     BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DIFFICULTY, DIVIDENDS, EMISSION,
     EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, IS_NETWORK_MEMBER, KAPPA, KEYS,
     LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN,
-    MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, NETWORKS_ADDED,
-    NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
-    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS, NETWORK_MIN_LOCK_COST,
-    NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
-    OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK,
-    RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
-    ROOT, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_OWNER, SUBNET_OWNER_CUT,
-    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE,
+    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN,
+    MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
+    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS,
+    NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT,
+    NETWORK_REGISTRATION_ALLOWED, OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
+    PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK,
+    REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT, SUBNETWORK_N, SUBNET_LIMIT,
+    SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO,
     TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS, VALIDATOR_PERMIT,
     VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
+use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
-use crate::uids::{get_subnetwork_n, get_uid_for_net_and_hotkey};
 use crate::utils::{
     do_sudo_set_activity_cutoff, do_sudo_set_adjustment_alpha, do_sudo_set_adjustment_interval,
     do_sudo_set_block_emission, do_sudo_set_bonds_moving_average, do_sudo_set_default_take,
@@ -52,12 +49,11 @@ use crate::utils::{
     do_sudo_set_target_registrations_per_interval, do_sudo_set_tempo, do_sudo_set_total_issuance,
     do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid,
     do_sudo_set_validator_prune_len, do_sudo_set_weights_set_rate_limit,
-    do_sudo_set_weights_version_key, get_max_weight_limit,
+    do_sudo_set_weights_version_key,
 };
-use crate::weights::{
-    check_len_uids_within_allowed, check_length, do_set_weights, get_network_weights,
-    max_weight_limited,
-};
+use crate::weights::{do_set_weights, get_network_weights};
+
+// use cw2::set_contract_version;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "cybernet";
@@ -73,7 +69,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     ROOT.save(deps.storage, &info.sender)?;
-    ALLOW_FAUCET.save(deps.storage, &true)?;
+    ALLOW_FAUCET.save(deps.storage, &false)?;
 
     // TODO remove from InstantiateMsg
     // // Set initial total issuance from balances
@@ -84,18 +80,18 @@ pub fn instantiate(
 
     SUBNET_LIMIT.save(deps.storage, &16)?;
     NETWORK_IMMUNITY_PERIOD.save(deps.storage, &7200)?;
-    BLOCK_EMISSION.save(deps.storage, &1_000_000)?;
+    BLOCK_EMISSION.save(deps.storage, &1_000_000_000)?;
 
     NETWORK_MIN_ALLOWED_UIDS.save(deps.storage, &0)?;
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
 
     DEFAULT_TAKE.save(deps.storage, &11_796)?;
-    TX_RATE_LIMIT.save(deps.storage, &0)?;
+    TX_RATE_LIMIT.save(deps.storage, &1000)?;
 
-    NETWORK_LAST_LOCK_COST.save(deps.storage, &0)?;
-    NETWORK_MIN_LOCK_COST.save(deps.storage, &0)?;
-    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &1)?;
+    NETWORK_LAST_LOCK_COST.save(deps.storage, &100_000_000_000)?;
+    NETWORK_MIN_LOCK_COST.save(deps.storage, &100_000_000_000)?;
+    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &2)?; // test value, change to 14 * 7200;
 
     // -- Root network initialization --
 
@@ -137,14 +133,20 @@ pub fn instantiate(
     SERVING_RATE_LIMIT.save(deps.storage, root_netuid, &50)?;
     DIFFICULTY.save(deps.storage, root_netuid, &10_000_000)?;
     IMMUNITY_PERIOD.save(deps.storage, root_netuid, &7200)?;
-
+    POW_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, root_netuid, &0)?;
+    BURN_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, root_netuid, &0)?;
+    ADJUSTMENTS_ALPHA.save(deps.storage, root_netuid, &0)?;
+    MIN_DIFFICULTY.save(deps.storage, root_netuid, &1)?;
+    MAX_DIFFICULTY.save(deps.storage, root_netuid, &1000000)?;
+    EMISSION_VALUES.save(deps.storage, root_netuid, &0)?;
+    NETWORK_LAST_REGISTERED.save(deps.storage, &0)?;
     TOTAL_NETWORKS.save(deps.storage, &1)?;
 
     // -- Subnetwork 1 initialization --
 
     // Subnet config values
     let netuid: u16 = 1;
-    let tempo = 1;
+    let tempo = 10;
     let max_uids = 4096;
 
     SUBNET_OWNER.save(deps.storage, netuid, &info.sender)?;
@@ -181,97 +183,30 @@ pub fn instantiate(
     RHO.save(deps.storage, netuid, &30)?;
     RAO_RECYCLED_FOR_REGISTRATION.save(deps.storage, netuid, &0)?;
     SERVING_RATE_LIMIT.save(deps.storage, netuid, &50)?;
+    ADJUSTMENTS_ALPHA.save(deps.storage, netuid, &0)?;
+    MIN_DIFFICULTY.save(deps.storage, root_netuid, &1)?;
+    MAX_DIFFICULTY.save(deps.storage, root_netuid, &1000000)?;
+    SUBNET_LOCKED.save(deps.storage, root_netuid, &0)?;
+    NETWORK_REGISTERED_AT.save(deps.storage, netuid, &env.block.height)?;
+    SUBNETWORK_N.save(deps.storage, netuid, &0)?;
+    SUBNET_LOCKED.save(deps.storage, netuid, &0)?;
 
-    let mut next_uid = 0;
+    RANK.save(deps.storage, netuid, &vec![])?;
+    TRUST.save(deps.storage, netuid, &vec![])?;
+    ACTIVE.save(deps.storage, netuid, &vec![])?;
+    EMISSION.save(deps.storage, netuid, &vec![])?;
+    CONSENSUS.save(deps.storage, netuid, &vec![])?;
+    INCENTIVE.save(deps.storage, netuid, &vec![])?;
+    DIVIDENDS.save(deps.storage, netuid, &vec![])?;
+    LAST_UPDATE.save(deps.storage, netuid, &vec![])?;
+    PRUNING_SCORES.save(deps.storage, netuid, &vec![])?;
+    VALIDATOR_TRUST.save(deps.storage, netuid, &vec![])?;
+    VALIDATOR_PERMIT.save(deps.storage, netuid, &vec![])?;
 
-    let action = |vec: Option<Vec<u16>>| -> StdResult<_> {
-        match vec {
-            Some(mut v) => {
-                v.push(0);
-                Ok(v)
-            }
-            None => Ok(vec![0]),
-        }
-    };
-    for (coldkey_address, hotkeys) in msg.stakes.iter() {
-        let coldkey = deps.api.addr_validate(&coldkey_address)?;
-        for (hotkey_address, stake_uid) in hotkeys.iter() {
-            let hotkey = deps.api.addr_validate(&hotkey_address)?;
-            let (stake, uid) = stake_uid;
-            RANK.update(deps.storage, netuid.clone(), action)?;
-            TRUST.update(deps.storage, netuid.clone(), action)?;
-            ACTIVE.update(deps.storage, netuid.clone(), |vec| -> StdResult<_> {
-                match vec {
-                    Some(mut v) => {
-                        v.push(true);
-                        Ok(v)
-                    }
-                    None => Ok(vec![true]),
-                }
-            })?;
-            EMISSION.update(deps.storage, netuid.clone(), |vec| -> StdResult<_> {
-                match vec {
-                    Some(mut v) => {
-                        v.push(0);
-                        Ok(v)
-                    }
-                    None => Ok(vec![0]),
-                }
-            })?;
-            CONSENSUS.update(deps.storage, netuid.clone(), action)?;
-            INCENTIVE.update(deps.storage, netuid.clone(), action)?;
-            DIVIDENDS.update(deps.storage, netuid.clone(), action)?;
-            LAST_UPDATE.update(deps.storage, netuid.clone(), |vec| -> StdResult<_> {
-                match vec {
-                    Some(mut v) => {
-                        v.push(0);
-                        Ok(v)
-                    }
-                    None => Ok(vec![0]),
-                }
-            })?;
-            PRUNING_SCORES.update(deps.storage, netuid.clone(), action)?;
-            VALIDATOR_TRUST.update(deps.storage, netuid.clone(), action)?;
-            VALIDATOR_PERMIT.update(deps.storage, netuid.clone(), |vec| -> StdResult<_> {
-                match vec {
-                    Some(mut v) => {
-                        v.push(false);
-                        Ok(v)
-                    }
-                    None => Ok(vec![false]),
-                }
-            })?;
-            KEYS.save(deps.storage, (netuid.clone(), uid.clone()), &hotkey.clone())?; // Make hotkey - uid association.
-            UIDS.save(deps.storage, (netuid.clone(), &hotkey), &uid.clone())?; // Make uid - hotkey association.
-            BLOCK_AT_REGISTRATION.save(
-                deps.storage,
-                (netuid.clone(), uid.clone()),
-                &env.block.height,
-            )?;
-            IS_NETWORK_MEMBER.save(deps.storage, (&hotkey, netuid), &true)?;
-            OWNER.save(deps.storage, &hotkey, &coldkey)?;
-
-            increase_stake_on_coldkey_hotkey_account(
-                deps.storage,
-                &coldkey,
-                &hotkey,
-                stake.clone(),
-            );
-
-            next_uid += 1;
-        }
-    }
-
-    // Set correct length for Subnet neurons
-    SUBNETWORK_N.save(deps.storage, netuid, &next_uid)?;
-
-    // Increment the number of total networks.
     TOTAL_NETWORKS.update(deps.storage, |mut n| -> StdResult<_> {
         n += 1;
         Ok(n)
     })?;
-
-    NETWORK_LAST_REGISTERED.save(deps.storage, &env.block.height)?;
 
     Ok(Response::default().add_attribute("action", "instantiate"))
 }

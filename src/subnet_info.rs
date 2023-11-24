@@ -1,3 +1,6 @@
+use cosmwasm_schema::cw_serde;
+use cosmwasm_std::{Addr, Deps, Order, StdResult};
+
 use crate::root::if_subnet_exist;
 use crate::state::{
     ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
@@ -8,8 +11,6 @@ use crate::state::{
     WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 use crate::uids::get_subnetwork_n;
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Deps, Order, StdResult};
 
 #[cw_serde]
 pub struct SubnetInfo {
@@ -135,7 +136,7 @@ pub fn get_subnet_hyperparams(deps: Deps, netuid: u16) -> StdResult<Option<Subne
 
     let rho = RHO.load(deps.storage, netuid)?;
     let kappa = KAPPA.load(deps.storage, netuid)?;
-    let difficulty = DIFFICULTY.load(deps.storage, netuid)?;
+    // let difficulty = DIFFICULTY.load(deps.storage, netuid)?;
     let immunity_period = IMMUNITY_PERIOD.load(deps.storage, netuid)?;
     let min_allowed_weights = MIN_ALLOWED_WEIGHTS.load(deps.storage, netuid)?;
     let max_weights_limit = MAX_WEIGHTS_LIMIT.load(deps.storage, netuid)?;

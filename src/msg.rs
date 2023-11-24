@@ -1,11 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, CosmosMsg, Empty};
 
 #[cw_serde]
-pub struct InstantiateMsg {
-    pub stakes: Vec<(String, Vec<(String, (u64, u16))>)>,
-    pub balances_issuance: u64,
-}
+pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {

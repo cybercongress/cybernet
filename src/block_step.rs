@@ -15,7 +15,6 @@ use crate::state::{
 };
 use crate::utils::get_blocks_since_last_step;
 use crate::ContractError;
-use cosmwasm_std::StdError::GenericErr;
 use cosmwasm_std::{Addr, Api, DepsMut, Env, Order, Response, StdResult, Storage};
 use std::ops::Add;
 use substrate_fixed::types::I110F18;
@@ -62,10 +61,14 @@ pub fn blocks_until_next_epoch(netuid: u16, tempo: u16, block_number: u64) -> u6
     if tempo == 0 {
         return 1000;
     }
+
+    //TODO revisit this
     let blocks_until = tempo as u64 - (block_number + netuid as u64) % (tempo as u64 + 1);
+
+    // let blocks_until = (block_number + netuid as u64) % (tempo as u64 + 1);
     // println!("until {:?} netuid {:?} tempo {:?} block {:?}", netuid, tempo, block_number, blocks_until);
     // return tempo as u64 - (block_number + netuid as u64 + 1) % (tempo as u64 + 1);
-    // TODO revisit this
+
     blocks_until
 }
 
