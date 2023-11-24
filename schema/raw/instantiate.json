@@ -2,59 +2,5 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "InstantiateMsg",
   "type": "object",
-  "required": [
-    "balances_issuance",
-    "stakes"
-  ],
-  "properties": {
-    "balances_issuance": {
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
-    },
-    "stakes": {
-      "type": "array",
-      "items": {
-        "type": "array",
-        "items": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "array",
-              "items": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "array",
-                  "items": [
-                    {
-                      "type": "integer",
-                      "format": "uint64",
-                      "minimum": 0.0
-                    },
-                    {
-                      "type": "integer",
-                      "format": "uint16",
-                      "minimum": 0.0
-                    }
-                  ],
-                  "maxItems": 2,
-                  "minItems": 2
-                }
-              ],
-              "maxItems": 2,
-              "minItems": 2
-            }
-          }
-        ],
-        "maxItems": 2,
-        "minItems": 2
-      }
-    }
-  },
   "additionalProperties": false
 }
