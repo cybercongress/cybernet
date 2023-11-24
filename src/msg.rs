@@ -1,11 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, CosmosMsg, Empty};
 
 #[cw_serde]
-pub struct InstantiateMsg {
-    pub stakes: Vec<(String, Vec<(String, (u64, u16))>)>,
-    pub balances_issuance: u64,
-}
+pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -260,6 +256,9 @@ pub enum QueryMsg {
     // TODO added for debugging, remove later
     #[returns(Vec<Vec<u16>>)]
     GetWeights { netuid: u16 },
+
+    #[returns(crate::state_info::StateInfo)]
+    GetState {},
 }
 
 #[cw_serde]

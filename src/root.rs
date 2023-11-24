@@ -202,7 +202,6 @@ pub fn set_emission_values(
             "set netuid:{:?} emission:{:?}",
             netuid_i, emission[i]
         ));
-        // EmissionValues::<T>::insert(*netuid_i, emission[i]);
         EMISSION_VALUES.save(store, *netuid_i, &emission[i])?;
     }
     Ok(())
@@ -313,7 +312,7 @@ pub fn root_epoch(
     // --- 4. Determines the total block emission across all the subnetworks. This is the
     // value which will be distributed based on the computation below.
     let block_emission: I64F64 = I64F64::from_num(get_block_emission(store));
-    // api.debug(&format!("block_emission:\n{:?}\n", block_emission));
+    api.debug(&format!("block_emission:\n{:?}\n", block_emission));
 
     // --- 5. A collection of all registered hotkeys on the root network. Hotkeys
     // pairs with network UIDs and stake values.
@@ -335,17 +334,17 @@ pub fn root_epoch(
         stake_i64[*uid_i as usize] = I64F64::from_num(get_total_stake_for_hotkey(store, &hotkey));
     }
     inplace_normalize_64(&mut stake_i64);
-    // api.debug(&format!("S:\n{:?}\n", &stake_i64));
+    api.debug(&format!("S:\n{:?}\n", &stake_i64));
 
     // --- 8. Retrieves the network weights in a 2D Vector format. Weights have shape
     // n x k where is n is the number of registered peers and k is the number of subnets.
     let weights: Vec<Vec<I64F64>> = get_root_weights(store, api);
-    // api.debug(&format!("W:\n{:?}\n", &weights));
+    api.debug(&format!("W:\n{:?}\n", &weights));
 
     // --- 9. Calculates the rank of networks. Rank is a product of weights and stakes.
     // Ranks will have shape k, a score for each subnet.
     let ranks: Vec<I64F64> = matmul_64(&weights, &stake_i64);
-    // api.debug(&format!("R:\n{:?}\n", &ranks));
+    api.debug(&format!("R:\n{:?}\n", &ranks));
 
     // --- 10. Calculates the trust of networks. Trust is a sum of all stake with weights > 0.
     // Trust will have shape k, a score for each subnet.
@@ -362,8 +361,8 @@ pub fn root_epoch(
         }
     }
 
-    // api.debug(&format!("T_before normalization:\n{:?}\n", &trust));
-    // api.debug(&format!("Total_stake:\n{:?}\n", &total_stake));
+    api.debug(&format!("T_before normalization:\n{:?}\n", &trust));
+    api.debug(&format!("Total_stake:\n{:?}\n", &total_stake));
 
     if total_stake == 0 {
         return Err(ContractError::Std(GenericErr {
@@ -382,7 +381,7 @@ pub fn root_epoch(
 
     // --- 11. Calculates the consensus of networks. Consensus is a sigmoid normalization of the trust scores.
     // Consensus will have shape k, a score for each subnet.
-    // api.debug(&format!("T:\n{:?}\n", &trust));
+    api.debug(&format!("T:\n{:?}\n", &trust));
     let one = I64F64::from_num(1);
     let mut consensus = vec![I64F64::from_num(0); total_networks as usize];
     for (idx, trust_score) in trust.iter_mut().enumerate() {
@@ -400,7 +399,7 @@ pub fn root_epoch(
         *emission = consensus[idx] * ranks[idx];
     }
     inplace_normalize_64(&mut weighted_emission);
-    // api.debug(&format!("Ei64:\n{:?}\n", &weighted_emission));
+    api.debug(&format!("Ei64:\n{:?}\n", &weighted_emission));
 
     // -- 11. Converts the normalized 64-bit fixed point rank values to u64 for the final emission calculation.
     let emission_as_tao: Vec<I64F64> = weighted_emission
@@ -828,6 +827,8 @@ pub fn init_new_network(
     RHO.save(store, netuid, &30)?;
     RAO_RECYCLED_FOR_REGISTRATION.save(store, netuid, &0)?;
     SERVING_RATE_LIMIT.save(store, netuid, &50)?;
+    ADJUSTMENTS_ALPHA.save(store, netuid, &0)?;
+    LAST_UPDATE.save(store, netuid, &vec![])?;
 
     Ok(())
 }
@@ -911,6 +912,7 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     BURN_REGISTRATIONS_THIS_INTERVAL.remove(store, netuid);
 
     // --- 11. Add the balance back to the owner.
+    // send here
     add_balance_to_coldkey_account(&owner_coldkey, reserved_amount_as_bal);
     set_subnet_locked_balance(store, netuid, 0);
     SUBNET_OWNER.remove(store, netuid);
@@ -936,6 +938,7 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     SERVING_RATE_LIMIT.remove(store, netuid);
     MIN_DIFFICULTY.remove(store, netuid);
     MAX_DIFFICULTY.remove(store, netuid);
+    ADJUSTMENTS_ALPHA.remove(store, netuid);
 
     Ok(())
 }

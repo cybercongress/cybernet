@@ -1,6 +1,7 @@
-use crate::state::STAKE;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
+
+use crate::state::STAKE;
 
 #[cw_serde]
 pub struct StakeInfo {

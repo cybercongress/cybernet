@@ -8,9 +8,8 @@ use crate::staking::{
     remove_balance_from_coldkey_account,
 };
 use crate::state::{
-    ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, MAX_ALLOWED_UIDS,
-    POW_REGISTRATIONS_THIS_INTERVAL, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL,
-    TOTAL_ISSUANCE, UIDS, USED_WORK,
+    ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, POW_REGISTRATIONS_THIS_INTERVAL,
+    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, TOTAL_ISSUANCE, UIDS, USED_WORK,
 };
 use crate::uids::{append_neuron, get_subnetwork_n, replace_neuron};
 use crate::utils::{
@@ -518,6 +517,7 @@ pub fn do_registration(
         .add_attribute("hotkey", hotkey))
 }
 
+#[cfg(feature = "pow-faucet")]
 pub fn do_faucet(
     deps: DepsMut,
     env: Env,
@@ -575,6 +575,7 @@ pub fn do_faucet(
         "Faucet( coldkey:{:?} amount:{:?} ) ",
         coldkey, balance_to_add
     ));
+    // TODO Create send tokens msgs and add to response
 
     // --- 7. Ok and done.
     Ok(Response::default()
@@ -664,7 +665,7 @@ pub fn get_neuron_to_prune(
 pub fn hash_meets_difficulty(hash: &H256, difficulty: U256) -> bool {
     let bytes: &[u8] = &hash.as_bytes();
     let num_hash = U256::from(bytes);
-    let (value, overflowed) = num_hash.overflowing_mul(difficulty);
+    let (_, overflowed) = num_hash.overflowing_mul(difficulty);
 
     // log::trace!(
     //     target: LOG_TARGET,
@@ -679,7 +680,7 @@ pub fn hash_meets_difficulty(hash: &H256, difficulty: U256) -> bool {
     !overflowed
 }
 
-pub fn get_block_hash_from_u64(block_number: u64) -> H256 {
+pub fn get_block_hash_from_u64(_: u64) -> H256 {
     // TODO cosmwasm don't have api to access block hash, not possible to access hash because hash is result of execution
     // let block_number: T::BlockNumber = TryInto::<T::BlockNumber>::try_into(block_number)
     //     .ok()

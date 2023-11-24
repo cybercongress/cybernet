@@ -3,6 +3,7 @@ mod difficulty;
 mod epoch;
 mod neuron_info;
 mod registration;
+mod root;
 mod serving;
 mod uids;
 mod weights;

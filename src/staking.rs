@@ -1,9 +1,9 @@
+use std::ops::Deref;
+
 use cosmwasm_std::{ensure, Addr, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage};
-use std::ops::{Deref, DerefMut};
 
 use crate::state::{
-    DELEGATES, OWNER, STAKE, TEMPO, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE,
-    TOTAL_STAKE,
+    DELEGATES, OWNER, STAKE, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_STAKE,
 };
 use crate::utils::{exceeds_tx_rate_limit, get_last_tx_block, set_last_tx_block};
 use crate::ContractError;

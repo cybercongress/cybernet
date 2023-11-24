@@ -28,7 +28,10 @@ fn test_get_neuron_some() {
     let coldkey0 = "addr0";
 
     add_network(&mut deps.storage, netuid, tempo, modality);
-    register_ok_neuron(deps.as_mut(), env, netuid, &hotkey0, &coldkey0, 39420842);
+    assert_eq!(
+        register_ok_neuron(deps.as_mut(), env, netuid, &hotkey0, &coldkey0, 39420842).is_ok(),
+        true
+    );
 
     let neuron = get_neuron(&deps.storage, netuid, uid).unwrap();
     assert_ne!(neuron, None);
@@ -52,13 +55,17 @@ fn test_get_neurons_list() {
         let hotkey = Addr::unchecked((1000 + index).to_string());
         let coldkey = Addr::unchecked((2000 + index).to_string());
         let nonce: u64 = 39420842 + index;
-        register_ok_neuron(
-            deps.as_mut(),
-            env.clone(),
-            netuid,
-            hotkey.as_str(),
-            coldkey.as_str(),
-            nonce,
+        assert_eq!(
+            register_ok_neuron(
+                deps.as_mut(),
+                env.clone(),
+                netuid,
+                hotkey.as_str(),
+                coldkey.as_str(),
+                nonce,
+            )
+            .is_ok(),
+            true
         );
     }
 

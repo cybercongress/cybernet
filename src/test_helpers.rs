@@ -10,7 +10,10 @@ use crate::contract::{execute, instantiate, query};
 use crate::msg::ExecuteMsg;
 use crate::registration::create_work_for_block_number;
 use crate::root::init_new_network;
-use crate::utils::{get_difficulty_as_u64, set_difficulty, set_network_registration_allowed};
+use crate::utils::{
+    get_difficulty_as_u64, set_difficulty, set_network_registration_allowed,
+    set_weights_set_rate_limit,
+};
 use crate::ContractError;
 
 const CT_ADDR: &str = "contract0";
@@ -59,35 +62,33 @@ pub type TestDeps = OwnedDeps<MemoryStorageWithGas, MockApi, MockQuerier<Empty>>
 
 pub fn instantiate_contract() -> (TestDeps, Env) {
     let mut deps = mock_dependencies(&[]);
-    let msg = crate::msg::InstantiateMsg {
-        stakes: vec![
-            (ROOT.to_string(), vec![(ROOT.to_string(), (100, 1))]),
-            (ADDR1.to_string(), vec![(ADDR2.to_string(), (100, 1))]),
-            (ADDR3.to_string(), vec![(ADDR4.to_string(), (100, 1))]),
-        ],
-        balances_issuance: 300,
-    };
+    let msg = crate::msg::InstantiateMsg {};
 
     let mut env = mock_env();
     env.block.height = 1;
 
     let info = mock_info(ROOT, &[]);
     let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
-    root_register(deps.as_mut(), env.clone(), ROOT);
+    // root_register(deps.as_mut(), env.clone(), ROOT, ROOT);
     assert_eq!(res.messages.len(), 0);
+
+    assert_eq!(
+        execute(
+            deps.as_mut(),
+            env.clone(),
+            mock_info("ROOT", &[]),
+            ExecuteMsg::BlockStep {},
+        )
+        .is_ok(),
+        true
+    );
+
     (deps, env)
 }
 
 pub fn instantiate_contract_app(app: &mut App) -> Addr {
     let cn_id = app.store_code(cn_contract());
-    let msg = crate::msg::InstantiateMsg {
-        stakes: vec![
-            (ROOT.to_string(), vec![(ROOT.to_string(), (100, 1))]),
-            (ADDR1.to_string(), vec![(ADDR2.to_string(), (100, 1))]),
-            (ADDR3.to_string(), vec![(ADDR4.to_string(), (100, 1))]),
-        ],
-        balances_issuance: 300,
-    };
+    let msg = crate::msg::InstantiateMsg {};
 
     app.instantiate_contract(
         cn_id,
@@ -133,7 +134,7 @@ pub fn register_ok_neuron(
     hotkey: &str,
     coldkey: &str,
     start_nonce: u64,
-) {
+) -> Result<Response, ContractError> {
     let (nonce, work): (u64, Vec<u8>) = create_work_for_block_number(
         deps.as_ref().storage,
         netuid,
@@ -145,15 +146,16 @@ pub fn register_ok_neuron(
     let msg = ExecuteMsg::Register {
         netuid,
         block_number: env.block.height,
-        nonce: nonce,
-        work: work,
+        nonce,
+        work,
         hotkey: hotkey.to_string(),
         coldkey: coldkey.to_string(),
     };
 
     let info = mock_info(hotkey, &[]);
-    let res = execute(deps, env, info, msg);
-    assert_eq!(res.is_ok(), true);
+    let result = execute(deps, env, info, msg);
+
+    result
 }
 
 pub fn pow_register_ok_neuron(
@@ -195,14 +197,20 @@ pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: &st
     assert_eq!(res.is_ok(), true);
 }
 
-pub fn root_register(deps: DepsMut, env: Env, hotkey: &str) {
+pub fn root_register(
+    deps: DepsMut,
+    env: Env,
+    hotkey: &str,
+    coldkey: &str,
+) -> Result<Response, ContractError> {
     let msg = ExecuteMsg::RootRegister {
         hotkey: hotkey.to_string(),
     };
 
-    let info = mock_info(&ROOT, &[]);
-    let res = execute(deps, env, info, msg);
-    assert_eq!(res.is_ok(), true);
+    let info = mock_info(coldkey, &[]);
+    let result = execute(deps, env, info, msg);
+
+    result
 }
 
 pub fn burned_register_ok_neuron(
@@ -211,16 +219,44 @@ pub fn burned_register_ok_neuron(
     netuid: u16,
     hotkey: &str,
     coldkey: &str,
-) {
+) -> Result<Response, ContractError> {
     let msg = ExecuteMsg::BurnedRegister {
         netuid,
         hotkey: hotkey.to_string(),
     };
 
     let info = mock_info(coldkey, &[]);
-    let res = execute(deps, env, info, msg);
-    println!("{:?}", res);
-    assert_eq!(res.is_ok(), true);
+    let result = execute(deps, env, info, msg);
+
+    result
+}
+
+pub fn add_stake(
+    deps: DepsMut,
+    env: Env,
+    hotkey: &str,
+    coldkey: &str,
+    amount: u64,
+) -> Result<Response, ContractError> {
+    let msg = ExecuteMsg::AddStake {
+        hotkey: hotkey.to_string(),
+        amount_staked: amount,
+    };
+
+    // TODO Add funds here
+    let info = mock_info(coldkey, &[]);
+    let result = execute(deps, env, info, msg);
+
+    result
+}
+
+pub fn register_network(deps: DepsMut, env: Env, key: &str) -> Result<Response, ContractError> {
+    let msg = ExecuteMsg::RegisterNetwork {};
+
+    let info = mock_info(key, &[]);
+    let result = execute(deps, env, info, msg);
+
+    result
 }
 
 pub fn add_network_app(app: &mut App) -> u16 {
@@ -241,18 +277,30 @@ pub fn add_network_app(app: &mut App) -> u16 {
 pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: u16) {
     init_new_network(store, netuid, tempo).unwrap();
     set_difficulty(store, netuid, 1); // Reinitialize difficulty for tests mock
+    set_weights_set_rate_limit(store, netuid, 0);
     set_network_registration_allowed(store, netuid, true);
 }
 
 // TODO revisit block increasing logic before or after step
-pub fn step_block(deps: DepsMut, mut env: &mut Env) -> Result<Response, ContractError> {
+pub fn step_block(mut deps: DepsMut, mut env: &mut Env) -> Result<Response, ContractError> {
     env.block.height += 1;
     let result = execute(
-        deps,
+        deps.branch(),
         env.clone(),
         mock_info("ROOT", &[]),
         ExecuteMsg::BlockStep {},
     );
+
+    // let state = get_state_info(deps.storage);
+    // println!("{:?}", _serde_json::to_string(&state.unwrap()).unwrap());
+
+    // let mut buf = Vec::new();
+    // let formatter = _serde_json::ser::PrettyFormatter::with_indent(b"    ");
+    // let mut ser = _serde_json::Serializer::with_formatter(&mut buf, formatter);
+    // let obj = json!(&state.unwrap());
+    // obj.serialize(&mut ser).unwrap();
+    // println!("{}", String::from_utf8(buf).unwrap());
+
     result
 }
 

@@ -21,8 +21,8 @@ use crate::utils::{
     get_pruning_score_for_uid, get_rao_recycled, get_registrations_this_block,
     get_registrations_this_interval, get_target_registrations_per_interval, get_tempo,
     set_adjustment_interval, set_burn, set_difficulty, set_immunity_period, set_max_allowed_uids,
-    set_max_registrations_per_block, set_min_difficulty, set_network_registration_allowed,
-    set_pruning_score_for_uid, set_target_registrations_per_interval,
+    set_max_registrations_per_block, set_network_registration_allowed, set_pruning_score_for_uid,
+    set_target_registrations_per_interval,
 };
 use crate::ContractError;
 
@@ -32,7 +32,7 @@ use crate::ContractError;
 
 #[test]
 fn test_registration_difficulty() {
-    let (mut deps, env) = instantiate_contract();
+    let (deps, _) = instantiate_contract();
 
     assert_eq!(get_difficulty_as_u64(&deps.storage, 1), 10000000)
 }
@@ -237,24 +237,32 @@ fn test_burn_adjustment() {
     let hotkey_account_id_1 = "addr1";
     let coldkey_account_id_1 = "addr1";
     add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_1), 10000);
-    let result = burned_register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id_1,
-        coldkey_account_id_1,
+    assert_eq!(
+        burned_register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id_1,
+            coldkey_account_id_1,
+        )
+        .is_ok(),
+        true
     );
 
     // Register key 2.
     let hotkey_account_id_2 = "addr2";
     let coldkey_account_id_2 = "addr2";
     add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id_2), 10000);
-    let result = burned_register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id_2,
-        coldkey_account_id_2,
+    assert_eq!(
+        burned_register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id_2,
+            coldkey_account_id_2,
+        )
+        .is_ok(),
+        true
     );
 
     // We are over the number of regs allowed this interval.
@@ -773,21 +781,29 @@ fn test_registration_get_uid_to_prune_all_in_immunity_period() {
     let netuid: u16 = 2;
     add_network(&mut deps.storage, netuid, 0, 0);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr0",
-        "addr0",
-        39420842,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr0",
+            "addr0",
+            39420842,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr1",
-        "addr1",
-        12412392,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr1",
+            "addr1",
+            12412392,
+        )
+        .is_ok(),
+        true
     );
 
     set_pruning_score_for_uid(&mut deps.storage, &deps.api, netuid, 0, 100);
@@ -815,21 +831,29 @@ fn test_registration_get_uid_to_prune_none_in_immunity_period() {
     let netuid: u16 = 2;
     add_network(&mut deps.storage, netuid, 0, 0);
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr0",
-        "addr0",
-        39420842,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr0",
+            "addr0",
+            39420842,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr1",
-        "addr1",
-        12412392,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr1",
+            "addr1",
+            12412392,
+        )
+        .is_ok(),
+        true
     );
     set_pruning_score_for_uid(&mut deps.storage, &deps.api, netuid, 0, 100);
     set_pruning_score_for_uid(&mut deps.storage, &deps.api, netuid, 1, 110);
@@ -1068,7 +1092,7 @@ fn test_burn_registration_increase_recycled_rao() {
     let netuid2: u16 = 3;
 
     let hotkey_account_id = "addr1";
-    let coldkey_account_id = "addr667";
+    let _coldkey_account_id = "addr667";
 
     // Give funds for burn. 1000 TAO
     // let _ = Balances::deposit_creating(
@@ -1085,26 +1109,37 @@ fn test_burn_registration_increase_recycled_rao() {
     step_block(deps.as_mut(), &mut env).unwrap();
 
     let burn_amount = get_burn_as_u64(&deps.storage, netuid);
-    let result = burned_register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey_account_id,
-        hotkey_account_id,
+    assert_eq!(
+        burned_register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey_account_id,
+            hotkey_account_id,
+        )
+        .is_ok(),
+        true
     );
     assert_eq!(get_rao_recycled(&deps.storage, netuid), burn_amount);
 
     step_block(deps.as_mut(), &mut env).unwrap();
 
     let burn_amount2 = get_burn_as_u64(&deps.storage, netuid2);
-    burned_register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid2,
-        hotkey_account_id,
-        hotkey_account_id,
+    assert_eq!(
+        burned_register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid2,
+            hotkey_account_id,
+            hotkey_account_id,
+        )
+        .is_ok(),
+        true
     );
-    burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid2, "addr2", "addr2");
+    assert_eq!(
+        burned_register_ok_neuron(deps.as_mut(), env.clone(), netuid2, "addr2", "addr2").is_ok(),
+        true
+    );
     assert_eq!(get_rao_recycled(&deps.storage, netuid2), burn_amount2 * 2);
     // Validate netuid is not affected.
     assert_eq!(get_rao_recycled(&deps.storage, netuid), burn_amount)
@@ -1175,53 +1210,77 @@ fn test_full_pass_through() {
     assert_eq!(get_subnetwork_n(&deps.storage, netuid2), 0);
 
     // Registered the keys to all networks.
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid0,
-        hotkey0,
-        coldkey0,
-        39420842,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid0,
+            hotkey0,
+            coldkey0,
+            39420842,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid0,
-        hotkey1,
-        coldkey1,
-        12412392,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid0,
+            hotkey1,
+            coldkey1,
+            12412392,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid1,
-        hotkey0,
-        coldkey0,
-        21813123,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid1,
+            hotkey0,
+            coldkey0,
+            21813123,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid1,
-        hotkey1,
-        coldkey1,
-        25755207,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid1,
+            hotkey1,
+            coldkey1,
+            25755207,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid2,
-        hotkey0,
-        coldkey0,
-        251232207,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid2,
+            hotkey0,
+            coldkey0,
+            251232207,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid2,
-        hotkey1,
-        coldkey1,
-        159184122,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid2,
+            hotkey1,
+            coldkey1,
+            159184122,
+        )
+        .is_ok(),
+        true
     );
 
     // Check uids.
@@ -1318,29 +1377,41 @@ fn test_full_pass_through() {
     assert_eq!(get_subnetwork_n(&deps.storage, netuid2), 2);
 
     // Register the 3rd hotkey.
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid0,
-        hotkey2,
-        coldkey2,
-        59420842,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid0,
+            hotkey2,
+            coldkey2,
+            59420842,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid1,
-        hotkey2,
-        coldkey2,
-        31813123,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid1,
+            hotkey2,
+            coldkey2,
+            31813123,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid2,
-        hotkey2,
-        coldkey2,
-        451232207,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid2,
+            hotkey2,
+            coldkey2,
+            451232207,
+        )
+        .is_ok(),
+        true
     );
 
     // Check for replacement.

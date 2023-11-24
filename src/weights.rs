@@ -3,15 +3,10 @@
 // ==========================
 
 use cosmwasm_std::{ensure, Api, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage};
-use substrate_fixed::types::I32F32;
 
-use crate::epoch::get_weights;
 use crate::math::{check_vec_max_limited, vec_u16_max_upscale_to_u16};
 use crate::root::{contains_invalid_root_uids, get_root_netuid, if_subnet_exist};
-use crate::state::{
-    KEYS, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, WEIGHTS, WEIGHTS_SET_RATE_LIMIT,
-    WEIGHTS_VERSION_KEY,
-};
+use crate::state::{MIN_ALLOWED_WEIGHTS, WEIGHTS, WEIGHTS_VERSION_KEY};
 use crate::uids::{
     get_subnetwork_n, get_uid_for_net_and_hotkey, is_hotkey_registered_on_network,
     is_uid_exist_on_network,
@@ -114,7 +109,7 @@ pub fn do_set_weights(
     if netuid == get_root_netuid() {
         // --- 4.a. Ensure that the passed uids are valid for the network.
         ensure!(
-            contains_invalid_root_uids(deps.storage, deps.api, &uids),
+            !contains_invalid_root_uids(deps.storage, deps.api, &uids),
             ContractError::InvalidUid {}
         );
     } else {

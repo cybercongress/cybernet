@@ -66,29 +66,41 @@ fn test_registration_difficulty_adjustment() {
     let coldkey1 = "addr1000";
     let coldkey2 = "addr20000";
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey0,
-        coldkey0,
-        39420842,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey0,
+            coldkey0,
+            39420842,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey1,
-        coldkey1,
-        12412392,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey1,
+            coldkey1,
+            12412392,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        hotkey2,
-        coldkey2,
-        21813123,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            hotkey2,
+            coldkey2,
+            21813123,
+        )
+        .is_ok(),
+        true
     );
 
     assert_eq!(
@@ -127,29 +139,41 @@ fn test_registration_difficulty_adjustment() {
     ); // Target is default.
 
     // Register 3 more
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr1",
-        "addr1",
-        3942084,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr1",
+            "addr1",
+            3942084,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr101",
-        "addr1001",
-        1241239,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr101",
+            "addr1001",
+            1241239,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr2001",
-        "addr20001",
-        2181312,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr2001",
+            "addr20001",
+            2181312,
+        )
+        .is_ok(),
+        true
     );
     assert_eq!(
         get_hotkey_for_net_and_uid(&deps.storage, netuid, 0).unwrap(),
@@ -172,29 +196,41 @@ fn test_registration_difficulty_adjustment() {
     assert_eq!(get_registrations_this_interval(&deps.storage, netuid), 3); // Registrations this interval = 3
 
     // Register 3 more.
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr2",
-        "addr2",
-        394208420,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr2",
+            "addr2",
+            394208420,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr102",
-        "addr1002",
-        124123920,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr102",
+            "addr1002",
+            124123920,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr2002",
-        "addr20002",
-        218131230,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr2002",
+            "addr20002",
+            218131230,
+        )
+        .is_ok(),
+        true
     );
     assert_eq!(get_registrations_this_block(&deps.storage, netuid), 3); // Registrations have been erased.
 
@@ -225,37 +261,53 @@ fn test_registration_difficulty_adjustment() {
     assert_eq!(get_max_difficulty(&deps.storage, netuid), 10000);
     assert_eq!(get_difficulty_as_u64(&deps.storage, netuid), 5000);
     set_max_registrations_per_block(&mut deps.storage, netuid, 4);
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr3",
-        "addr3",
-        294208420,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr3",
+            "addr3",
+            294208420,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr103",
-        "addr1003",
-        824123920,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr103",
+            "addr1003",
+            824123920,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr2003",
-        "addr20003",
-        324123920,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr2003",
+            "addr20003",
+            324123920,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr2004",
-        "addr20004",
-        524123920,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr2004",
+            "addr20004",
+            524123920,
+        )
+        .is_ok(),
+        true
     );
     assert_eq!(get_registrations_this_interval(&deps.storage, netuid), 4);
     assert_eq!(
@@ -265,29 +317,41 @@ fn test_registration_difficulty_adjustment() {
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(get_difficulty_as_u64(&deps.storage, netuid), 5833); // Difficulty increased 5000 * ( 4 + 3 ) / (3 + 3) = 1.16 * 5000 = 5833
 
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr4",
-        "addr4",
-        124208420,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr4",
+            "addr4",
+            124208420,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr104",
-        "addr1004",
-        314123920,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr104",
+            "addr1004",
+            314123920,
+        )
+        .is_ok(),
+        true
     );
-    register_ok_neuron(
-        deps.as_mut(),
-        env.clone(),
-        netuid,
-        "addr2004",
-        "addr20004",
-        834123920,
+    assert_eq!(
+        register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
+            netuid,
+            "addr2004",
+            "addr20004",
+            834123920,
+        )
+        .is_ok(),
+        true
     );
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(get_difficulty_as_u64(&deps.storage, netuid), 5833); // Difficulty unchanged
