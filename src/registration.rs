@@ -21,7 +21,7 @@ use crate::utils::{
 use crate::ContractError;
 use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, StdResult, Storage};
 use primitive_types::{H256, U256};
-use sp_io::hashing::{keccak_256, sha2_256};
+use sp_core_hashing::{keccak_256, sha2_256};
 
 pub fn do_sudo_registration(
     deps: DepsMut,
