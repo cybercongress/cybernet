@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 pub const ROOT: Item<Addr> = Item::new("root");
 
+pub const DENOM: Item<String> = Item::new("denom");
+
 // --- ITEM ( percentage ) // TODO change to decimal
 // pub const SENATE_REQUIRED_STAKE_PERCENTAGE: Item<u64> = Item::new("senate_required_stake_percentage");
 

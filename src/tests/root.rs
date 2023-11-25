@@ -19,6 +19,7 @@ use crate::utils::{
     set_weights_set_rate_limit,
 };
 use crate::ContractError;
+use crate::state_info::get_state_info;
 
 #[test]
 fn test_root_register_network_exist() {
@@ -348,6 +349,8 @@ fn test_root_set_weights() {
 
     // TODO back to this
     // assert_eq!(get_pending_emission(&deps.storage, 9), 0);
+    let state = get_state_info(&deps.storage);
+    println!("{:?}", state)
 }
 
 // TODO FAILED

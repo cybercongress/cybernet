@@ -127,6 +127,7 @@ pub fn register_ok_neuron_app(
     assert_eq!(res.is_ok(), true);
 }
 
+
 pub fn register_ok_neuron(
     deps: DepsMut,
     env: Env,

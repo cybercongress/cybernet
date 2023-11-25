@@ -24,7 +24,7 @@ use crate::state::{
     POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION,
     REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, SERVING_RATE_LIMIT, SUBNETWORK_N,
     SUBNET_LIMIT, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST,
-    UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, DENOM,
 };
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, replace_neuron};
 use crate::utils::{
@@ -34,6 +34,7 @@ use crate::utils::{
     set_subnet_locked_balance,
 };
 use crate::ContractError;
+use cw_utils::must_pay;
 
 // Retrieves the unique identifier (UID) for the root network.
 //
@@ -625,6 +626,9 @@ pub fn user_add_network(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    let denom = DENOM.load(deps.storage)?;
+    let amount = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
+
     // --- 0. Ensure the caller is a signed user.
     let coldkey = info.sender;
 
@@ -640,17 +644,20 @@ pub fn user_add_network(
     let lock_amount: u64 = get_network_lock_cost(deps.storage, deps.api, env.block.height)?;
     // TODO revisit this
     // let lock_as_balance = u64_to_balance(lock_amount);
-    let lock_as_balance = 0;
+    // let lock_as_balance = 0;
     deps.api
         .debug(&format!("network lock_amount: {:?}", lock_amount));
+
+    ensure!(amount.u128() as u64 >= lock_amount, ContractError::NotEnoughBalanceToStake {});
+
     // ensure!(
     //         lock_as_balance.is_some(),
     //         Error::<T>::CouldNotConvertToBalance
     //     );
-    ensure!(
-        can_remove_balance_from_coldkey_account(&coldkey, lock_as_balance),
-        ContractError::NotEnoughBalanceToStake {}
-    );
+    // ensure!(
+    //     can_remove_balance_from_coldkey_account(&coldkey, lock_as_balance),
+    //     ContractError::NotEnoughBalanceToStake {}
+    // );
 
     // --- 4. Determine the netuid to register.
     let netuid_to_register: u16 = {
@@ -682,10 +689,10 @@ pub fn user_add_network(
     };
 
     // --- 5. Perform the lock operation.
-    ensure!(
-        remove_balance_from_coldkey_account(&coldkey, lock_as_balance) == true,
-        ContractError::BalanceWithdrawalError {}
-    );
+    // ensure!(
+    //     remove_balance_from_coldkey_account(&coldkey, lock_as_balance) == true,
+    //     ContractError::BalanceWithdrawalError {}
+    // );
     set_subnet_locked_balance(deps.storage, netuid_to_register, lock_amount);
     set_network_last_lock(deps.storage, lock_amount);
 
@@ -912,8 +919,8 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     BURN_REGISTRATIONS_THIS_INTERVAL.remove(store, netuid);
 
     // --- 11. Add the balance back to the owner.
-    // send here
-    add_balance_to_coldkey_account(&owner_coldkey, reserved_amount_as_bal);
+    // TODO create messages send here
+    // add_balance_to_coldkey_account(&owner_coldkey, reserved_amount_as_bal);
     set_subnet_locked_balance(store, netuid, 0);
     SUBNET_OWNER.remove(store, netuid);
 

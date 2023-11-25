@@ -5,6 +5,7 @@ pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    Empty {},
     // TODO move to sudo and call as module from sdk
     BlockStep {},
 
