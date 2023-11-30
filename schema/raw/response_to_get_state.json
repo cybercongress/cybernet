@@ -1,0 +1,1826 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StateInfo",
+  "type": "object",
+  "required": [
+    "active",
+    "activity_cutoff",
+    "adjustment_interval",
+    "adjustments_alpha",
+    "allow_faucet",
+    "axon_info",
+    "block_at_registration",
+    "blocks_since_last_step",
+    "bonds",
+    "bonds_moving_average",
+    "burn",
+    "burn_registrations_this_interval",
+    "consensus",
+    "default_take",
+    "difficulty",
+    "dividends",
+    "emission",
+    "emission_values",
+    "global_block_emission",
+    "global_used_work",
+    "hotkey_coldkey",
+    "hotkey_stake",
+    "immunity_period",
+    "incentive",
+    "is_network_member",
+    "kappa",
+    "keys",
+    "last_adjustment_block",
+    "last_mechanism_step_block",
+    "last_tx_block",
+    "last_update",
+    "loaded_emission",
+    "max_allowed_uids",
+    "max_allowed_validators",
+    "max_burn",
+    "max_difficulty",
+    "max_registration_per_block",
+    "max_weights_limit",
+    "min_allowed_weights",
+    "min_burn",
+    "min_difficulty",
+    "network_immunity_period",
+    "network_last_lock_cost",
+    "network_last_registered",
+    "network_lock_reduction_interval",
+    "network_min_allowed_uids",
+    "network_min_lock_cost",
+    "network_modality",
+    "network_rate_limit",
+    "network_registered_at",
+    "network_registration_allowed",
+    "networks_added",
+    "neurons_to_prunet_at_next_epoch",
+    "pending_emission",
+    "pow_registrations_this_interval",
+    "prometheus_info",
+    "pruning_scores",
+    "rank",
+    "rao_recycled_for_registration",
+    "registrations_this_block",
+    "registrations_this_interval",
+    "rho",
+    "root",
+    "scaling_law_power",
+    "serving_rate_limit",
+    "staked_hotkey_coldkey",
+    "subnet_limit",
+    "subnet_locked",
+    "subnet_owner",
+    "subnet_owner_cut",
+    "subnetwork_n",
+    "target_registrations_per_interval",
+    "tempo",
+    "total_coldkey_stake",
+    "total_hotkey_stake",
+    "total_issuance",
+    "total_networks",
+    "total_stake",
+    "trust",
+    "tx_rate_limit",
+    "uids",
+    "validator_permit",
+    "validator_prune_len",
+    "validator_trust",
+    "weights",
+    "weights_set_rate_limit",
+    "weights_version_key"
+  ],
+  "properties": {
+    "active": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "activity_cutoff": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "adjustment_interval": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "adjustments_alpha": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "allow_faucet": {
+      "type": "boolean"
+    },
+    "axon_info": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "$ref": "#/definitions/Addr"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "$ref": "#/definitions/AxonInfo"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "block_at_registration": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "blocks_since_last_step": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "bonds": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "bonds_moving_average": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "burn": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "burn_registrations_this_interval": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "consensus": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "default_take": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "difficulty": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "dividends": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "emission": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "emission_values": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "global_block_emission": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "global_used_work": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            }
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "hotkey_coldkey": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/definitions/Addr"
+          },
+          {
+            "$ref": "#/definitions/Addr"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "hotkey_stake": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/definitions/Addr"
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "immunity_period": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "incentive": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "is_network_member": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "type": "boolean"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "kappa": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "keys": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "$ref": "#/definitions/Addr"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "last_adjustment_block": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "last_mechanism_step_block": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "last_tx_block": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/definitions/Addr"
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "last_update": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "loaded_emission": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/Addr"
+                },
+                {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              ],
+              "maxItems": 3,
+              "minItems": 3
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "max_allowed_uids": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "max_allowed_validators": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "max_burn": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "max_difficulty": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "max_registration_per_block": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "max_weights_limit": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "min_allowed_weights": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "min_burn": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "min_difficulty": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "network_immunity_period": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "network_last_lock_cost": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "network_last_registered": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "network_lock_reduction_interval": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "network_min_allowed_uids": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "network_min_lock_cost": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "network_modality": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "network_rate_limit": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "network_registered_at": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "network_registration_allowed": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "boolean"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "networks_added": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "boolean"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "neurons_to_prunet_at_next_epoch": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "pending_emission": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "pow_registrations_this_interval": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "prometheus_info": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "$ref": "#/definitions/Addr"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "$ref": "#/definitions/PrometheusInfo"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "pruning_scores": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "rank": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "rao_recycled_for_registration": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "registrations_this_block": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "registrations_this_interval": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "rho": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "root": {
+      "$ref": "#/definitions/Addr"
+    },
+    "scaling_law_power": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "serving_rate_limit": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "staked_hotkey_coldkey": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "$ref": "#/definitions/Addr"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "subnet_limit": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "subnet_locked": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "subnet_owner": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "$ref": "#/definitions/Addr"
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "subnet_owner_cut": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "subnetwork_n": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "target_registrations_per_interval": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "tempo": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "total_coldkey_stake": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/definitions/Addr"
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "total_hotkey_stake": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/definitions/Addr"
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "total_issuance": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "total_networks": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "total_stake": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "trust": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "tx_rate_limit": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "uids": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "$ref": "#/definitions/Addr"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "validator_permit": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "validator_prune_len": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "validator_trust": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "weights": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "weights_set_rate_limit": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "weights_version_key": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "AxonInfo": {
+      "type": "object",
+      "required": [
+        "block",
+        "ip",
+        "ip_type",
+        "placeholder1",
+        "placeholder2",
+        "port",
+        "protocol",
+        "version"
+      ],
+      "properties": {
+        "block": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "ip": {
+          "type": "integer",
+          "format": "uint128",
+          "minimum": 0.0
+        },
+        "ip_type": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "placeholder1": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "placeholder2": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "protocol": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "PrometheusInfo": {
+      "type": "object",
+      "required": [
+        "block",
+        "ip",
+        "ip_type",
+        "port",
+        "version"
+      ],
+      "properties": {
+        "block": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "ip": {
+          "type": "integer",
+          "format": "uint128",
+          "minimum": 0.0
+        },
+        "ip_type": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}

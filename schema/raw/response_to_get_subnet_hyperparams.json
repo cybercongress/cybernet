@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SubnetHyperparams",
+  "type": "object",
+  "required": [
+    "activity_cutoff",
+    "adjustment_interval",
+    "bonds_moving_avg",
+    "immunity_period",
+    "kappa",
+    "max_burn",
+    "max_difficulty",
+    "max_regs_per_block",
+    "max_weights_limit",
+    "min_allowed_weights",
+    "min_burn",
+    "min_difficulty",
+    "registration_allowed",
+    "rho",
+    "target_regs_per_interval",
+    "tempo",
+    "weights_rate_limit",
+    "weights_version"
+  ],
+  "properties": {
+    "activity_cutoff": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "adjustment_interval": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "bonds_moving_avg": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "immunity_period": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "kappa": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "max_burn": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "max_difficulty": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "max_regs_per_block": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "max_weights_limit": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "min_allowed_weights": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "min_burn": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "min_difficulty": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "registration_allowed": {
+      "type": "boolean"
+    },
+    "rho": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "target_regs_per_interval": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "tempo": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "weights_rate_limit": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "weights_version": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  },
+  "additionalProperties": false
+}
