@@ -279,6 +279,27 @@ pub enum QueryMsg {
     #[returns(Option<u16>)]
     GetDelegateTake { hotkey: String },
 
+    #[returns(Option<u64>)]
+    GetBurn { netuid: u16 },
+
+    #[returns(Option<u64>)]
+    GetDifficulty { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetTempo { netuid: u16 },
+
+    #[returns(u16)]
+    GetTotalNetworks {},
+
+    #[returns(Vec<u16>)]
+    GetNetworksAdded {},
+
+    #[returns(u64)]
+    GetEmissionValueBySubnet { netuid: u16 },
+
+    #[returns(Vec<u16>)]
+    GetAllSubnetNetuids {},
+
     // TODO added for debugging, remove later
     #[returns(Vec<Vec<u16>>)]
     GetWeights { netuid: u16 },

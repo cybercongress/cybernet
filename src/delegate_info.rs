@@ -12,11 +12,11 @@ use alloc::vec::Vec;
 
 #[cw_serde]
 pub struct DelegateInfo {
-    delegate_ss58: Addr,
+    delegate: Addr,
     take: u16,
     nominators: Vec<(Addr, u64)>,
-    // map of nominator_ss58 to stake amount
-    owner_ss58: Addr,
+    // map of nominator to stake amount
+    owner: Addr,
     registrations: Vec<u16>,
     // Vec of netuid this delegate is registered on
     validator_permits: Vec<u16>,
@@ -76,10 +76,10 @@ pub fn get_delegate_by_existing_account(store: &dyn Storage, delegate: &Addr) ->
     }
 
     return DelegateInfo {
-        delegate_ss58: delegate.clone(),
+        delegate: delegate.clone(),
         take,
         nominators,
-        owner_ss58: owner.clone(),
+        owner: owner.clone(),
         registrations: registrations.iter().map(|x| *x).collect(),
         validator_permits,
         return_per_1000: U64F64::to_num::<u64>(return_per_1000).into(),

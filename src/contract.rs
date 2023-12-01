@@ -1,9 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Storage,
-    Uint128,
-};
+use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Storage, Uint128, Order};
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
@@ -570,6 +567,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             let hotkey_address = deps.api.addr_validate(&hotkey)?;
             to_json_binary(&query_delegate_take(deps.storage, &hotkey_address)?)
         }
+        QueryMsg::GetBurn { netuid } => to_json_binary(&query_burn(deps.storage, netuid)?),
+        QueryMsg::GetDifficulty { netuid } => to_json_binary(&query_difficulty(deps.storage, netuid)?),
+        QueryMsg::GetTempo { netuid } => to_json_binary(&query_tempo(deps.storage, netuid)?),
+        QueryMsg::GetTotalNetworks {} => to_json_binary(&query_total_networks(deps.storage)?),
+        QueryMsg::GetNetworksAdded {} => to_json_binary(&query_networks_added(deps.storage)?),
+        QueryMsg::GetEmissionValueBySubnet { netuid } => {
+            to_json_binary(&query_emission_value_by_subnet(deps, netuid)?)
+        },
+        QueryMsg::GetAllSubnetNetuids {} => {
+            to_json_binary(&query_all_subnet_netuids(deps.storage)?)
+        },
 
         // TODO added for debugging, remove later
         QueryMsg::GetWeights { netuid } => {
@@ -580,6 +588,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 // TODO move this function to given files
+// cannot use may_load directly: the trait `Serialize` is not implemented for `cosmwasm_std::StdError`
 pub fn get_subnet_owner(store: &dyn Storage, netuid: u16) -> StdResult<Option<String>> {
     let owner = SUBNET_OWNER.may_load(store, netuid)?;
     if owner.is_some() {
@@ -657,6 +666,63 @@ pub fn query_delegate_take(store: &dyn Storage, hotkey: &Addr) -> StdResult<Opti
     } else {
         Ok(None)
     }
+}
+
+pub fn query_burn(store: &dyn Storage, netuid: u16) -> StdResult<Option<u64>> {
+    let burn = BURN.may_load(store, netuid)?;
+    if burn.is_some() {
+        Ok(Some(burn.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_difficulty(store: &dyn Storage, netuid: u16) -> StdResult<Option<u64>> {
+    let difficulty = DIFFICULTY.may_load(store, netuid)?;
+    if difficulty.is_some() {
+        Ok(Some(difficulty.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_tempo(store: &dyn Storage, netuid: u16) -> StdResult<Option<u16>> {
+    let tempo = TEMPO.may_load(store, netuid)?;
+    if tempo.is_some() {
+        Ok(Some(tempo.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_total_networks(store: &dyn Storage) -> StdResult<u16> {
+    let total_networks = TOTAL_NETWORKS.load(store)?;
+    Ok(total_networks)
+}
+
+pub fn query_networks_added(store: &dyn Storage) -> StdResult<Vec<u16>> {
+    let networks = NETWORKS_ADDED
+        .range(store, None, None, Order::Ascending)
+        .map(|item| {
+            let (k, _) = item.unwrap();
+            k
+        }).collect::<Vec<u16>>();
+    Ok(networks)
+}
+
+pub fn query_emission_value_by_subnet(deps: Deps, netuid: u16) -> StdResult<u64> {
+    let emission_value = EMISSION_VALUES.load(deps.storage, netuid)?;
+    Ok(emission_value)
+}
+
+pub fn query_all_subnet_netuids(store: &dyn Storage) -> StdResult<Vec<u16>> {
+    let netuids = NETWORKS_ADDED
+        .range(store, None, None, Order::Ascending)
+        .map(|item| {
+            let (k, _) = item.unwrap();
+            k
+        }).collect::<Vec<u16>>();
+    Ok(netuids)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
