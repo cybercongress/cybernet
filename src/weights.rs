@@ -2,7 +2,7 @@
 // ==== Helper functions ====
 // ==========================
 
-use cosmwasm_std::{ensure, Api, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage};
+use cosmwasm_std::{ensure, Api, DepsMut, Env, MessageInfo, Order, StdResult, Storage};
 
 use crate::math::{check_vec_max_limited, vec_u16_max_upscale_to_u16};
 use crate::root::{contains_invalid_root_uids, get_root_netuid, if_subnet_exist};
@@ -16,6 +16,7 @@ use crate::utils::{
     get_weights_set_rate_limit, set_last_update_for_uid,
 };
 use crate::ContractError;
+use cyber_std::Response;
 
 // ---- The implementation for the extrinsic set_weights.
 //

@@ -15,7 +15,8 @@ use crate::state::{
 };
 use crate::utils::get_blocks_since_last_step;
 use crate::ContractError;
-use cosmwasm_std::{Addr, Api, DepsMut, Env, Order, Response, StdResult, Storage};
+use cosmwasm_std::{Addr, Api, DepsMut, Env, Order, StdResult, Storage};
+use cyber_std::Response;
 use std::ops::Add;
 use substrate_fixed::types::I110F18;
 use substrate_fixed::types::I64F64;

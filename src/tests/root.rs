@@ -8,6 +8,7 @@ use crate::root::{
     set_lock_reduction_interval, set_network_last_lock,
 };
 use crate::staking::{add_balance_to_coldkey_account, hotkey_is_delegate};
+use crate::state_info::get_state_info;
 use crate::test_helpers::{
     add_network, add_stake, burned_register_ok_neuron, instantiate_contract,
     pow_register_ok_neuron, register_network, root_register, set_weights, step_block,
@@ -19,7 +20,6 @@ use crate::utils::{
     set_weights_set_rate_limit,
 };
 use crate::ContractError;
-use crate::state_info::get_state_info;
 
 #[test]
 fn test_root_register_network_exist() {

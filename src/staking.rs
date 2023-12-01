@@ -1,11 +1,18 @@
 use std::ops::Deref;
 
-use cosmwasm_std::{ensure, Addr, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage, CosmosMsg, BankMsg, coins, Uint128};
+use cosmwasm_std::{
+    coins, ensure, Addr, BankMsg, CosmosMsg, DepsMut, Env, MessageInfo, Order, StdResult, Storage,
+    Uint128,
+};
 use cw_utils::must_pay;
 
-use crate::state::{DELEGATES, DENOM, OWNER, STAKE, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_STAKE};
+use crate::state::{
+    DELEGATES, DENOM, OWNER, STAKE, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE,
+    TOTAL_STAKE,
+};
 use crate::utils::{exceeds_tx_rate_limit, get_last_tx_block, set_last_tx_block};
 use crate::ContractError;
+use cyber_std::Response;
 
 // ---- The implementation for the extrinsic become_delegate: signals that this hotkey allows delegated stake.
 //
@@ -144,7 +151,8 @@ pub fn do_add_stake(
     let hotkey = deps.api.addr_validate(&hotkey_address)?;
 
     let denom = DENOM.load(deps.storage)?;
-    let stake_to_be_added = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
+    let stake_to_be_added =
+        must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
 
     deps.api.debug(&format!(
         "do_add_stake( origin:{:?} hotkey:{:?}, stake_to_be_added:{:?} )",
@@ -193,7 +201,12 @@ pub fn do_add_stake(
     // );
 
     // --- 8. If we reach here, add the balance to the hotkey.
-    increase_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake_to_be_added.u128() as u64);
+    increase_stake_on_coldkey_hotkey_account(
+        deps.storage,
+        &coldkey,
+        &hotkey,
+        stake_to_be_added.u128() as u64,
+    );
 
     // --- 9. Emit the staking event.
     deps.api.debug(&format!(

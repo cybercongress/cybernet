@@ -38,8 +38,8 @@ pub enum ContractError {
     #[error("Thrown when the caller requests removing more stake than there exists in the staking account. See: fn remove_stake.")]
     NotEnoughStaketoWithdraw {},
 
-    #[error("//  ---Thrown when the caller requests adding more stake than there exists in the cold key account. See: fn add_stake")]
-    NotEnoughBalanceToStake {},
+    #[error("Thrown when the caller sent less tokens that needed")]
+    NotEnoughTokens {},
 
     #[error("Thrown when the caller tries to add stake, but for some reason the requested amount could not be withdrawn from the coldkey account.")]
     BalanceWithdrawalError {},

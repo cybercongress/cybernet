@@ -1,10 +1,15 @@
+#[cfg(test)]
 use std::fs::File;
 use std::io::Write;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier};
-use cosmwasm_std::{Addr, Coin, DepsMut, Empty, Env, MemoryStorage, OwnedDeps, Response, Storage};
-use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
+use cosmwasm_std::{Addr, Coin, DepsMut, Empty, Env, MemoryStorage, OwnedDeps, Storage};
+use cw_multi_test::{App, AppBuilder, BasicAppBuilder, Contract, ContractWrapper, Executor};
 use cw_storage_gas_meter::MemoryStorageWithGas;
+use cyber_std::CyberMsgWrapper;
+use cyber_std::Response;
+
+use cyber_std_test::{CyberApp, CyberAppWrapped, CyberModule};
 
 use crate::contract::{execute, instantiate, query};
 use crate::msg::ExecuteMsg;
@@ -27,18 +32,35 @@ const ADDR6: &str = "addr46";
 const ADDR7: &str = "addr47";
 const ADDR8: &str = "addr48";
 
-fn mock_app(contract_balance: &[Coin]) -> App {
-    AppBuilder::new()
-        .with_storage(MemoryStorage::new())
-        .build(|r, _, storage| {
-            r.bank
-                .init_balance(
-                    storage,
-                    &Addr::unchecked("contract0"),
-                    contract_balance.to_vec(),
-                )
-                .unwrap();
-        })
+fn mock_app(contract_balance: &[Coin]) -> CyberApp {
+    // TODO need to update CyberApp to use with .with_storage(MemoryStorage::new())
+    // TODO need to update CyberApp to use with new cw-multi-test
+
+    // TODO Before was default app with MemoryStorage
+    // AppBuilder::new()
+    // .with_storage(MemoryStorage::new())
+    // .build(|r, _, storage| {
+    //     r.bank
+    //         .init_balance(
+    //             storage,
+    //             &Addr::unchecked("contract0"),
+    //             contract_balance.to_vec(),
+    //         )
+    //         .unwrap();
+    // })
+
+    let mut app = CyberApp::new();
+    app.init_modules(|router, _, storage| {
+        router
+            .bank
+            .init_balance(
+                storage,
+                &Addr::unchecked("contract0"),
+                contract_balance.to_vec(),
+            )
+            .unwrap();
+    });
+    app
 }
 
 pub fn mock_dependencies(
@@ -53,7 +75,7 @@ pub fn mock_dependencies(
     }
 }
 
-pub fn cn_contract() -> Box<dyn Contract<Empty>> {
+pub fn cn_contract() -> Box<dyn cw_multi_test::Contract<CyberMsgWrapper, Empty>> {
     let contract = ContractWrapper::new(execute, instantiate, query);
     Box::new(contract)
 }
@@ -86,7 +108,8 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
     (deps, env)
 }
 
-pub fn instantiate_contract_app(app: &mut App) -> Addr {
+pub fn instantiate_contract_app(app: &mut CyberApp) -> Addr {
+    // TODO fix this
     let cn_id = app.store_code(cn_contract());
     let msg = crate::msg::InstantiateMsg {};
 
@@ -102,7 +125,7 @@ pub fn instantiate_contract_app(app: &mut App) -> Addr {
 }
 
 pub fn register_ok_neuron_app(
-    app: &mut App,
+    app: &mut CyberApp,
     netuid: u16,
     hotkey: &str,
     coldkey: String,
@@ -126,7 +149,6 @@ pub fn register_ok_neuron_app(
     // app.update_block(|block| block.height += 100);
     assert_eq!(res.is_ok(), true);
 }
-
 
 pub fn register_ok_neuron(
     deps: DepsMut,
@@ -260,7 +282,7 @@ pub fn register_network(deps: DepsMut, env: Env, key: &str) -> Result<Response, 
     result
 }
 
-pub fn add_network_app(app: &mut App) -> u16 {
+pub fn add_network_app(app: &mut CyberApp) -> u16 {
     let msg = ExecuteMsg::RegisterNetwork {};
 
     let res = app
@@ -279,6 +301,7 @@ pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: 
     init_new_network(store, netuid, tempo).unwrap();
     set_difficulty(store, netuid, 1); // Reinitialize difficulty for tests mock
     set_weights_set_rate_limit(store, netuid, 0);
+    // TODO set_subnet_owner because cannot read it
     set_network_registration_allowed(store, netuid, true);
 }
 
@@ -403,7 +426,7 @@ pub fn serve_prometheus(
     result
 }
 
-pub fn print_state(app: &mut App, cn_addr: &Addr) {
+pub fn print_state(app: &mut CyberApp, cn_addr: &Addr) {
     let mut file = File::create("state_dump.md").unwrap();
     let mut data = String::new();
 

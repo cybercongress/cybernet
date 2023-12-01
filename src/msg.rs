@@ -5,7 +5,7 @@ pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Empty {},
+    Activate {},
     // TODO move to sudo and call as module from sdk
     BlockStep {},
 
@@ -253,6 +253,31 @@ pub enum QueryMsg {
 
     #[returns(u64)]
     GetNetworkRegistrationCost {},
+
+    // TODO added for cybertensor CLI
+    #[returns(Option<String>)]
+    GetSubnetOwner { netuid: u16 },
+
+    #[returns(Option<String>)]
+    GetHotkeyOwner { hotkey: String },
+
+    #[returns(Option<u64>)]
+    GetStakeForColdkeyAndHotkey { coldkey: String, hotkey: String },
+
+    #[returns(Option<u16>)]
+    GetUidForHotkeyOnSubnet { hotkey: String, netuid: u16 },
+
+    #[returns(bool)]
+    GetSubnetExist { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetMaxWeightLimit { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetMinAllowedWeights { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetDelegateTake { hotkey: String },
 
     // TODO added for debugging, remove later
     #[returns(Vec<Vec<u16>>)]

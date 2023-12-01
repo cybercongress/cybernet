@@ -7,7 +7,10 @@ use crate::staking::{
     can_remove_balance_from_coldkey_account, coldkey_owns_hotkey,
     remove_balance_from_coldkey_account,
 };
-use crate::state::{ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, DENOM, POW_REGISTRATIONS_THIS_INTERVAL, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, TOTAL_ISSUANCE, UIDS, USED_WORK};
+use crate::state::{
+    ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, DENOM, POW_REGISTRATIONS_THIS_INTERVAL,
+    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, TOTAL_ISSUANCE, UIDS, USED_WORK,
+};
 use crate::uids::{append_neuron, get_subnetwork_n, replace_neuron};
 use crate::utils::{
     burn_tokens, ensure_root, get_burn_as_u64, get_difficulty_as_u64, get_immunity_period,
@@ -16,11 +19,12 @@ use crate::utils::{
     get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid,
 };
 use crate::ContractError;
-use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, StdResult, Storage};
+use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, StdResult, Storage};
 use cw_utils::must_pay;
 
 use primitive_types::{H256, U256};
 // use sp_io::hashing::{keccak_256, sha2_256};
+use cyber_std::Response;
 use sp_core_hashing::{keccak_256, sha2_256};
 
 pub fn do_sudo_registration(
@@ -210,7 +214,7 @@ pub fn do_burned_registration(
 
     ensure!(
         amount.u128() as u64 >= registration_cost_as_balance,
-        ContractError::NotEnoughBalanceToStake {}
+        ContractError::NotEnoughTokens {}
     );
 
     // --- 8. Ensure the remove operation from the coldkey is a success.

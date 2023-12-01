@@ -1,7 +1,11 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+    to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Storage,
+    Uint128,
+};
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
+use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
 use crate::block_step::block_step;
 use crate::delegate_info::{get_delegate, get_delegated, get_delegates};
@@ -15,7 +19,24 @@ use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys}
 use crate::staking::{
     do_add_stake, do_become_delegate, do_remove_stake, increase_stake_on_coldkey_hotkey_account,
 };
-use crate::state::{ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, ALLOW_FAUCET, BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, IS_NETWORK_MEMBER, KAPPA, KEYS, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, DENOM};
+use crate::state::{
+    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, ALLOW_FAUCET,
+    BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
+    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY,
+    DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, IS_NETWORK_MEMBER, KAPPA,
+    KEYS, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN,
+    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN,
+    MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
+    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS,
+    NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT,
+    NETWORK_REGISTRATION_ALLOWED, OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
+    PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK,
+    REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, STAKE,
+    SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT,
+    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST,
+    TX_RATE_LIMIT, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT,
+    WEIGHTS_VERSION_KEY,
+};
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
 use crate::utils::{
@@ -43,6 +64,8 @@ use crate::weights::{do_set_weights, get_network_weights};
 const CONTRACT_NAME: &str = "cybernet";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+use cyber_std::Response;
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -50,7 +73,6 @@ pub fn instantiate(
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     ROOT.save(deps.storage, &info.sender)?;
@@ -127,6 +149,7 @@ pub fn instantiate(
     EMISSION_VALUES.save(deps.storage, root_netuid, &0)?;
     NETWORK_LAST_REGISTERED.save(deps.storage, &0)?;
     TOTAL_NETWORKS.save(deps.storage, &1)?;
+    SCALING_LAW_POWER.save(deps.storage, root_netuid, &50)?;
 
     // -- Subnetwork 1 initialization --
 
@@ -170,12 +193,15 @@ pub fn instantiate(
     RAO_RECYCLED_FOR_REGISTRATION.save(deps.storage, netuid, &0)?;
     SERVING_RATE_LIMIT.save(deps.storage, netuid, &50)?;
     ADJUSTMENTS_ALPHA.save(deps.storage, netuid, &0)?;
-    MIN_DIFFICULTY.save(deps.storage, root_netuid, &1)?;
-    MAX_DIFFICULTY.save(deps.storage, root_netuid, &1000000)?;
-    SUBNET_LOCKED.save(deps.storage, root_netuid, &0)?;
+    MIN_DIFFICULTY.save(deps.storage, netuid, &1)?;
+    MAX_DIFFICULTY.save(deps.storage, netuid, &1000000)?;
+    SUBNET_LOCKED.save(deps.storage, netuid, &0)?;
     NETWORK_REGISTERED_AT.save(deps.storage, netuid, &env.block.height)?;
     SUBNETWORK_N.save(deps.storage, netuid, &0)?;
     SUBNET_LOCKED.save(deps.storage, netuid, &0)?;
+    TARGET_REGISTRATIONS_PER_INTERVAL.save(deps.storage, netuid, &1)?;
+    SCALING_LAW_POWER.save(deps.storage, netuid, &50)?;
+    NETWORK_REGISTRATION_ALLOWED.save(deps.storage, netuid, &true)?;
 
     RANK.save(deps.storage, netuid, &vec![])?;
     TRUST.save(deps.storage, netuid, &vec![])?;
@@ -197,6 +223,30 @@ pub fn instantiate(
     Ok(Response::default().add_attribute("action", "instantiate"))
 }
 
+pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+    let res = Response::new()
+        .add_message(create_creat_thought_msg(
+            env.contract.address.to_string(),
+            Trigger {
+                period: 1,
+                block: 0,
+            },
+            Load {
+                // {"block_step":{}}
+                input: "eyJibG9ja19zdGVwIjp7fX0=".to_string(),
+                gas_price: Coin {
+                    denom: "boot".to_string(),
+                    amount: Uint128::from(10u128),
+                },
+            },
+            env.contract.address.as_str()[0..32].to_string(),
+            "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+        ))
+        .add_attribute("action", "dmn");
+
+    Ok(res)
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -205,7 +255,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Empty {} => Ok(Response::default()),
+        ExecuteMsg::Activate {} => activate(deps, env),
         ExecuteMsg::BlockStep {} => block_step(deps, env),
 
         ExecuteMsg::SetWeights {
@@ -480,11 +530,132 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             env.block.height,
         )?),
 
+        // TODO added for cybertensor CLI
+        QueryMsg::GetSubnetOwner { netuid } => {
+            to_json_binary(&get_subnet_owner(deps.storage, netuid)?)
+        }
+        QueryMsg::GetHotkeyOwner { hotkey } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&get_hotkey_owner(deps.storage, &hotkey_address)?)
+        }
+        QueryMsg::GetStakeForColdkeyAndHotkey { coldkey, hotkey } => {
+            let coldkey_address = deps.api.addr_validate(&coldkey)?;
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_stake_for_coldkey_and_hotkey(
+                deps.storage,
+                &hotkey_address,
+                &coldkey_address,
+            )?)
+        }
+        QueryMsg::GetUidForHotkeyOnSubnet { hotkey, netuid } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_uid_for_hotkey_on_subnet(
+                deps.storage,
+                &hotkey_address,
+                netuid,
+            )?)
+        }
+        QueryMsg::GetSubnetExist { netuid } => {
+            to_json_binary(&query_subnet_exist(deps.storage, netuid)?)
+        }
+        // TODO maybe don't need to return Option this and next one
+        QueryMsg::GetMaxWeightLimit { netuid } => {
+            to_json_binary(&query_max_weight_limit(deps.storage, netuid)?)
+        }
+        QueryMsg::GetMinAllowedWeights { netuid } => {
+            to_json_binary(&query_min_allowed_weights(deps.storage, netuid)?)
+        }
+        // TODO double check this function
+        QueryMsg::GetDelegateTake { hotkey } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_delegate_take(deps.storage, &hotkey_address)?)
+        }
+
         // TODO added for debugging, remove later
         QueryMsg::GetWeights { netuid } => {
             to_json_binary(&get_network_weights(deps.storage, netuid)?)
         }
         QueryMsg::GetState {} => to_json_binary(&get_state_info(deps.storage)?),
+    }
+}
+
+// TODO move this function to given files
+pub fn get_subnet_owner(store: &dyn Storage, netuid: u16) -> StdResult<Option<String>> {
+    let owner = SUBNET_OWNER.may_load(store, netuid)?;
+    if owner.is_some() {
+        Ok(Some(owner.unwrap().to_string()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_hotkey_owner(store: &dyn Storage, hotkey: &Addr) -> StdResult<Option<String>> {
+    let owner = OWNER.may_load(store, hotkey)?;
+    if owner.is_some() {
+        Ok(Some(owner.unwrap().to_string()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_stake_for_coldkey_and_hotkey(
+    store: &dyn Storage,
+    hotkey: &Addr,
+    coldkey: &Addr,
+) -> StdResult<Option<u64>> {
+    let stake = STAKE.may_load(store, (hotkey, coldkey))?;
+    if stake.is_some() {
+        Ok(Some(stake.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_uid_for_hotkey_on_subnet(
+    store: &dyn Storage,
+    hotkey: &Addr,
+    netuid: u16,
+) -> StdResult<Option<u16>> {
+    let uid = UIDS.may_load(store, (netuid, hotkey))?;
+    if uid.is_some() {
+        Ok(Some(uid.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_subnet_exist(store: &dyn Storage, netuid: u16) -> StdResult<bool> {
+    let exist = NETWORKS_ADDED.may_load(store, netuid)?;
+    if exist.is_some() {
+        Ok(exist.unwrap())
+    } else {
+        Ok(false)
+    }
+}
+pub fn query_max_weight_limit(store: &dyn Storage, netuid: u16) -> StdResult<Option<u16>> {
+    let max_weight_limit = MAX_WEIGHTS_LIMIT.may_load(store, netuid)?;
+    if max_weight_limit.is_some() {
+        Ok(Some(max_weight_limit.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_min_allowed_weights(store: &dyn Storage, netuid: u16) -> StdResult<Option<u16>> {
+    let min_allowed_weights = MIN_ALLOWED_WEIGHTS.may_load(store, netuid)?;
+    if min_allowed_weights.is_some() {
+        Ok(Some(min_allowed_weights.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn query_delegate_take(store: &dyn Storage, hotkey: &Addr) -> StdResult<Option<u16>> {
+    let take = DELEGATES.may_load(store, hotkey)?;
+    if take.is_some() {
+        Ok(Some(take.unwrap()))
+    } else {
+        Ok(None)
     }
 }
 
