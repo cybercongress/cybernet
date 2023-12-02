@@ -125,9 +125,9 @@ pub fn instantiate(
     BONDS_MOVING_AVERAGE.save(deps.storage, root_netuid, &900_000)?;
     LAST_ADJUSTMENT_BLOCK.save(deps.storage, root_netuid, &0)?;
     ADJUSTMENT_INTERVAL.save(deps.storage, root_netuid, &100)?;
-    BURN.save(deps.storage, root_netuid, &0)?;
-    MIN_BURN.save(deps.storage, root_netuid, &0)?;
-    MAX_BURN.save(deps.storage, root_netuid, &1_000_000_000)?;
+    BURN.save(deps.storage, root_netuid, &1_000_000_000)?;
+    MIN_BURN.save(deps.storage, root_netuid, &100_000_000)?;
+    MAX_BURN.save(deps.storage, root_netuid, &100_000_000_000)?;
     REGISTRATIONS_THIS_BLOCK.save(deps.storage, root_netuid, &0)?;
     MAX_REGISTRATION_PER_BLOCK.save(deps.storage, root_netuid, &1)?;
     REGISTRATIONS_THIS_INTERVAL.save(deps.storage, root_netuid, &0)?;
@@ -180,9 +180,9 @@ pub fn instantiate(
     BONDS_MOVING_AVERAGE.save(deps.storage, netuid, &900_000)?;
     LAST_ADJUSTMENT_BLOCK.save(deps.storage, netuid, &0)?;
     ADJUSTMENT_INTERVAL.save(deps.storage, netuid, &100)?;
-    BURN.save(deps.storage, netuid, &0)?;
-    MIN_BURN.save(deps.storage, netuid, &0)?;
-    MAX_BURN.save(deps.storage, netuid, &1_000_000_000)?;
+    BURN.save(deps.storage, netuid, &1_000_000_000)?;
+    MIN_BURN.save(deps.storage, netuid, &100_000_000)?;
+    MAX_BURN.save(deps.storage, netuid, &100_000_000_000)?;
     REGISTRATIONS_THIS_BLOCK.save(deps.storage, netuid, &0)?;
     MAX_REGISTRATION_PER_BLOCK.save(deps.storage, netuid, &3)?;
     KAPPA.save(deps.storage, netuid, &32_767)?;
@@ -578,6 +578,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetAllSubnetNetuids {} => {
             to_json_binary(&query_all_subnet_netuids(deps.storage)?)
         },
+        QueryMsg::GetNetuidsForHotkey { hotkey } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_netuids_for_hotkey(deps.storage, &hotkey_address)?)
+        },
+        QueryMsg::GetTotalIssuance {} => to_json_binary(&query_total_issuance(deps.storage)?),
+        QueryMsg::GetTotalStake {} => to_json_binary(&query_total_stake(deps.storage)?),
+        QueryMsg::GetTxRateLimit {} => to_json_binary(&query_tx_rate_limit(deps.storage)?),
 
         // TODO added for debugging, remove later
         QueryMsg::GetWeights { netuid } => {
@@ -723,6 +730,27 @@ pub fn query_all_subnet_netuids(store: &dyn Storage) -> StdResult<Vec<u16>> {
             k
         }).collect::<Vec<u16>>();
     Ok(netuids)
+}
+
+pub fn query_netuids_for_hotkey(store: &dyn Storage, hotkey: &Addr) -> StdResult<Vec<u16>> {
+    let networks = get_registered_networks_for_hotkey(store, hotkey);
+
+    Ok(networks)
+}
+
+pub fn query_total_issuance(store: &dyn Storage) -> StdResult<u64> {
+    let issuance = TOTAL_ISSUANCE.load(store)?;
+    Ok(issuance)
+}
+
+pub fn query_total_stake(store: &dyn Storage) -> StdResult<u64> {
+    let stake = TOTAL_STAKE.load(store)?;
+    Ok(stake)
+}
+
+pub fn query_tx_rate_limit(store: &dyn Storage) -> StdResult<u64> {
+    let limit = TX_RATE_LIMIT.load(store)?;
+    Ok(limit)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

@@ -440,17 +440,17 @@ pub fn do_registration(
     );
 
     // --- 8. Ensure the supplied work passes the difficulty.
-    // let difficulty = get_difficulty(deps.storage, netuid);
-    // let work_hash: H256 = vec_to_hash(work.clone());
-    // ensure!(
-    //     hash_meets_difficulty(&work_hash, difficulty),
-    //     ContractError::InvalidDifficulty {}
-    // ); // Check that the work meets difficulty.
+    let difficulty = get_difficulty(deps.storage, netuid);
+    let work_hash: H256 = vec_to_hash(work.clone());
+    ensure!(
+        hash_meets_difficulty(&work_hash, difficulty),
+        ContractError::InvalidDifficulty {}
+    ); // Check that the work meets difficulty.
 
     // --- 7. Check Work is the product of the nonce, the block number, and hotkey. Add this as used work.
-    // let seal: H256 = create_seal_hash(block_number, nonce, hotkey.as_str());
-    // ensure!(seal == work_hash, ContractError::InvalidSeal {});
-    // USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
+    let seal: H256 = create_seal_hash(block_number, nonce, hotkey.as_str());
+    ensure!(seal == work_hash, ContractError::InvalidSeal {});
+    USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
 
     // --- 9. If the network account does not exist we will create it here.
     create_account_if_non_existent(deps.storage, &coldkey, &hotkey);

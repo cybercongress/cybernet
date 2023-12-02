@@ -267,6 +267,9 @@ pub enum QueryMsg {
     #[returns(Option<u16>)]
     GetUidForHotkeyOnSubnet { hotkey: String, netuid: u16 },
 
+    #[returns(Option<Vec<u16>>)]
+    GetNetuidsForHotkey { hotkey: String },
+
     #[returns(bool)]
     GetSubnetExist { netuid: u16 },
 
@@ -299,6 +302,15 @@ pub enum QueryMsg {
 
     #[returns(Vec<u16>)]
     GetAllSubnetNetuids {},
+
+    #[returns(u64)]
+    GetTotalIssuance {},
+
+    #[returns(u64)]
+    GetTotalStake {},
+
+    #[returns(u64)]
+    GetTxRateLimit {},
 
     // TODO added for debugging, remove later
     #[returns(Vec<Vec<u16>>)]
