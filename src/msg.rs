@@ -312,6 +312,24 @@ pub enum QueryMsg {
     #[returns(u64)]
     GetTxRateLimit {},
 
+    #[returns(Option<AxonInfo>)]
+    GetAxonInfo { netuid: u16, hotkey: String },
+
+    #[returns(Option<PrometheusInfo>)]
+    GetPrometheusInfo { netuid: u16, hotkey: String },
+
+    #[returns(Option<u64>)]
+    GetTotalStakeForHotkey { address: String },
+
+    #[returns(Option<u64>)]
+    GetTotalStakeForColdkey { address: String },
+
+    #[returns(bool)]
+    GetHotkeyExist { hotkey: String },
+
+    #[returns(Vec<(String, u64)>)]
+    GetStake { hotkey: String },
+
     // TODO added for debugging, remove later
     #[returns(Vec<Vec<u16>>)]
     GetWeights { netuid: u16 },

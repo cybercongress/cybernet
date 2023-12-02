@@ -62,6 +62,7 @@ const CONTRACT_NAME: &str = "cybernet";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 use cyber_std::Response;
+use crate::uids::get_registered_networks_for_hotkey;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -586,11 +587,36 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetTotalStake {} => to_json_binary(&query_total_stake(deps.storage)?),
         QueryMsg::GetTxRateLimit {} => to_json_binary(&query_tx_rate_limit(deps.storage)?),
 
+        QueryMsg::GetAxonInfo { netuid, hotkey } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_get_axon_info(deps.storage, netuid, &hotkey_address)?)
+        }
+        QueryMsg::GetPrometheusInfo { netuid, hotkey } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_get_prometheus_info(deps.storage, netuid, &hotkey_address)?)
+        }
+        QueryMsg::GetTotalStakeForHotkey { address } => {
+            let hotkey_address = deps.api.addr_validate(&address)?;
+            to_json_binary(&query_get_total_stake_for_hotkey(deps.storage, &hotkey_address)?)
+        }
+        QueryMsg::GetTotalStakeForColdkey { address } => {
+            let hotkey_address = deps.api.addr_validate(&address)?;
+            to_json_binary(&query_get_total_stake_for_coldkey(deps.storage, &hotkey_address)?)
+        }
+        QueryMsg::GetHotkeyExist { hotkey } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_get_hotkey_exist(deps.storage, &hotkey_address)?)
+        }
+        QueryMsg::GetStake { hotkey } => {
+            let hotkey_address = deps.api.addr_validate(&hotkey)?;
+            to_json_binary(&query_get_stake(deps.storage, &hotkey_address)?)
+        }
+
         // TODO added for debugging, remove later
+        QueryMsg::GetState {} => to_json_binary(&get_state_info(deps.storage)?),
         QueryMsg::GetWeights { netuid } => {
             to_json_binary(&get_network_weights(deps.storage, netuid)?)
         }
-        QueryMsg::GetState {} => to_json_binary(&get_state_info(deps.storage)?),
     }
 }
 
@@ -752,6 +778,58 @@ pub fn query_tx_rate_limit(store: &dyn Storage) -> StdResult<u64> {
     let limit = TX_RATE_LIMIT.load(store)?;
     Ok(limit)
 }
+
+pub fn query_get_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> StdResult<Option<AxonInfo>> {
+    let axon = AXONS.may_load(store, (netuid, hotkey))?;
+    if axon.is_some() {
+        Ok(Some(axon.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+pub fn query_get_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> StdResult<Option<PrometheusInfo>> {
+    let axon = PROMETHEUS.may_load(store, (netuid, hotkey))?;
+    if axon.is_some() {
+        Ok(Some(axon.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+pub fn query_get_total_stake_for_hotkey(store: &dyn Storage, hotkey: &Addr) -> StdResult<Option<u64>> {
+    let stake = TOTAL_HOTKEY_STAKE.may_load(store, hotkey)?;
+    if stake.is_some() {
+        Ok(Some(stake.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+pub fn query_get_total_stake_for_coldkey(store: &dyn Storage, coldkey: &Addr) -> StdResult<Option<u64>> {
+    let stake = TOTAL_COLDKEY_STAKE.may_load(store, coldkey)?;
+    if stake.is_some() {
+        Ok(Some(stake.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+pub fn query_get_hotkey_exist(store: &dyn Storage, hotkey: &Addr) -> StdResult<bool> {
+    let owner = OWNER.may_load(store, hotkey)?;
+    if owner.is_some() {
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+pub fn query_get_stake(store: &dyn Storage, hotkey: &Addr) -> StdResult<Vec<(String, u64)>> {
+    let stakes = STAKE
+        .prefix(hotkey)
+        .range(store, None, None, Order::Ascending)
+        .map(|item| {
+            let (address, stake) = item.unwrap();
+            (address.to_string(), stake)
+        }).collect::<Vec<(String, u64)>>();
+    Ok(stakes)
+}
+
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
