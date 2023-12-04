@@ -1,6 +1,9 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, StdResult, Storage, Uint128, Order};
+use cosmwasm_std::{
+    to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage,
+    Uint128,
+};
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
@@ -17,22 +20,22 @@ use crate::staking::{
     do_add_stake, do_become_delegate, do_remove_stake, increase_stake_on_coldkey_hotkey_account,
 };
 use crate::state::{
-    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, ALLOW_FAUCET,
-    BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
-    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY,
-    DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, IS_NETWORK_MEMBER, KAPPA,
-    KEYS, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN,
-    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN,
-    MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
-    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS,
-    NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT,
-    NETWORK_REGISTRATION_ALLOWED, OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
-    PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK,
-    REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, STAKE,
-    SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT,
-    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST,
-    TX_RATE_LIMIT, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT,
-    WEIGHTS_VERSION_KEY,
+    AxonInfo, PrometheusInfo, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
+    ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION,
+    BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE,
+    DELEGATES, DENOM, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE,
+    IS_NETWORK_MEMBER, KAPPA, KEYS, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
+    MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK,
+    MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED,
+    NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
+    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS, NETWORK_MIN_LOCK_COST,
+    NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
+    OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
+    RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
+    ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED,
+    SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
+    TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS,
+    VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
@@ -61,8 +64,8 @@ use crate::weights::{do_set_weights, get_network_weights};
 const CONTRACT_NAME: &str = "cybernet";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-use cyber_std::Response;
 use crate::uids::get_registered_networks_for_hotkey;
+use cyber_std::Response;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -262,16 +265,11 @@ pub fn execute(
             weights,
             version_key,
         } => do_set_weights(deps, env, info, netuid, dests, weights, version_key),
-        ExecuteMsg::BecomeDelegate { hotkey } => {
-            do_become_delegate(deps, env, info, hotkey)
+        ExecuteMsg::BecomeDelegate { hotkey } => do_become_delegate(deps, env, info, hotkey),
+        ExecuteMsg::AddStake { hotkey } => do_add_stake(deps, env, info, hotkey),
+        ExecuteMsg::RemoveStake { hotkey, amount } => {
+            do_remove_stake(deps, env, info, hotkey, amount)
         }
-        ExecuteMsg::AddStake {
-            hotkey,
-        } => do_add_stake(deps, env, info, hotkey),
-        ExecuteMsg::RemoveStake {
-            hotkey,
-            amount,
-        } => do_remove_stake(deps, env, info, hotkey, amount),
         ExecuteMsg::ServeAxon {
             netuid,
             version,
@@ -494,12 +492,8 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetDelegates {} => to_json_binary(&get_delegates(deps)?),
-        QueryMsg::GetDelegate { delegate } => {
-            to_json_binary(&get_delegate(deps, delegate)?)
-        }
-        QueryMsg::GetDelegated { delegatee } => {
-            to_json_binary(&get_delegated(deps, delegatee)?)
-        }
+        QueryMsg::GetDelegate { delegate } => to_json_binary(&get_delegate(deps, delegate)?),
+        QueryMsg::GetDelegated { delegatee } => to_json_binary(&get_delegated(deps, delegatee)?),
         QueryMsg::GetNeuronsLite { netuid } => {
             to_json_binary(&get_neurons_lite(deps.storage, netuid)?)
         }
@@ -568,20 +562,22 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_json_binary(&query_delegate_take(deps.storage, &hotkey_address)?)
         }
         QueryMsg::GetBurn { netuid } => to_json_binary(&query_burn(deps.storage, netuid)?),
-        QueryMsg::GetDifficulty { netuid } => to_json_binary(&query_difficulty(deps.storage, netuid)?),
+        QueryMsg::GetDifficulty { netuid } => {
+            to_json_binary(&query_difficulty(deps.storage, netuid)?)
+        }
         QueryMsg::GetTempo { netuid } => to_json_binary(&query_tempo(deps.storage, netuid)?),
         QueryMsg::GetTotalNetworks {} => to_json_binary(&query_total_networks(deps.storage)?),
         QueryMsg::GetNetworksAdded {} => to_json_binary(&query_networks_added(deps.storage)?),
         QueryMsg::GetEmissionValueBySubnet { netuid } => {
             to_json_binary(&query_emission_value_by_subnet(deps, netuid)?)
-        },
+        }
         QueryMsg::GetAllSubnetNetuids {} => {
             to_json_binary(&query_all_subnet_netuids(deps.storage)?)
-        },
+        }
         QueryMsg::GetNetuidsForHotkey { hotkey } => {
             let hotkey_address = deps.api.addr_validate(&hotkey)?;
             to_json_binary(&query_netuids_for_hotkey(deps.storage, &hotkey_address)?)
-        },
+        }
         QueryMsg::GetTotalIssuance {} => to_json_binary(&query_total_issuance(deps.storage)?),
         QueryMsg::GetTotalStake {} => to_json_binary(&query_total_stake(deps.storage)?),
         QueryMsg::GetTxRateLimit {} => to_json_binary(&query_tx_rate_limit(deps.storage)?),
@@ -592,15 +588,25 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         }
         QueryMsg::GetPrometheusInfo { netuid, hotkey } => {
             let hotkey_address = deps.api.addr_validate(&hotkey)?;
-            to_json_binary(&query_get_prometheus_info(deps.storage, netuid, &hotkey_address)?)
+            to_json_binary(&query_get_prometheus_info(
+                deps.storage,
+                netuid,
+                &hotkey_address,
+            )?)
         }
         QueryMsg::GetTotalStakeForHotkey { address } => {
             let hotkey_address = deps.api.addr_validate(&address)?;
-            to_json_binary(&query_get_total_stake_for_hotkey(deps.storage, &hotkey_address)?)
+            to_json_binary(&query_get_total_stake_for_hotkey(
+                deps.storage,
+                &hotkey_address,
+            )?)
         }
         QueryMsg::GetTotalStakeForColdkey { address } => {
             let hotkey_address = deps.api.addr_validate(&address)?;
-            to_json_binary(&query_get_total_stake_for_coldkey(deps.storage, &hotkey_address)?)
+            to_json_binary(&query_get_total_stake_for_coldkey(
+                deps.storage,
+                &hotkey_address,
+            )?)
         }
         QueryMsg::GetHotkeyExist { hotkey } => {
             let hotkey_address = deps.api.addr_validate(&hotkey)?;
@@ -738,7 +744,8 @@ pub fn query_networks_added(store: &dyn Storage) -> StdResult<Vec<u16>> {
         .map(|item| {
             let (k, _) = item.unwrap();
             k
-        }).collect::<Vec<u16>>();
+        })
+        .collect::<Vec<u16>>();
     Ok(networks)
 }
 
@@ -753,7 +760,8 @@ pub fn query_all_subnet_netuids(store: &dyn Storage) -> StdResult<Vec<u16>> {
         .map(|item| {
             let (k, _) = item.unwrap();
             k
-        }).collect::<Vec<u16>>();
+        })
+        .collect::<Vec<u16>>();
     Ok(netuids)
 }
 
@@ -778,7 +786,11 @@ pub fn query_tx_rate_limit(store: &dyn Storage) -> StdResult<u64> {
     Ok(limit)
 }
 
-pub fn query_get_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> StdResult<Option<AxonInfo>> {
+pub fn query_get_axon_info(
+    store: &dyn Storage,
+    netuid: u16,
+    hotkey: &Addr,
+) -> StdResult<Option<AxonInfo>> {
     let axon = AXONS.may_load(store, (netuid, hotkey))?;
     if axon.is_some() {
         Ok(Some(axon.unwrap()))
@@ -786,7 +798,11 @@ pub fn query_get_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> S
         Ok(None)
     }
 }
-pub fn query_get_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> StdResult<Option<PrometheusInfo>> {
+pub fn query_get_prometheus_info(
+    store: &dyn Storage,
+    netuid: u16,
+    hotkey: &Addr,
+) -> StdResult<Option<PrometheusInfo>> {
     let axon = PROMETHEUS.may_load(store, (netuid, hotkey))?;
     if axon.is_some() {
         Ok(Some(axon.unwrap()))
@@ -794,7 +810,10 @@ pub fn query_get_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr
         Ok(None)
     }
 }
-pub fn query_get_total_stake_for_hotkey(store: &dyn Storage, hotkey: &Addr) -> StdResult<Option<u64>> {
+pub fn query_get_total_stake_for_hotkey(
+    store: &dyn Storage,
+    hotkey: &Addr,
+) -> StdResult<Option<u64>> {
     let stake = TOTAL_HOTKEY_STAKE.may_load(store, hotkey)?;
     if stake.is_some() {
         Ok(Some(stake.unwrap()))
@@ -802,7 +821,10 @@ pub fn query_get_total_stake_for_hotkey(store: &dyn Storage, hotkey: &Addr) -> S
         Ok(None)
     }
 }
-pub fn query_get_total_stake_for_coldkey(store: &dyn Storage, coldkey: &Addr) -> StdResult<Option<u64>> {
+pub fn query_get_total_stake_for_coldkey(
+    store: &dyn Storage,
+    coldkey: &Addr,
+) -> StdResult<Option<u64>> {
     let stake = TOTAL_COLDKEY_STAKE.may_load(store, coldkey)?;
     if stake.is_some() {
         Ok(Some(stake.unwrap()))
@@ -825,10 +847,10 @@ pub fn query_get_stake(store: &dyn Storage, hotkey: &Addr) -> StdResult<Vec<(Str
         .map(|item| {
             let (address, stake) = item.unwrap();
             (address.to_string(), stake)
-        }).collect::<Vec<(String, u64)>>();
+        })
+        .collect::<Vec<(String, u64)>>();
     Ok(stakes)
 }
-
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
