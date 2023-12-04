@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Array_of_SubnetInfo",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/SubnetInfo"
+  },
+  "definitions": {
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "SubnetInfo": {
+      "type": "object",
+      "required": [
+        "blocks_since_last_step",
+        "burn",
+        "difficulty",
+        "emission_values",
+        "immunity_period",
+        "kappa",
+        "max_allowed_uids",
+        "max_allowed_validators",
+        "max_weights_limit",
+        "min_allowed_weights",
+        "netuid",
+        "network_connect",
+        "network_modality",
+        "owner",
+        "rho",
+        "scaling_law_power",
+        "subnetwork_n",
+        "tempo"
+      ],
+      "properties": {
+        "blocks_since_last_step": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "burn": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "difficulty": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "emission_values": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "immunity_period": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "kappa": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_allowed_uids": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_allowed_validators": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_weights_limit": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "min_allowed_weights": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "netuid": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "network_connect": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "network_modality": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "owner": {
+          "$ref": "#/definitions/Addr"
+        },
+        "rho": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "scaling_law_power": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "subnetwork_n": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "tempo": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

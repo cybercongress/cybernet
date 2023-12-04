@@ -1,0 +1,223 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Array_of_NeuronInfoLite",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/NeuronInfoLite"
+  },
+  "definitions": {
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+      "type": "string"
+    },
+    "AxonInfo": {
+      "type": "object",
+      "required": [
+        "block",
+        "ip",
+        "ip_type",
+        "placeholder1",
+        "placeholder2",
+        "port",
+        "protocol",
+        "version"
+      ],
+      "properties": {
+        "block": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "ip": {
+          "type": "integer",
+          "format": "uint128",
+          "minimum": 0.0
+        },
+        "ip_type": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "placeholder1": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "placeholder2": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "protocol": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "NeuronInfoLite": {
+      "type": "object",
+      "required": [
+        "active",
+        "axon_info",
+        "coldkey",
+        "consensus",
+        "dividends",
+        "emission",
+        "hotkey",
+        "incentive",
+        "last_update",
+        "netuid",
+        "prometheus_info",
+        "pruning_score",
+        "rank",
+        "stake",
+        "trust",
+        "uid",
+        "validator_permit",
+        "validator_trust"
+      ],
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "axon_info": {
+          "$ref": "#/definitions/AxonInfo"
+        },
+        "coldkey": {
+          "$ref": "#/definitions/Addr"
+        },
+        "consensus": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "dividends": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "emission": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "hotkey": {
+          "$ref": "#/definitions/Addr"
+        },
+        "incentive": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "last_update": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "netuid": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "prometheus_info": {
+          "$ref": "#/definitions/PrometheusInfo"
+        },
+        "pruning_score": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "rank": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "stake": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "trust": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "uid": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "validator_permit": {
+          "type": "boolean"
+        },
+        "validator_trust": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "PrometheusInfo": {
+      "type": "object",
+      "required": [
+        "block",
+        "ip",
+        "ip_type",
+        "port",
+        "version"
+      ],
+      "properties": {
+        "block": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "ip": {
+          "type": "integer",
+          "format": "uint128",
+          "minimum": 0.0
+        },
+        "ip_type": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}

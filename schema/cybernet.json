@@ -1,0 +1,5335 @@
+{
+  "contract_name": "cybernet",
+  "contract_version": "0.1.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "type": "object",
+    "additionalProperties": false
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "block_step"
+        ],
+        "properties": {
+          "block_step": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "set_weights"
+        ],
+        "properties": {
+          "set_weights": {
+            "type": "object",
+            "required": [
+              "dests",
+              "netuid",
+              "version_key",
+              "weights"
+            ],
+            "properties": {
+              "dests": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "version_key": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "weights": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "become_delegate"
+        ],
+        "properties": {
+          "become_delegate": {
+            "type": "object",
+            "required": [
+              "hotkey",
+              "take"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              },
+              "take": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "add_stake"
+        ],
+        "properties": {
+          "add_stake": {
+            "type": "object",
+            "required": [
+              "amount_staked",
+              "hotkey"
+            ],
+            "properties": {
+              "amount_staked": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "remove_stake"
+        ],
+        "properties": {
+          "remove_stake": {
+            "type": "object",
+            "required": [
+              "amount_unstaked",
+              "hotkey"
+            ],
+            "properties": {
+              "amount_unstaked": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "serve_axon"
+        ],
+        "properties": {
+          "serve_axon": {
+            "type": "object",
+            "required": [
+              "ip",
+              "ip_type",
+              "netuid",
+              "placeholder1",
+              "placeholder2",
+              "port",
+              "protocol",
+              "version"
+            ],
+            "properties": {
+              "ip": {
+                "type": "integer",
+                "format": "uint128",
+                "minimum": 0.0
+              },
+              "ip_type": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "placeholder1": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              },
+              "placeholder2": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              },
+              "port": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "protocol": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              },
+              "version": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "serve_prometheus"
+        ],
+        "properties": {
+          "serve_prometheus": {
+            "type": "object",
+            "required": [
+              "ip",
+              "ip_type",
+              "netuid",
+              "port",
+              "version"
+            ],
+            "properties": {
+              "ip": {
+                "type": "integer",
+                "format": "uint128",
+                "minimum": 0.0
+              },
+              "ip_type": {
+                "type": "integer",
+                "format": "uint8",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "port": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "version": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "register"
+        ],
+        "properties": {
+          "register": {
+            "type": "object",
+            "required": [
+              "block_number",
+              "coldkey",
+              "hotkey",
+              "netuid",
+              "nonce",
+              "work"
+            ],
+            "properties": {
+              "block_number": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "coldkey": {
+                "type": "string"
+              },
+              "hotkey": {
+                "type": "string"
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "nonce": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "work": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint8",
+                  "minimum": 0.0
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "root_register"
+        ],
+        "properties": {
+          "root_register": {
+            "type": "object",
+            "required": [
+              "hotkey"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "burned_register"
+        ],
+        "properties": {
+          "burned_register": {
+            "type": "object",
+            "required": [
+              "hotkey",
+              "netuid"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "register_network"
+        ],
+        "properties": {
+          "register_network": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "dissolve_network"
+        ],
+        "properties": {
+          "dissolve_network": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_register"
+        ],
+        "properties": {
+          "sudo_register": {
+            "type": "object",
+            "required": [
+              "balance",
+              "coldkey",
+              "hotkey",
+              "netuid",
+              "stake"
+            ],
+            "properties": {
+              "balance": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "coldkey": {
+                "type": "string"
+              },
+              "hotkey": {
+                "type": "string"
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "stake": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_default_take"
+        ],
+        "properties": {
+          "sudo_set_default_take": {
+            "type": "object",
+            "required": [
+              "default_take"
+            ],
+            "properties": {
+              "default_take": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_serving_rate_limit"
+        ],
+        "properties": {
+          "sudo_set_serving_rate_limit": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "serving_rate_limit"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "serving_rate_limit": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_tx_rate_limit"
+        ],
+        "properties": {
+          "sudo_set_tx_rate_limit": {
+            "type": "object",
+            "required": [
+              "tx_rate_limit"
+            ],
+            "properties": {
+              "tx_rate_limit": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_max_burn"
+        ],
+        "properties": {
+          "sudo_set_max_burn": {
+            "type": "object",
+            "required": [
+              "max_burn",
+              "netuid"
+            ],
+            "properties": {
+              "max_burn": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_min_burn"
+        ],
+        "properties": {
+          "sudo_set_min_burn": {
+            "type": "object",
+            "required": [
+              "min_burn",
+              "netuid"
+            ],
+            "properties": {
+              "min_burn": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_max_difficulty"
+        ],
+        "properties": {
+          "sudo_set_max_difficulty": {
+            "type": "object",
+            "required": [
+              "max_difficulty",
+              "netuid"
+            ],
+            "properties": {
+              "max_difficulty": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_min_difficulty"
+        ],
+        "properties": {
+          "sudo_set_min_difficulty": {
+            "type": "object",
+            "required": [
+              "min_difficulty",
+              "netuid"
+            ],
+            "properties": {
+              "min_difficulty": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_weights_set_rate_limit"
+        ],
+        "properties": {
+          "sudo_set_weights_set_rate_limit": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "weights_set_rate_limit"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "weights_set_rate_limit": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_weights_version_key"
+        ],
+        "properties": {
+          "sudo_set_weights_version_key": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "weights_version_key"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "weights_version_key": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_bonds_moving_average"
+        ],
+        "properties": {
+          "sudo_set_bonds_moving_average": {
+            "type": "object",
+            "required": [
+              "bonds_moving_average",
+              "netuid"
+            ],
+            "properties": {
+              "bonds_moving_average": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_max_allowed_validators"
+        ],
+        "properties": {
+          "sudo_set_max_allowed_validators": {
+            "type": "object",
+            "required": [
+              "max_allowed_validators",
+              "netuid"
+            ],
+            "properties": {
+              "max_allowed_validators": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_difficulty"
+        ],
+        "properties": {
+          "sudo_set_difficulty": {
+            "type": "object",
+            "required": [
+              "difficulty",
+              "netuid"
+            ],
+            "properties": {
+              "difficulty": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_adjustment_interval"
+        ],
+        "properties": {
+          "sudo_set_adjustment_interval": {
+            "type": "object",
+            "required": [
+              "adjustment_interval",
+              "netuid"
+            ],
+            "properties": {
+              "adjustment_interval": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_target_registrations_per_interval"
+        ],
+        "properties": {
+          "sudo_set_target_registrations_per_interval": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "target_registrations_per_interval"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "target_registrations_per_interval": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_activity_cutoff"
+        ],
+        "properties": {
+          "sudo_set_activity_cutoff": {
+            "type": "object",
+            "required": [
+              "activity_cutoff",
+              "netuid"
+            ],
+            "properties": {
+              "activity_cutoff": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_rho"
+        ],
+        "properties": {
+          "sudo_set_rho": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "rho"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "rho": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_kappa"
+        ],
+        "properties": {
+          "sudo_set_kappa": {
+            "type": "object",
+            "required": [
+              "kappa",
+              "netuid"
+            ],
+            "properties": {
+              "kappa": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_max_allowed_uids"
+        ],
+        "properties": {
+          "sudo_set_max_allowed_uids": {
+            "type": "object",
+            "required": [
+              "max_allowed_uids",
+              "netuid"
+            ],
+            "properties": {
+              "max_allowed_uids": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_min_allowed_weights"
+        ],
+        "properties": {
+          "sudo_set_min_allowed_weights": {
+            "type": "object",
+            "required": [
+              "min_allowed_weights",
+              "netuid"
+            ],
+            "properties": {
+              "min_allowed_weights": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_validator_prune_len"
+        ],
+        "properties": {
+          "sudo_set_validator_prune_len": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "validator_prune_len"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "validator_prune_len": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_scaling_law_power"
+        ],
+        "properties": {
+          "sudo_set_scaling_law_power": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "scaling_law_power"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "scaling_law_power": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_immunity_period"
+        ],
+        "properties": {
+          "sudo_set_immunity_period": {
+            "type": "object",
+            "required": [
+              "immunity_period",
+              "netuid"
+            ],
+            "properties": {
+              "immunity_period": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_max_weight_limit"
+        ],
+        "properties": {
+          "sudo_set_max_weight_limit": {
+            "type": "object",
+            "required": [
+              "max_weight_limit",
+              "netuid"
+            ],
+            "properties": {
+              "max_weight_limit": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_max_registrations_per_block"
+        ],
+        "properties": {
+          "sudo_set_max_registrations_per_block": {
+            "type": "object",
+            "required": [
+              "max_registrations_per_block",
+              "netuid"
+            ],
+            "properties": {
+              "max_registrations_per_block": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_total_issuance"
+        ],
+        "properties": {
+          "sudo_set_total_issuance": {
+            "type": "object",
+            "required": [
+              "total_issuance"
+            ],
+            "properties": {
+              "total_issuance": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_tempo"
+        ],
+        "properties": {
+          "sudo_set_tempo": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "tempo"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "tempo": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_rao_recycled"
+        ],
+        "properties": {
+          "sudo_set_rao_recycled": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "rao_recycled"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "rao_recycled": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_registration_allowed"
+        ],
+        "properties": {
+          "sudo_set_registration_allowed": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "registration_allowed"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "registration_allowed": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_adjustment_alpha"
+        ],
+        "properties": {
+          "sudo_set_adjustment_alpha": {
+            "type": "object",
+            "required": [
+              "adjustment_alpha",
+              "netuid"
+            ],
+            "properties": {
+              "adjustment_alpha": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_subnet_owner_cut"
+        ],
+        "properties": {
+          "sudo_set_subnet_owner_cut": {
+            "type": "object",
+            "required": [
+              "cut"
+            ],
+            "properties": {
+              "cut": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_network_rate_limit"
+        ],
+        "properties": {
+          "sudo_set_network_rate_limit": {
+            "type": "object",
+            "required": [
+              "rate_limit"
+            ],
+            "properties": {
+              "rate_limit": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_network_immunity_period"
+        ],
+        "properties": {
+          "sudo_set_network_immunity_period": {
+            "type": "object",
+            "required": [
+              "immunity_period"
+            ],
+            "properties": {
+              "immunity_period": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_network_min_lock_cost"
+        ],
+        "properties": {
+          "sudo_set_network_min_lock_cost": {
+            "type": "object",
+            "required": [
+              "lock_cost"
+            ],
+            "properties": {
+              "lock_cost": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_subnet_limit"
+        ],
+        "properties": {
+          "sudo_set_subnet_limit": {
+            "type": "object",
+            "required": [
+              "max_subnets"
+            ],
+            "properties": {
+              "max_subnets": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_lock_reduction_interval"
+        ],
+        "properties": {
+          "sudo_set_lock_reduction_interval": {
+            "type": "object",
+            "required": [
+              "interval"
+            ],
+            "properties": {
+              "interval": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_validator_permit_for_uid"
+        ],
+        "properties": {
+          "sudo_set_validator_permit_for_uid": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "permit",
+              "uid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "permit": {
+                "type": "boolean"
+              },
+              "uid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_block_emission"
+        ],
+        "properties": {
+          "sudo_set_block_emission": {
+            "type": "object",
+            "required": [
+              "emission"
+            ],
+            "properties": {
+              "emission": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "get_delegates"
+        ],
+        "properties": {
+          "get_delegates": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_delegate"
+        ],
+        "properties": {
+          "get_delegate": {
+            "type": "object",
+            "required": [
+              "delegate_account"
+            ],
+            "properties": {
+              "delegate_account": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_delegated"
+        ],
+        "properties": {
+          "get_delegated": {
+            "type": "object",
+            "required": [
+              "delegatee_account"
+            ],
+            "properties": {
+              "delegatee_account": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_neurons_lite"
+        ],
+        "properties": {
+          "get_neurons_lite": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_neuron_lite"
+        ],
+        "properties": {
+          "get_neuron_lite": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "uid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "uid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_neurons"
+        ],
+        "properties": {
+          "get_neurons": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_neuron"
+        ],
+        "properties": {
+          "get_neuron": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "uid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "uid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_subnet_info"
+        ],
+        "properties": {
+          "get_subnet_info": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_subnets_info"
+        ],
+        "properties": {
+          "get_subnets_info": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_subnet_hyperparams"
+        ],
+        "properties": {
+          "get_subnet_hyperparams": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_stake_info_for_coldkey"
+        ],
+        "properties": {
+          "get_stake_info_for_coldkey": {
+            "type": "object",
+            "required": [
+              "coldkey_account"
+            ],
+            "properties": {
+              "coldkey_account": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_stake_info_for_coldkeys"
+        ],
+        "properties": {
+          "get_stake_info_for_coldkeys": {
+            "type": "object",
+            "required": [
+              "coldkey_accounts"
+            ],
+            "properties": {
+              "coldkey_accounts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_network_registration_cost"
+        ],
+        "properties": {
+          "get_network_registration_cost": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_weights"
+        ],
+        "properties": {
+          "get_weights": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_state"
+        ],
+        "properties": {
+          "get_state": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": null,
+  "sudo": null,
+  "responses": {
+    "get_delegate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_DelegateInfo",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DelegateInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "DelegateInfo": {
+          "type": "object",
+          "required": [
+            "delegate_ss58",
+            "nominators",
+            "owner_ss58",
+            "registrations",
+            "return_per_1000",
+            "take",
+            "total_daily_return",
+            "validator_permits"
+          ],
+          "properties": {
+            "delegate_ss58": {
+              "$ref": "#/definitions/Addr"
+            },
+            "nominators": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "owner_ss58": {
+              "$ref": "#/definitions/Addr"
+            },
+            "registrations": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "return_per_1000": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "take": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "total_daily_return": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "validator_permits": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "get_delegated": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Tuple_of_DelegateInfo_and_uint64",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "$ref": "#/definitions/DelegateInfo"
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "DelegateInfo": {
+          "type": "object",
+          "required": [
+            "delegate_ss58",
+            "nominators",
+            "owner_ss58",
+            "registrations",
+            "return_per_1000",
+            "take",
+            "total_daily_return",
+            "validator_permits"
+          ],
+          "properties": {
+            "delegate_ss58": {
+              "$ref": "#/definitions/Addr"
+            },
+            "nominators": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "owner_ss58": {
+              "$ref": "#/definitions/Addr"
+            },
+            "registrations": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "return_per_1000": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "take": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "total_daily_return": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "validator_permits": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "get_delegates": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_DelegateInfo",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/DelegateInfo"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "DelegateInfo": {
+          "type": "object",
+          "required": [
+            "delegate_ss58",
+            "nominators",
+            "owner_ss58",
+            "registrations",
+            "return_per_1000",
+            "take",
+            "total_daily_return",
+            "validator_permits"
+          ],
+          "properties": {
+            "delegate_ss58": {
+              "$ref": "#/definitions/Addr"
+            },
+            "nominators": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "owner_ss58": {
+              "$ref": "#/definitions/Addr"
+            },
+            "registrations": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "return_per_1000": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "take": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "total_daily_return": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "validator_permits": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "get_network_registration_cost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_neuron": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_NeuronInfo",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NeuronInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AxonInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "placeholder1",
+            "placeholder2",
+            "port",
+            "protocol",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder1": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder2": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "protocol": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        "NeuronInfo": {
+          "type": "object",
+          "required": [
+            "active",
+            "axon_info",
+            "bonds",
+            "coldkey",
+            "consensus",
+            "dividends",
+            "emission",
+            "hotkey",
+            "incentive",
+            "last_update",
+            "netuid",
+            "prometheus_info",
+            "pruning_score",
+            "rank",
+            "stake",
+            "trust",
+            "uid",
+            "validator_permit",
+            "validator_trust",
+            "weights"
+          ],
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "axon_info": {
+              "$ref": "#/definitions/AxonInfo"
+            },
+            "bonds": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "coldkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "consensus": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "dividends": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "emission": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "hotkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "incentive": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "last_update": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "prometheus_info": {
+              "$ref": "#/definitions/PrometheusInfo"
+            },
+            "pruning_score": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "rank": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "stake": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "uid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "validator_permit": {
+              "type": "boolean"
+            },
+            "validator_trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "weights": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "PrometheusInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "port",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "get_neuron_lite": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_NeuronInfoLite",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NeuronInfoLite"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AxonInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "placeholder1",
+            "placeholder2",
+            "port",
+            "protocol",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder1": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder2": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "protocol": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        "NeuronInfoLite": {
+          "type": "object",
+          "required": [
+            "active",
+            "axon_info",
+            "coldkey",
+            "consensus",
+            "dividends",
+            "emission",
+            "hotkey",
+            "incentive",
+            "last_update",
+            "netuid",
+            "prometheus_info",
+            "pruning_score",
+            "rank",
+            "stake",
+            "trust",
+            "uid",
+            "validator_permit",
+            "validator_trust"
+          ],
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "axon_info": {
+              "$ref": "#/definitions/AxonInfo"
+            },
+            "coldkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "consensus": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "dividends": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "emission": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "hotkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "incentive": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "last_update": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "prometheus_info": {
+              "$ref": "#/definitions/PrometheusInfo"
+            },
+            "pruning_score": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "rank": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "stake": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "uid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "validator_permit": {
+              "type": "boolean"
+            },
+            "validator_trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        "PrometheusInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "port",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "get_neurons": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_NeuronInfo",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NeuronInfo"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AxonInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "placeholder1",
+            "placeholder2",
+            "port",
+            "protocol",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder1": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder2": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "protocol": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        "NeuronInfo": {
+          "type": "object",
+          "required": [
+            "active",
+            "axon_info",
+            "bonds",
+            "coldkey",
+            "consensus",
+            "dividends",
+            "emission",
+            "hotkey",
+            "incentive",
+            "last_update",
+            "netuid",
+            "prometheus_info",
+            "pruning_score",
+            "rank",
+            "stake",
+            "trust",
+            "uid",
+            "validator_permit",
+            "validator_trust",
+            "weights"
+          ],
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "axon_info": {
+              "$ref": "#/definitions/AxonInfo"
+            },
+            "bonds": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "coldkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "consensus": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "dividends": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "emission": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "hotkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "incentive": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "last_update": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "prometheus_info": {
+              "$ref": "#/definitions/PrometheusInfo"
+            },
+            "pruning_score": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "rank": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "stake": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "uid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "validator_permit": {
+              "type": "boolean"
+            },
+            "validator_trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "weights": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "PrometheusInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "port",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "get_neurons_lite": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_NeuronInfoLite",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NeuronInfoLite"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AxonInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "placeholder1",
+            "placeholder2",
+            "port",
+            "protocol",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder1": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder2": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "protocol": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        "NeuronInfoLite": {
+          "type": "object",
+          "required": [
+            "active",
+            "axon_info",
+            "coldkey",
+            "consensus",
+            "dividends",
+            "emission",
+            "hotkey",
+            "incentive",
+            "last_update",
+            "netuid",
+            "prometheus_info",
+            "pruning_score",
+            "rank",
+            "stake",
+            "trust",
+            "uid",
+            "validator_permit",
+            "validator_trust"
+          ],
+          "properties": {
+            "active": {
+              "type": "boolean"
+            },
+            "axon_info": {
+              "$ref": "#/definitions/AxonInfo"
+            },
+            "coldkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "consensus": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "dividends": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "emission": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "hotkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "incentive": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "last_update": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "prometheus_info": {
+              "$ref": "#/definitions/PrometheusInfo"
+            },
+            "pruning_score": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "rank": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "stake": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "uid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "validator_permit": {
+              "type": "boolean"
+            },
+            "validator_trust": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        "PrometheusInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "port",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "get_stake_info_for_coldkey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StakeInfo",
+      "type": "object",
+      "required": [
+        "coldkey",
+        "hotkey",
+        "stake"
+      ],
+      "properties": {
+        "coldkey": {
+          "$ref": "#/definitions/Addr"
+        },
+        "hotkey": {
+          "$ref": "#/definitions/Addr"
+        },
+        "stake": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        }
+      }
+    },
+    "get_stake_info_for_coldkeys": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_StakeInfo",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/StakeInfo"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "StakeInfo": {
+          "type": "object",
+          "required": [
+            "coldkey",
+            "hotkey",
+            "stake"
+          ],
+          "properties": {
+            "coldkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "hotkey": {
+              "$ref": "#/definitions/Addr"
+            },
+            "stake": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "get_state": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StateInfo",
+      "type": "object",
+      "required": [
+        "active",
+        "activity_cutoff",
+        "adjustment_interval",
+        "adjustments_alpha",
+        "allow_faucet",
+        "axon_info",
+        "block_at_registration",
+        "blocks_since_last_step",
+        "bonds",
+        "bonds_moving_average",
+        "burn",
+        "burn_registrations_this_interval",
+        "consensus",
+        "default_take",
+        "difficulty",
+        "dividends",
+        "emission",
+        "emission_values",
+        "global_block_emission",
+        "global_used_work",
+        "hotkey_coldkey",
+        "hotkey_stake",
+        "immunity_period",
+        "incentive",
+        "is_network_member",
+        "kappa",
+        "keys",
+        "last_adjustment_block",
+        "last_mechanism_step_block",
+        "last_tx_block",
+        "last_update",
+        "loaded_emission",
+        "max_allowed_uids",
+        "max_allowed_validators",
+        "max_burn",
+        "max_difficulty",
+        "max_registration_per_block",
+        "max_weights_limit",
+        "min_allowed_weights",
+        "min_burn",
+        "min_difficulty",
+        "network_immunity_period",
+        "network_last_lock_cost",
+        "network_last_registered",
+        "network_lock_reduction_interval",
+        "network_min_allowed_uids",
+        "network_min_lock_cost",
+        "network_modality",
+        "network_rate_limit",
+        "network_registered_at",
+        "network_registration_allowed",
+        "networks_added",
+        "neurons_to_prunet_at_next_epoch",
+        "pending_emission",
+        "pow_registrations_this_interval",
+        "prometheus_info",
+        "pruning_scores",
+        "rank",
+        "rao_recycled_for_registration",
+        "registrations_this_block",
+        "registrations_this_interval",
+        "rho",
+        "root",
+        "scaling_law_power",
+        "serving_rate_limit",
+        "staked_hotkey_coldkey",
+        "subnet_limit",
+        "subnet_locked",
+        "subnet_owner",
+        "subnet_owner_cut",
+        "subnetwork_n",
+        "target_registrations_per_interval",
+        "tempo",
+        "total_coldkey_stake",
+        "total_hotkey_stake",
+        "total_issuance",
+        "total_networks",
+        "total_stake",
+        "trust",
+        "tx_rate_limit",
+        "uids",
+        "validator_permit",
+        "validator_prune_len",
+        "validator_trust",
+        "weights",
+        "weights_set_rate_limit",
+        "weights_version_key"
+      ],
+      "properties": {
+        "active": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "boolean"
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "activity_cutoff": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "adjustment_interval": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "adjustments_alpha": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "allow_faucet": {
+          "type": "boolean"
+        },
+        "axon_info": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "$ref": "#/definitions/Addr"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "$ref": "#/definitions/AxonInfo"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "block_at_registration": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "blocks_since_last_step": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "bonds": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": [
+                    {
+                      "type": "integer",
+                      "format": "uint16",
+                      "minimum": 0.0
+                    },
+                    {
+                      "type": "integer",
+                      "format": "uint16",
+                      "minimum": 0.0
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "bonds_moving_average": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "burn": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "burn_registrations_this_interval": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "consensus": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "default_take": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "difficulty": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "dividends": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "emission": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "emission_values": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "global_block_emission": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "global_used_work": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint8",
+                  "minimum": 0.0
+                }
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "hotkey_coldkey": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "$ref": "#/definitions/Addr"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "hotkey_stake": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "immunity_period": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "incentive": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "is_network_member": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "kappa": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "$ref": "#/definitions/Addr"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "last_adjustment_block": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "last_mechanism_step_block": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "last_tx_block": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "last_update": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "loaded_emission": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": [
+                    {
+                      "$ref": "#/definitions/Addr"
+                    },
+                    {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0.0
+                    },
+                    {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0.0
+                    }
+                  ],
+                  "maxItems": 3,
+                  "minItems": 3
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "max_allowed_uids": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "max_allowed_validators": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "max_burn": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "max_difficulty": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "max_registration_per_block": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "max_weights_limit": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "min_allowed_weights": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "min_burn": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "min_difficulty": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "network_immunity_period": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "network_last_lock_cost": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "network_last_registered": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "network_lock_reduction_interval": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "network_min_allowed_uids": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "network_min_lock_cost": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "network_modality": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "network_rate_limit": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "network_registered_at": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "network_registration_allowed": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "networks_added": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "neurons_to_prunet_at_next_epoch": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "pending_emission": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "pow_registrations_this_interval": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "prometheus_info": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "$ref": "#/definitions/Addr"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "$ref": "#/definitions/PrometheusInfo"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "pruning_scores": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "rank": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "rao_recycled_for_registration": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "registrations_this_block": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "registrations_this_interval": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "rho": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "root": {
+          "$ref": "#/definitions/Addr"
+        },
+        "scaling_law_power": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "serving_rate_limit": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "staked_hotkey_coldkey": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "$ref": "#/definitions/Addr"
+                  },
+                  {
+                    "$ref": "#/definitions/Addr"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "subnet_limit": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "subnet_locked": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "subnet_owner": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "$ref": "#/definitions/Addr"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "subnet_owner_cut": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "subnetwork_n": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "target_registrations_per_interval": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "tempo": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "total_coldkey_stake": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "total_hotkey_stake": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "$ref": "#/definitions/Addr"
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "total_issuance": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "total_networks": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "total_stake": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "trust": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "tx_rate_limit": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "uids": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "$ref": "#/definitions/Addr"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "validator_permit": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "boolean"
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "validator_prune_len": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "validator_trust": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "weights": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0.0
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": [
+                    {
+                      "type": "integer",
+                      "format": "uint16",
+                      "minimum": 0.0
+                    },
+                    {
+                      "type": "integer",
+                      "format": "uint16",
+                      "minimum": 0.0
+                    }
+                  ],
+                  "maxItems": 2,
+                  "minItems": 2
+                }
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "weights_set_rate_limit": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "weights_version_key": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "AxonInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "placeholder1",
+            "placeholder2",
+            "port",
+            "protocol",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder1": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder2": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "protocol": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        "PrometheusInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "port",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "get_subnet_hyperparams": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SubnetHyperparams",
+      "type": "object",
+      "required": [
+        "activity_cutoff",
+        "adjustment_interval",
+        "bonds_moving_avg",
+        "immunity_period",
+        "kappa",
+        "max_burn",
+        "max_difficulty",
+        "max_regs_per_block",
+        "max_weights_limit",
+        "min_allowed_weights",
+        "min_burn",
+        "min_difficulty",
+        "registration_allowed",
+        "rho",
+        "target_regs_per_interval",
+        "tempo",
+        "weights_rate_limit",
+        "weights_version"
+      ],
+      "properties": {
+        "activity_cutoff": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "adjustment_interval": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "bonds_moving_avg": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "immunity_period": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "kappa": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_burn": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "max_difficulty": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "max_regs_per_block": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_weights_limit": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "min_allowed_weights": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "min_burn": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "min_difficulty": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "registration_allowed": {
+          "type": "boolean"
+        },
+        "rho": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "target_regs_per_interval": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "tempo": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "weights_rate_limit": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "weights_version": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "get_subnet_info": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SubnetInfo",
+      "type": "object",
+      "required": [
+        "blocks_since_last_step",
+        "burn",
+        "difficulty",
+        "emission_values",
+        "immunity_period",
+        "kappa",
+        "max_allowed_uids",
+        "max_allowed_validators",
+        "max_weights_limit",
+        "min_allowed_weights",
+        "netuid",
+        "network_connect",
+        "network_modality",
+        "owner",
+        "rho",
+        "scaling_law_power",
+        "subnetwork_n",
+        "tempo"
+      ],
+      "properties": {
+        "blocks_since_last_step": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "burn": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "difficulty": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "emission_values": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "immunity_period": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "kappa": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_allowed_uids": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_allowed_validators": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "max_weights_limit": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "min_allowed_weights": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "netuid": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "network_connect": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "network_modality": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "owner": {
+          "$ref": "#/definitions/Addr"
+        },
+        "rho": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "scaling_law_power": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "subnetwork_n": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "tempo": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        }
+      }
+    },
+    "get_subnets_info": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_SubnetInfo",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SubnetInfo"
+      },
+      "definitions": {
+        "Addr": {
+          "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+          "type": "string"
+        },
+        "SubnetInfo": {
+          "type": "object",
+          "required": [
+            "blocks_since_last_step",
+            "burn",
+            "difficulty",
+            "emission_values",
+            "immunity_period",
+            "kappa",
+            "max_allowed_uids",
+            "max_allowed_validators",
+            "max_weights_limit",
+            "min_allowed_weights",
+            "netuid",
+            "network_connect",
+            "network_modality",
+            "owner",
+            "rho",
+            "scaling_law_power",
+            "subnetwork_n",
+            "tempo"
+          ],
+          "properties": {
+            "blocks_since_last_step": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "burn": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "difficulty": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "emission_values": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "immunity_period": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "kappa": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "max_allowed_uids": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "max_allowed_validators": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "max_weights_limit": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "min_allowed_weights": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "network_connect": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "uint16",
+                  "minimum": 0.0
+                },
+                "maxItems": 2,
+                "minItems": 2
+              }
+            },
+            "network_modality": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "owner": {
+              "$ref": "#/definitions/Addr"
+            },
+            "rho": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "scaling_law_power": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "subnetwork_n": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "tempo": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "get_weights": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Array_of_uint16",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}
