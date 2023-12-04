@@ -332,6 +332,8 @@ pub enum QueryMsg {
     // TODO added for debugging, remove later
     #[returns(Vec<Vec<u16>>)]
     GetWeights { netuid: u16 },
+    #[returns(Vec<Vec<(u16, u16)>>)]
+    GetWeightsSparse { netuid: u16 },
 
     #[returns(crate::state_info::StateInfo)]
     GetState {},

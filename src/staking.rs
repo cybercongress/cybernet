@@ -393,7 +393,8 @@ pub fn get_total_stake_for_coldkey(store: &dyn Storage, coldkey: &Addr) -> u64 {
 // Returns the stake under the cold - hot pairing in the staking table.
 //
 pub fn get_stake_for_coldkey_and_hotkey(store: &dyn Storage, coldkey: &Addr, hotkey: &Addr) -> u64 {
-    STAKE.load(store, (hotkey, coldkey)).unwrap()
+    // Added default, see delegate_info:125
+    STAKE.load(store, (hotkey, coldkey)).unwrap_or_default()
 }
 
 // Creates a cold - hot pairing account if the hotkey is not already an active account.

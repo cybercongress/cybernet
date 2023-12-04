@@ -56,7 +56,7 @@ use crate::utils::{
     do_sudo_set_validator_prune_len, do_sudo_set_weights_set_rate_limit,
     do_sudo_set_weights_version_key,
 };
-use crate::weights::{do_set_weights, get_network_weights};
+use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
 // use cw2::set_contract_version;
 
@@ -621,6 +621,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetState {} => to_json_binary(&get_state_info(deps.storage)?),
         QueryMsg::GetWeights { netuid } => {
             to_json_binary(&get_network_weights(deps.storage, netuid)?)
+        }
+        QueryMsg::GetWeightsSparse { netuid } => {
+            to_json_binary(&get_network_weights_sparse(deps.storage, netuid)?)
         }
     }
 }

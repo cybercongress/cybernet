@@ -405,3 +405,19 @@ pub fn get_network_weights(store: &dyn Storage, netuid: u16) -> StdResult<Vec<Ve
     }
     Ok(weights)
 }
+
+// Output unnormalized sparse weights, input weights are assumed to be row max-upscaled in u16.
+pub fn get_network_weights_sparse(store: &dyn Storage, netuid:u16 ) -> StdResult<Vec<Vec<(u16, u16)>>> {
+    let n: usize = get_subnetwork_n(store, netuid) as usize;
+    let mut weights: Vec<Vec<(u16, u16)>> = vec![ vec![]; n ];
+    for item in WEIGHTS
+        .prefix(netuid)
+        .range(store, None, None, Order::Ascending)
+    {
+        let (uid_i, weights_i) = item.unwrap();
+        for (uid_j, weight_ij) in weights_i.iter() {
+            weights [ uid_i as usize ].push( ( *uid_j, *weight_ij ));
+        }
+    }
+    Ok(weights)
+}
