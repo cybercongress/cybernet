@@ -8,6 +8,7 @@ use crate::root::{
     set_lock_reduction_interval, set_network_last_lock,
 };
 use crate::staking::{add_balance_to_coldkey_account, hotkey_is_delegate};
+use crate::state_info::get_state_info;
 use crate::test_helpers::{
     add_network, add_stake, burned_register_ok_neuron, instantiate_contract,
     pow_register_ok_neuron, register_network, root_register, set_weights, step_block,
@@ -348,6 +349,8 @@ fn test_root_set_weights() {
 
     // TODO back to this
     // assert_eq!(get_pending_emission(&deps.storage, 9), 0);
+    let state = get_state_info(&deps.storage);
+    println!("{:?}", state)
 }
 
 // TODO FAILED

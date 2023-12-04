@@ -66,6 +66,7 @@ pub struct StateInfo {
     pending_emission: Vec<(u16, u64)>,
     blocks_since_last_step: Vec<(u16, u64)>,
     last_mechanism_step_block: Vec<(u16, u64)>,
+    // TODO will fail if subnet don't have owner, need to return Option<Addr>
     subnet_owner: Vec<(u16, Addr)>,
     subnet_locked: Vec<(u16, u64)>,
     tx_rate_limit: u64,

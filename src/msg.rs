@@ -5,7 +5,8 @@ pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    // TODO move to sudo and call as module from sdk
+    Activate {},
+    // TODO remove later, use for manual block_step
     BlockStep {},
 
     SetWeights {
@@ -16,15 +17,14 @@ pub enum ExecuteMsg {
     },
     BecomeDelegate {
         hotkey: String,
-        take: u16,
+        // take: u16,
     },
     AddStake {
         hotkey: String,
-        amount_staked: u64,
     },
     RemoveStake {
         hotkey: String,
-        amount_unstaked: u64,
+        amount: u64,
     },
     ServeAxon {
         netuid: u16,
@@ -225,9 +225,9 @@ pub enum QueryMsg {
     #[returns(Vec<crate::delegate_info::DelegateInfo>)]
     GetDelegates {},
     #[returns(Option<crate::delegate_info::DelegateInfo>)]
-    GetDelegate { delegate_account: String },
+    GetDelegate { delegate: String },
     #[returns(Vec<(crate::delegate_info::DelegateInfo, u64)>)]
-    GetDelegated { delegatee_account: String },
+    GetDelegated { delegatee: String },
 
     #[returns(Vec<crate::neuron_info::NeuronInfoLite>)]
     GetNeuronsLite { netuid: u16 },
@@ -246,16 +246,94 @@ pub enum QueryMsg {
     GetSubnetHyperparams { netuid: u16 },
 
     #[returns(crate::stake_info::StakeInfo)]
-    GetStakeInfoForColdkey { coldkey_account: String },
+    GetStakeInfoForColdkey { coldkey: String },
     #[returns(Vec<crate::stake_info::StakeInfo>)]
-    GetStakeInfoForColdkeys { coldkey_accounts: Vec<String> },
+    GetStakeInfoForColdkeys { coldkeys: Vec<String> },
 
     #[returns(u64)]
     GetNetworkRegistrationCost {},
 
+    // TODO added for cybertensor CLI
+    #[returns(Option<String>)]
+    GetSubnetOwner { netuid: u16 },
+
+    #[returns(Option<String>)]
+    GetHotkeyOwner { hotkey: String },
+
+    #[returns(Option<u64>)]
+    GetStakeForColdkeyAndHotkey { coldkey: String, hotkey: String },
+
+    #[returns(Option<u16>)]
+    GetUidForHotkeyOnSubnet { hotkey: String, netuid: u16 },
+
+    #[returns(Option<Vec<u16>>)]
+    GetNetuidsForHotkey { hotkey: String },
+
+    #[returns(bool)]
+    GetSubnetExist { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetMaxWeightLimit { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetMinAllowedWeights { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetDelegateTake { hotkey: String },
+
+    #[returns(Option<u64>)]
+    GetBurn { netuid: u16 },
+
+    #[returns(Option<u64>)]
+    GetDifficulty { netuid: u16 },
+
+    #[returns(Option<u16>)]
+    GetTempo { netuid: u16 },
+
+    #[returns(u16)]
+    GetTotalNetworks {},
+
+    #[returns(Vec<u16>)]
+    GetNetworksAdded {},
+
+    #[returns(u64)]
+    GetEmissionValueBySubnet { netuid: u16 },
+
+    #[returns(Vec<u16>)]
+    GetAllSubnetNetuids {},
+
+    #[returns(u64)]
+    GetTotalIssuance {},
+
+    #[returns(u64)]
+    GetTotalStake {},
+
+    #[returns(u64)]
+    GetTxRateLimit {},
+
+    #[returns(Option<crate::state::AxonInfoOf>)]
+    GetAxonInfo { netuid: u16, hotkey: String },
+
+    #[returns(Option<crate::state::PrometheusInfoOf>)]
+    GetPrometheusInfo { netuid: u16, hotkey: String },
+
+    #[returns(Option<u64>)]
+    GetTotalStakeForHotkey { address: String },
+
+    #[returns(Option<u64>)]
+    GetTotalStakeForColdkey { address: String },
+
+    #[returns(bool)]
+    GetHotkeyExist { hotkey: String },
+
+    #[returns(Vec<(String, u64)>)]
+    GetStake { hotkey: String },
+
     // TODO added for debugging, remove later
     #[returns(Vec<Vec<u16>>)]
     GetWeights { netuid: u16 },
+    #[returns(Vec<Vec<(u16, u16)>>)]
+    GetWeightsSparse { netuid: u16 },
 
     #[returns(crate::state_info::StateInfo)]
     GetState {},

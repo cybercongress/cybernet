@@ -2,7 +2,7 @@
 // ==== Helper functions ====
 // ==========================
 
-use cosmwasm_std::{ensure, Api, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage};
+use cosmwasm_std::{ensure, Api, DepsMut, Env, MessageInfo, Order, StdResult, Storage};
 
 use crate::math::{check_vec_max_limited, vec_u16_max_upscale_to_u16};
 use crate::root::{contains_invalid_root_uids, get_root_netuid, if_subnet_exist};
@@ -16,6 +16,7 @@ use crate::utils::{
     get_weights_set_rate_limit, set_last_update_for_uid,
 };
 use crate::ContractError;
+use cyber_std::Response;
 
 // ---- The implementation for the extrinsic set_weights.
 //
@@ -400,6 +401,22 @@ pub fn get_network_weights(store: &dyn Storage, netuid: u16) -> StdResult<Vec<Ve
         let (uid_i, weights_i) = item.unwrap();
         for (uid_j, weight_ij) in weights_i.iter() {
             weights[uid_i as usize][*uid_j as usize] = *weight_ij;
+        }
+    }
+    Ok(weights)
+}
+
+// Output unnormalized sparse weights, input weights are assumed to be row max-upscaled in u16.
+pub fn get_network_weights_sparse(store: &dyn Storage, netuid:u16 ) -> StdResult<Vec<Vec<(u16, u16)>>> {
+    let n: usize = get_subnetwork_n(store, netuid) as usize;
+    let mut weights: Vec<Vec<(u16, u16)>> = vec![ vec![]; n ];
+    for item in WEIGHTS
+        .prefix(netuid)
+        .range(store, None, None, Order::Ascending)
+    {
+        let (uid_i, weights_i) = item.unwrap();
+        for (uid_j, weight_ij) in weights_i.iter() {
+            weights [ uid_i as usize ].push( ( *uid_j, *weight_ij ));
         }
     }
     Ok(weights)

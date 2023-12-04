@@ -57,7 +57,7 @@ pub struct SubnetHyperparams {
 }
 
 pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>> {
-    if if_subnet_exist(deps.storage, netuid) {
+    if !if_subnet_exist(deps.storage, netuid) {
         return Ok(None);
     }
 
@@ -77,6 +77,8 @@ pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>>
     let emission_values = EMISSION_VALUES.load(deps.storage, netuid)?;
     let burn = BURN.load(deps.storage, netuid)?;
     let owner = SUBNET_OWNER.load(deps.storage, netuid)?;
+    // TODO update
+    // let owner = SUBNET_OWNER.load(deps.storage, netuid).map_err(|_| return Ok(None))?;
 
     // DEPRECATED
     let network_connect: Vec<[u16; 2]> = Vec::<[u16; 2]>::new();

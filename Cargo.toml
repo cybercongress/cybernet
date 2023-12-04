@@ -1,6 +1,6 @@
 [package]
 name = "cybernet"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["C H <litvintech@gmail.com>"]
 edition = "2021"
 
@@ -62,8 +62,11 @@ primitive-types = { version = "0.12.0", default-features = false }
 sp-core-hashing = { version = "13.0.0", default-features = false }
 substrate-fixed = { version = "0.5.9", default-features = false }
 scale-info = { version = "2.0.0", default-features = false }
+cyber-std = { version = "0.2.2"}
 
 [dev-dependencies]
 cw-multi-test = { version = "0.18.0", features = ["iterator"]}
+cyber-std = { version = "0.2.2"}
+cyber-std-test = { version = "0.2.1"}
 rand = { version = "0.8.4" }
 cw-storage-gas-meter = "1.0.0"

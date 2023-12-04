@@ -8,7 +8,7 @@ use crate::staking::{
     remove_balance_from_coldkey_account,
 };
 use crate::state::{
-    ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, POW_REGISTRATIONS_THIS_INTERVAL,
+    ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, DENOM, POW_REGISTRATIONS_THIS_INTERVAL,
     REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, TOTAL_ISSUANCE, UIDS, USED_WORK,
 };
 use crate::uids::{append_neuron, get_subnetwork_n, replace_neuron};
@@ -19,8 +19,12 @@ use crate::utils::{
     get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid,
 };
 use crate::ContractError;
-use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Response, StdResult, Storage};
+use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, StdResult, Storage};
+use cw_utils::must_pay;
+
 use primitive_types::{H256, U256};
+// use sp_io::hashing::{keccak_256, sha2_256};
+use cyber_std::Response;
 use sp_core_hashing::{keccak_256, sha2_256};
 
 pub fn do_sudo_registration(
@@ -33,6 +37,10 @@ pub fn do_sudo_registration(
     stake: u64,
     balance: u64,
 ) -> Result<Response, ContractError> {
+    // TODO update stake and balance to incoming tokens
+    // let denom = DENOM.load(deps.storage)?;
+    // let amount = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
+
     let hotkey = deps.api.addr_validate(&hotkey_address)?;
     let coldkey = deps.api.addr_validate(&coldkey_address)?;
 
@@ -60,12 +68,12 @@ pub fn do_sudo_registration(
     );
     increase_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake);
 
-    let balance_to_be_added_as_balance = u64_to_balance(balance);
-    ensure!(
-        balance_to_be_added_as_balance.is_some(),
-        ContractError::CouldNotConvertToBalance {}
-    );
-    add_balance_to_coldkey_account(&coldkey, balance_to_be_added_as_balance.unwrap());
+    // let balance_to_be_added_as_balance = u64_to_balance(balance);
+    // ensure!(
+    //     balance_to_be_added_as_balance.is_some(),
+    //     ContractError::CouldNotConvertToBalance {}
+    // );
+    // add_balance_to_coldkey_account(&coldkey, balance_to_be_added_as_balance.unwrap());
 
     let subnetwork_uid: u16;
     let current_block_number: u64 = env.block.height;
@@ -146,6 +154,10 @@ pub fn do_burned_registration(
     netuid: u16,
     hotkey_address: String,
 ) -> Result<Response, ContractError> {
+    // TODO cannot burn so just receive tokens for registration and account as burned increase_rao_recycled
+    let denom = DENOM.load(deps.storage)?;
+    let amount = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
+
     // --- 1. Check that the caller has signed the transaction. (the coldkey of the pairing)
     let coldkey = info.sender;
     let hotkey = deps.api.addr_validate(&hotkey_address)?;
@@ -195,18 +207,24 @@ pub fn do_burned_registration(
     let current_block_number: u64 = env.block.height;
     let registration_cost_as_u64 = get_burn_as_u64(deps.storage, netuid);
     let registration_cost_as_balance = u64_to_balance(registration_cost_as_u64).unwrap();
+    // ensure!(
+    //     can_remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance),
+    //     ContractError::NotEnoughBalanceToStake {}
+    // );
+
     ensure!(
-        can_remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance),
-        ContractError::NotEnoughBalanceToStake {}
+        amount.u128() as u64 >= registration_cost_as_balance,
+        ContractError::NotEnoughTokens {}
     );
 
     // --- 8. Ensure the remove operation from the coldkey is a success.
-    ensure!(
-        remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance) == true,
-        ContractError::BalanceWithdrawalError {}
-    );
+    // ensure!(
+    //     remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance) == true,
+    //     ContractError::BalanceWithdrawalError {}
+    // );
 
     // The burn occurs here.
+    // same as below
     let burn_amount = get_burn_as_u64(deps.storage, netuid);
     burn_tokens(deps.storage, burn_amount)?;
 
@@ -550,17 +568,17 @@ pub fn do_faucet(
     );
 
     // --- 3. Ensure the supplied work passes the difficulty.
-    let difficulty = U256::from(1_000_000); // Base faucet difficulty.
-    let work_hash: H256 = vec_to_hash(work.clone());
-    ensure!(
-        hash_meets_difficulty(&work_hash, difficulty),
-        ContractError::InvalidDifficulty {}
-    ); // Check that the work meets difficulty.
+    // let difficulty = U256::from(1_000_000); // Base faucet difficulty.
+    // let work_hash: H256 = vec_to_hash(work.clone());
+    // ensure!(
+    //     hash_meets_difficulty(&work_hash, difficulty),
+    //     ContractError::InvalidDifficulty {}
+    // ); // Check that the work meets difficulty.
 
     // --- 4. Check Work is the product of the nonce, the block number, and hotkey. Add this as used work.
-    let seal: H256 = create_seal_hash(block_number, nonce, coldkey.as_str());
-    ensure!(seal == work_hash, ContractError::InvalidSeal {});
-    USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
+    // let seal: H256 = create_seal_hash(block_number, nonce, coldkey.as_str());
+    // ensure!(seal == work_hash, ContractError::InvalidSeal {});
+    // USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
 
     // --- 5. Add Balance via faucet.
     let balance_to_add: u64 = 100_000_000_000;

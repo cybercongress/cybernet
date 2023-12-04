@@ -12,11 +12,11 @@ use alloc::vec::Vec;
 
 #[cw_serde]
 pub struct DelegateInfo {
-    delegate_ss58: Addr,
+    delegate: Addr,
     take: u16,
     nominators: Vec<(Addr, u64)>,
-    // map of nominator_ss58 to stake amount
-    owner_ss58: Addr,
+    // map of nominator to stake amount
+    owner: Addr,
     registrations: Vec<u16>,
     // Vec of netuid this delegate is registered on
     validator_permits: Vec<u16>,
@@ -76,10 +76,10 @@ pub fn get_delegate_by_existing_account(store: &dyn Storage, delegate: &Addr) ->
     }
 
     return DelegateInfo {
-        delegate_ss58: delegate.clone(),
+        delegate: delegate.clone(),
         take,
         nominators,
-        owner_ss58: owner.clone(),
+        owner: owner.clone(),
         registrations: registrations.iter().map(|x| *x).collect(),
         validator_permits,
         return_per_1000: U64F64::to_num::<u64>(return_per_1000).into(),
@@ -97,6 +97,7 @@ pub fn get_delegate(deps: Deps, delegate: String) -> StdResult<Option<DelegateIn
     return Ok(Some(delegate_info));
 }
 
+// TODO add pagination and limit
 pub fn get_delegates(deps: Deps) -> StdResult<Vec<DelegateInfo>> {
     let mut delegates = Vec::<DelegateInfo>::new();
     for item in DELEGATES
@@ -114,6 +115,7 @@ pub fn get_delegates(deps: Deps) -> StdResult<Vec<DelegateInfo>> {
 pub fn get_delegated(deps: Deps, delegatee: String) -> StdResult<Vec<(DelegateInfo, u64)>> {
     let delegatee = deps.api.addr_validate(&delegatee)?;
     let mut delegates: Vec<(DelegateInfo, u64)> = Vec::new();
+    // TODO iterator over all delegates? rewrite
     for item in DELEGATES
         .range(deps.storage, None, None, Order::Ascending)
         .into_iter()

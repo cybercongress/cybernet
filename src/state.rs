@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 pub const ROOT: Item<Addr> = Item::new("root");
 
+pub const DENOM: Item<String> = Item::new("denom");
+
 // --- ITEM ( percentage ) // TODO change to decimal
 // pub const SENATE_REQUIRED_STAKE_PERCENTAGE: Item<u64> = Item::new("senate_required_stake_percentage");
 
@@ -199,8 +201,8 @@ pub const VALIDATOR_PRUNE_LEN: Map<u16, u64> = Map::new("validator_prune_len");
 // --- MAP ( netuid ) --> scaling_law_power
 pub const SCALING_LAW_POWER: Map<u16, u16> = Map::new("scaling_law_power");
 // --- MAP ( netuid ) --> target_registrations_this_interval
-pub const TARGET_REGISTRATIONS_PER_INTERVAL: Map<u16, u16> =
-    Map::new("target_registrations_per_interval");
+// TODO update to target_regs_per_interval, check later
+pub const TARGET_REGISTRATIONS_PER_INTERVAL: Map<u16, u16> = Map::new("target_regs_per_interval");
 // --- DMAP ( netuid, uid ) --> block_at_registration
 pub const BLOCK_AT_REGISTRATION: Map<(u16, u16), u64> = Map::new("block_at_registration");
 // --- DMAP ( netuid ) --> adjustment_alpha

@@ -15,7 +15,8 @@ use crate::state::{
 };
 use crate::utils::get_blocks_since_last_step;
 use crate::ContractError;
-use cosmwasm_std::{Addr, Api, DepsMut, Env, Order, Response, StdResult, Storage};
+use cosmwasm_std::{Addr, Api, DepsMut, Env, Order, StdResult, Storage};
+use cyber_std::Response;
 use std::ops::Add;
 use substrate_fixed::types::I110F18;
 use substrate_fixed::types::I64F64;
@@ -144,10 +145,17 @@ pub fn generate_emission(
             remaining = remaining.saturating_sub(cut);
 
             let subnet_owner = SUBNET_OWNER.load(store, netuid)?;
-            add_balance_to_coldkey_account(
-                &subnet_owner,
-                u64_to_balance(cut.to_num::<u64>()).unwrap(),
-            );
+            // TODO create messages here
+            // add_balance_to_coldkey_account(
+            //     &subnet_owner,
+            //     u64_to_balance(cut.to_num::<u64>()).unwrap(),
+            // );
+            // let denom = DENOM.load(deps.storage)?;
+            // let msg = CosmosMsg::Bank(BankMsg::Send {
+            //     to_address: &subnet_owner.to_string(),
+            //     amount: coins(Uint128::from(cut.to_num::<u64>()).u128(), denom),
+            // });
+
             TOTAL_ISSUANCE.update(store, |a| -> StdResult<_> {
                 Ok(a.saturating_add(cut.to_num::<u64>()))
             })?;

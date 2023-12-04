@@ -1,30 +1,29 @@
 use cosmwasm_std::StdError::GenericErr;
-use cosmwasm_std::{
-    ensure, Addr, Api, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage,
-};
+use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Order, StdResult, Storage};
+use cw_utils::must_pay;
+use cyber_std::Response;
 use substrate_fixed::types::I64F64;
 
 use crate::block_step::blocks_until_next_epoch;
 use crate::epoch::get_float_kappa;
 use crate::math::{inplace_normalize_64, matmul_64, vec_fixed64_to_u64};
 use crate::staking::{
-    add_balance_to_coldkey_account, can_remove_balance_from_coldkey_account,
-    create_account_if_non_existent, delegate_hotkey, get_total_stake_for_hotkey,
-    hotkey_is_delegate, remove_balance_from_coldkey_account,
+    create_account_if_non_existent, delegate_hotkey, get_total_stake_for_hotkey, hotkey_is_delegate,
 };
 use crate::state::{
     ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS,
-    BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DIFFICULTY, DIVIDENDS,
-    EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS, LAST_ADJUSTMENT_BLOCK,
-    LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY,
-    MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
-    NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
-    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT,
-    NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, PENDING_EMISSION,
-    POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION,
-    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, SERVING_RATE_LIMIT, SUBNETWORK_N,
-    SUBNET_LIMIT, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST,
-    UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DENOM, DIFFICULTY,
+    DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS,
+    LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN,
+    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN,
+    MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
+    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
+    NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
+    PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK,
+    RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
+    SCALING_LAW_POWER, SERVING_RATE_LIMIT, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_OWNER,
+    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST, UIDS, VALIDATOR_PERMIT,
+    VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, replace_neuron};
 use crate::utils::{
@@ -625,6 +624,9 @@ pub fn user_add_network(
     env: Env,
     info: MessageInfo,
 ) -> Result<Response, ContractError> {
+    let denom = DENOM.load(deps.storage)?;
+    let amount = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
+
     // --- 0. Ensure the caller is a signed user.
     let coldkey = info.sender;
 
@@ -640,17 +642,23 @@ pub fn user_add_network(
     let lock_amount: u64 = get_network_lock_cost(deps.storage, deps.api, env.block.height)?;
     // TODO revisit this
     // let lock_as_balance = u64_to_balance(lock_amount);
-    let lock_as_balance = 0;
+    // let lock_as_balance = 0;
     deps.api
         .debug(&format!("network lock_amount: {:?}", lock_amount));
+
+    ensure!(
+        amount.u128() as u64 >= lock_amount,
+        ContractError::NotEnoughTokens {}
+    );
+
     // ensure!(
     //         lock_as_balance.is_some(),
     //         Error::<T>::CouldNotConvertToBalance
     //     );
-    ensure!(
-        can_remove_balance_from_coldkey_account(&coldkey, lock_as_balance),
-        ContractError::NotEnoughBalanceToStake {}
-    );
+    // ensure!(
+    //     can_remove_balance_from_coldkey_account(&coldkey, lock_as_balance),
+    //     ContractError::NotEnoughBalanceToStake {}
+    // );
 
     // --- 4. Determine the netuid to register.
     let netuid_to_register: u16 = {
@@ -682,10 +690,10 @@ pub fn user_add_network(
     };
 
     // --- 5. Perform the lock operation.
-    ensure!(
-        remove_balance_from_coldkey_account(&coldkey, lock_as_balance) == true,
-        ContractError::BalanceWithdrawalError {}
-    );
+    // ensure!(
+    //     remove_balance_from_coldkey_account(&coldkey, lock_as_balance) == true,
+    //     ContractError::BalanceWithdrawalError {}
+    // );
     set_subnet_locked_balance(deps.storage, netuid_to_register, lock_amount);
     set_network_last_lock(deps.storage, lock_amount);
 
@@ -829,6 +837,7 @@ pub fn init_new_network(
     SERVING_RATE_LIMIT.save(store, netuid, &50)?;
     ADJUSTMENTS_ALPHA.save(store, netuid, &0)?;
     LAST_UPDATE.save(store, netuid, &vec![])?;
+    SCALING_LAW_POWER.save(store, netuid, &50)?;
 
     Ok(())
 }
@@ -912,8 +921,8 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     BURN_REGISTRATIONS_THIS_INTERVAL.remove(store, netuid);
 
     // --- 11. Add the balance back to the owner.
-    // send here
-    add_balance_to_coldkey_account(&owner_coldkey, reserved_amount_as_bal);
+    // TODO create messages send here
+    // add_balance_to_coldkey_account(&owner_coldkey, reserved_amount_as_bal);
     set_subnet_locked_balance(store, netuid, 0);
     SUBNET_OWNER.remove(store, netuid);
 
@@ -939,6 +948,9 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     MIN_DIFFICULTY.remove(store, netuid);
     MAX_DIFFICULTY.remove(store, netuid);
     ADJUSTMENTS_ALPHA.remove(store, netuid);
+    SCALING_LAW_POWER.remove(store, netuid);
+    NETWORK_REGISTRATION_ALLOWED.remove(store, netuid);
+    TARGET_REGISTRATIONS_PER_INTERVAL.remove(store, netuid);
 
     Ok(())
 }

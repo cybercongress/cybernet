@@ -1,9 +1,10 @@
-use cosmwasm_std::{ensure, Addr, DepsMut, Env, MessageInfo, Response, Storage};
+use cosmwasm_std::{ensure, Addr, DepsMut, Env, MessageInfo, Storage};
 
 use crate::state::{AxonInfo, AxonInfoOf, PrometheusInfo, PrometheusInfoOf, AXONS, PROMETHEUS};
 use crate::uids::is_hotkey_registered_on_any_network;
 use crate::utils::get_serving_rate_limit;
 use crate::ContractError;
+use cyber_std::Response;
 
 // ---- The implementation for the extrinsic serve_axon which sets the ip endpoint information for a uid on a network.
 //
