@@ -262,17 +262,16 @@ pub fn execute(
             weights,
             version_key,
         } => do_set_weights(deps, env, info, netuid, dests, weights, version_key),
-        ExecuteMsg::BecomeDelegate { hotkey, take } => {
-            do_become_delegate(deps, env, info, hotkey, take)
+        ExecuteMsg::BecomeDelegate { hotkey } => {
+            do_become_delegate(deps, env, info, hotkey)
         }
         ExecuteMsg::AddStake {
             hotkey,
-            amount_staked,
-        } => do_add_stake(deps, env, info, hotkey, amount_staked),
+        } => do_add_stake(deps, env, info, hotkey),
         ExecuteMsg::RemoveStake {
             hotkey,
-            amount_unstaked,
-        } => do_remove_stake(deps, env, info, hotkey, amount_unstaked),
+            amount,
+        } => do_remove_stake(deps, env, info, hotkey, amount),
         ExecuteMsg::ServeAxon {
             netuid,
             version,
@@ -495,11 +494,11 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractE
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetDelegates {} => to_json_binary(&get_delegates(deps)?),
-        QueryMsg::GetDelegate { delegate_account } => {
-            to_json_binary(&get_delegate(deps, delegate_account)?)
+        QueryMsg::GetDelegate { delegate } => {
+            to_json_binary(&get_delegate(deps, delegate)?)
         }
-        QueryMsg::GetDelegated { delegatee_account } => {
-            to_json_binary(&get_delegated(deps, delegatee_account)?)
+        QueryMsg::GetDelegated { delegatee } => {
+            to_json_binary(&get_delegated(deps, delegatee)?)
         }
         QueryMsg::GetNeuronsLite { netuid } => {
             to_json_binary(&get_neurons_lite(deps.storage, netuid)?)
@@ -516,11 +515,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetSubnetHyperparams { netuid } => {
             to_json_binary(&get_subnet_hyperparams(deps, netuid)?)
         }
-        QueryMsg::GetStakeInfoForColdkey { coldkey_account } => {
-            to_json_binary(&get_stake_info_for_coldkey(deps, coldkey_account)?)
+        QueryMsg::GetStakeInfoForColdkey { coldkey } => {
+            to_json_binary(&get_stake_info_for_coldkey(deps, coldkey)?)
         }
-        QueryMsg::GetStakeInfoForColdkeys { coldkey_accounts } => {
-            to_json_binary(&get_stake_info_for_coldkeys(deps, coldkey_accounts)?)
+        QueryMsg::GetStakeInfoForColdkeys { coldkeys } => {
+            to_json_binary(&get_stake_info_for_coldkeys(deps, coldkeys)?)
         }
         QueryMsg::GetNetworkRegistrationCost {} => to_json_binary(&get_network_lock_cost(
             deps.storage,

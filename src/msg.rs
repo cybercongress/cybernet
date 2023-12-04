@@ -6,7 +6,7 @@ pub struct InstantiateMsg {}
 #[cw_serde]
 pub enum ExecuteMsg {
     Activate {},
-    // TODO move to sudo and call as module from sdk
+    // TODO remove later, use for manual block_step
     BlockStep {},
 
     SetWeights {
@@ -17,15 +17,14 @@ pub enum ExecuteMsg {
     },
     BecomeDelegate {
         hotkey: String,
-        take: u16,
+        // take: u16,
     },
     AddStake {
         hotkey: String,
-        amount_staked: u64,
     },
     RemoveStake {
         hotkey: String,
-        amount_unstaked: u64,
+        amount: u64,
     },
     ServeAxon {
         netuid: u16,
@@ -226,9 +225,9 @@ pub enum QueryMsg {
     #[returns(Vec<crate::delegate_info::DelegateInfo>)]
     GetDelegates {},
     #[returns(Option<crate::delegate_info::DelegateInfo>)]
-    GetDelegate { delegate_account: String },
+    GetDelegate { delegate: String },
     #[returns(Vec<(crate::delegate_info::DelegateInfo, u64)>)]
-    GetDelegated { delegatee_account: String },
+    GetDelegated { delegatee: String },
 
     #[returns(Vec<crate::neuron_info::NeuronInfoLite>)]
     GetNeuronsLite { netuid: u16 },
@@ -247,9 +246,9 @@ pub enum QueryMsg {
     GetSubnetHyperparams { netuid: u16 },
 
     #[returns(crate::stake_info::StakeInfo)]
-    GetStakeInfoForColdkey { coldkey_account: String },
+    GetStakeInfoForColdkey { coldkey: String },
     #[returns(Vec<crate::stake_info::StakeInfo>)]
-    GetStakeInfoForColdkeys { coldkey_accounts: Vec<String> },
+    GetStakeInfoForColdkeys { coldkeys: Vec<String> },
 
     #[returns(u64)]
     GetNetworkRegistrationCost {},
@@ -312,10 +311,10 @@ pub enum QueryMsg {
     #[returns(u64)]
     GetTxRateLimit {},
 
-    #[returns(Option<AxonInfo>)]
+    #[returns(Option<crate::state::AxonInfoOf>)]
     GetAxonInfo { netuid: u16, hotkey: String },
 
-    #[returns(Option<PrometheusInfo>)]
+    #[returns(Option<crate::state::PrometheusInfoOf>)]
     GetPrometheusInfo { netuid: u16, hotkey: String },
 
     #[returns(Option<u64>)]

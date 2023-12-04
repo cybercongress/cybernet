@@ -45,9 +45,10 @@ pub fn do_become_delegate(
     env: Env,
     info: MessageInfo,
     hotkey_address: String,
-    take: u16,
+    // take: u16,
 ) -> Result<Response, ContractError> {
     // TODO set get_default_take() of custom take
+    let take = 11_796;
 
     // --- 1. We check the coldkey signuture.
     let coldkey = info.sender;
@@ -144,7 +145,6 @@ pub fn do_add_stake(
     env: Env,
     info: MessageInfo,
     hotkey_address: String,
-    _stake_to_be_added: u64,
 ) -> Result<Response, ContractError> {
     // --- 1. We check that the transaction is signed by the caller and retrieve the T::AccountId coldkey information.
     let coldkey = info.clone().sender;
