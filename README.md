@@ -45,9 +45,10 @@ cargo run --bin schema
 - [[O]] token is for the `cyber` verse
 - create verse
 	- product
+    - explore epochs  
 		- explore verses
 			- ListDeploidContracts
-		- explore faculties
+		- explore verse
 			- listSubnetworks
 		- explore faculty
 			- listSubnetwork
@@ -63,7 +64,6 @@ cargo run --bin schema
 				- particle:
 			- DissolveNetwork
 				- netuid: u16
-		- explore epochs
 - become mage
 	- product
 		- mining is hard - good visualization map of steps
