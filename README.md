@@ -24,6 +24,7 @@ cargo run --bin schema
 - bittensor is ported to cosmwasm endpoints: [cybertensor](https://github.com/cybercongress/cybertensor)
 - protocol is mostly remained untouched for maximum compatibility
 - TODO protocol extension: subnetwork is about learning particle's subgraph
+- TODO daodao integration
 - TODO enriched original docs of the project
 - TODO cyb app and art created for easier adoption <img width="1025" alt="image" src="https://github.com/cybercongress/cybernet/assets/410789/198c9ed2-5e08-429c-9dfd-268d65cc5728">
 - for convenience in app we took metaphor of magic school for gamification
