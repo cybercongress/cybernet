@@ -41,6 +41,7 @@ cargo run --bin schema
 	- manage your network using manual ux weights in app
 	- maximize rewards with the help of [[cybergraph]]
 	- program using [[cosmwasm]]
+  - manage verses with daodao
 	- participate in vibrant [[ibc]] ecosystem
 	- trade against [[H]] and other [[cyber tokens]]
 - [[O]] token is for the `cyber` verse
