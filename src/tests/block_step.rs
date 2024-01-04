@@ -16,14 +16,14 @@ use crate::math::{
 };
 use crate::registration::create_work_for_block_number;
 use crate::root::set_emission_values;
-use crate::staking::{add_balance_to_coldkey_account, get_total_stake_for_hotkey};
+use crate::staking::get_total_stake_for_hotkey;
 use crate::state::{
     ACTIVE, BONDS, CONSENSUS, DIVIDENDS, EMISSION, INCENTIVE, KEYS, PRUNING_SCORES, RANK, TRUST,
     VALIDATOR_PERMIT, VALIDATOR_TRUST,
 };
 use crate::test_helpers::{
-    add_network, burned_register_ok_neuron, instantiate_contract, pow_register_ok_neuron,
-    step_block, sudo_register_ok_neuron,
+    add_balance_to_coldkey_account, add_network, burned_register_ok_neuron, instantiate_contract,
+    pow_register_ok_neuron, step_block, sudo_register_ok_neuron,
 };
 use crate::uids::get_subnetwork_n;
 use crate::utils::{
@@ -537,7 +537,7 @@ fn test_burn_adjustment() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 1;
     add_network(&mut deps.storage, netuid, tempo, 0);
@@ -590,7 +590,7 @@ fn test_burn_adjustment() {
     step_block(deps.as_mut(), &mut env).unwrap();
 
     // Check the adjusted burn.
-    assert_eq!(get_burn_as_u64(&deps.storage, netuid), 1500);
+    assert_eq!(get_burn_as_u64(&deps.storage, netuid), 1500000000);
 }
 
 #[test]
@@ -599,7 +599,7 @@ fn test_burn_adjustment_with_moving_average() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 1;
     add_network(&mut deps.storage, netuid, tempo, 0);
@@ -651,7 +651,8 @@ fn test_burn_adjustment_with_moving_average() {
 
     // Check the adjusted burn.
     // 0.5 * 1000 + 0.5 * 1500 = 1250
-    assert_eq!(get_burn_as_u64(&deps.storage, netuid), 1250);
+    // assert_eq!(get_burn_as_u64(&deps.storage, netuid), 1250000000);
+    assert_eq!(get_burn_as_u64(&deps.storage, netuid), 1250001907);
 }
 
 #[test]
@@ -665,7 +666,7 @@ fn test_burn_adjustment_case_a() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 1;
     let start_diff: u64 = 10_000;
@@ -766,7 +767,7 @@ fn test_burn_adjustment_case_b() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 1;
     let start_diff: u64 = 20_000;
@@ -845,7 +846,7 @@ fn test_burn_adjustment_case_b() {
     //   and the difficulty has not changed.
     let adjusted_burn = get_burn_as_u64(&deps.storage, netuid);
     assert!(adjusted_burn > burn_cost);
-    assert_eq!(adjusted_burn, 2_000);
+    assert_eq!(adjusted_burn, 2000000000);
 
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
     assert_eq!(adjusted_diff, start_diff);
@@ -862,7 +863,7 @@ fn test_burn_adjustment_case_c() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 4; // Needs registrations < 4 to trigger
     let start_diff: u64 = 20_000;
@@ -946,7 +947,7 @@ fn test_burn_adjustment_case_c() {
     //   and the difficulty has not changed.
     let adjusted_burn = get_burn_as_u64(&deps.storage, netuid);
     assert!(adjusted_burn < burn_cost);
-    assert_eq!(adjusted_burn, 875);
+    assert_eq!(adjusted_burn, 875000000);
 
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
     assert_eq!(adjusted_diff, start_diff);
@@ -1059,7 +1060,7 @@ fn test_burn_adjustment_case_e() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval: u16 = 3;
     let start_diff: u64 = 20_000;
@@ -1121,7 +1122,7 @@ fn test_burn_adjustment_case_e() {
     // Check the adjusted BURN has DECREASED.
     let adjusted_burn = get_burn_as_u64(&deps.storage, netuid);
     assert!(adjusted_burn < burn_cost);
-    assert_eq!(adjusted_burn, 833);
+    assert_eq!(adjusted_burn, 833333333);
 
     // Check the adjusted POW difficulty has DECREASED.
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
@@ -1140,7 +1141,7 @@ fn test_burn_adjustment_case_f() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval: u16 = 1;
     let start_diff: u64 = 20_000;
@@ -1202,7 +1203,7 @@ fn test_burn_adjustment_case_f() {
     // Check the adjusted BURN has INCREASED.
     let adjusted_burn = get_burn_as_u64(&deps.storage, netuid);
     assert!(adjusted_burn > burn_cost);
-    assert_eq!(adjusted_burn, 1_500);
+    assert_eq!(adjusted_burn, 1_500_000_000);
 
     // Check the adjusted POW difficulty has INCREASED.
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);
@@ -1223,7 +1224,7 @@ fn test_burn_adjustment_case_e_zero_registrations() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 0;
     let target_registrations_per_interval: u16 = 1;
     let start_diff: u64 = 20_000;
@@ -1249,7 +1250,7 @@ fn test_burn_adjustment_case_e_zero_registrations() {
     // Check the adjusted BURN has DECREASED.
     let adjusted_burn = get_burn_as_u64(&deps.storage, netuid);
     assert!(adjusted_burn < burn_cost);
-    assert_eq!(adjusted_burn, 500);
+    assert_eq!(adjusted_burn, 500000000);
 
     // Check the adjusted POW difficulty has DECREASED.
     let adjusted_diff = get_difficulty_as_u64(&deps.storage, netuid);

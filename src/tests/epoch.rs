@@ -4,12 +4,11 @@ use crate::msg::ExecuteMsg;
 use crate::registration::create_work_for_block_number;
 use crate::root::{get_subnet_emission_value, set_emission_values};
 use crate::staking::{
-    add_balance_to_coldkey_account, get_total_stake, get_total_stake_for_hotkey,
-    increase_stake_on_coldkey_hotkey_account,
+    get_total_stake, get_total_stake_for_hotkey, increase_stake_on_coldkey_hotkey_account,
 };
 use crate::test_helpers::{
-    add_network, instantiate_contract, pow_register_ok_neuron, run_step_to_block, set_weights,
-    step_block, TestDeps, ROOT,
+    add_balance_to_coldkey_account, add_network, instantiate_contract, pow_register_ok_neuron,
+    run_step_to_block, set_weights, step_block,
 };
 use crate::tests::block_step::epoch_dense;
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n};
@@ -22,7 +21,7 @@ use crate::utils::{
     set_target_registrations_per_interval, set_weights_set_rate_limit,
 };
 use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{Addr, Api, Deps, DepsMut, Env, Storage};
+use cosmwasm_std::{Addr, Api, DepsMut, Env, Storage};
 use rand::{distributions::Uniform, rngs::StdRng, seq::SliceRandom, thread_rng, Rng, SeedableRng};
 use std::time::Instant;
 use substrate_fixed::transcendental::{cos, ln, sqrt, PI};

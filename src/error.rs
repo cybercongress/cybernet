@@ -79,7 +79,7 @@ pub enum ContractError {
     #[error("Thrown if the vaule is invalid for MaxAllowedUids.")]
     MaxAllowedUIdsNotAllowed {},
 
-    #[error("Thrown when the dispatch attempts to convert between a u64 and T::balance but the call fails.")]
+    #[error("Thrown when wrong denom passed to the contract as payment")]
     CouldNotConvertToBalance {},
 
     #[error("Thrown when the caller requests adding stake for a hotkey to the total stake which already added.")]

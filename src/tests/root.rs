@@ -5,13 +5,14 @@ use crate::registration::create_work_for_block_number;
 use crate::root::{
     get_all_subnet_netuids, get_max_subnets, get_network_lock_cost, get_num_subnets,
     get_subnet_emission_value, if_subnet_exist, remove_network, root_epoch,
-    set_lock_reduction_interval, set_network_last_lock,
+    set_lock_reduction_interval,
 };
-use crate::staking::{add_balance_to_coldkey_account, hotkey_is_delegate};
+use crate::staking::hotkey_is_delegate;
 use crate::state_info::get_state_info;
 use crate::test_helpers::{
-    add_network, add_stake, burned_register_ok_neuron, instantiate_contract,
-    pow_register_ok_neuron, register_network, root_register, set_weights, step_block,
+    add_balance_to_coldkey_account, add_network, add_stake, burned_register_ok_neuron,
+    instantiate_contract, pow_register_ok_neuron, register_network, root_register, set_weights,
+    step_block,
 };
 use crate::uids::{get_subnetwork_n, get_uid_for_net_and_hotkey, is_hotkey_registered_on_network};
 use crate::utils::{

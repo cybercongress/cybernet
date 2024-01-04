@@ -10,7 +10,7 @@ use crate::state::{
     DELEGATES, DENOM, OWNER, STAKE, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE,
     TOTAL_STAKE,
 };
-use crate::utils::{exceeds_tx_rate_limit, get_last_tx_block, set_last_tx_block};
+use crate::utils::{exceeds_tx_rate_limit, get_default_take, get_last_tx_block, set_last_tx_block};
 use crate::ContractError;
 use cyber_std::Response;
 
@@ -47,8 +47,7 @@ pub fn do_become_delegate(
     hotkey_address: String,
     // take: u16,
 ) -> Result<Response, ContractError> {
-    // TODO set get_default_take() of custom take
-    let take = 11_796;
+    let take = get_default_take(deps.storage);
 
     // --- 1. We check the coldkey signuture.
     let coldkey = info.sender;
@@ -500,23 +499,20 @@ pub fn decrease_stake_on_coldkey_hotkey_account(
     Ok(())
 }
 
-#[cfg(test)]
-pub fn add_balance_to_coldkey_account(_coldkey: &Addr, _amount: u64) {}
+// #[cfg(test)]
+// pub fn can_remove_balance_from_coldkey_account(_coldkey: &Addr, _amount: u64) -> bool {
+//     true
+// }
 
-#[cfg(test)]
-pub fn can_remove_balance_from_coldkey_account(_coldkey: &Addr, _amount: u64) -> bool {
-    true
-}
+// #[cfg(test)]
+// pub fn get_coldkey_balance(_coldkey: &Addr) -> u64 {
+//     return 0;
+// }
 
-#[cfg(test)]
-pub fn get_coldkey_balance(_coldkey: &Addr) -> u64 {
-    return 0;
-}
-
-#[cfg(test)]
-pub fn remove_balance_from_coldkey_account(_coldkey: &Addr, _amount: u64) -> bool {
-    true
-}
+// #[cfg(test)]
+// pub fn remove_balance_from_coldkey_account(_coldkey: &Addr, _amount: u64) -> bool {
+//     true
+// }
 
 pub fn unstake_all_coldkeys_from_hotkey_account(
     store: &mut dyn Storage,

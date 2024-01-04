@@ -3,20 +3,20 @@ use std::fs::File;
 use std::io::Write;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier};
-use cosmwasm_std::{Addr, Coin, DepsMut, Empty, Env, MemoryStorage, OwnedDeps, Storage};
-use cw_multi_test::{App, AppBuilder, BasicAppBuilder, Contract, ContractWrapper, Executor};
+use cosmwasm_std::{coin, Addr, Coin, DepsMut, Empty, Env, OwnedDeps, Storage};
+use cw_multi_test::{Contract, ContractWrapper, Executor};
 use cw_storage_gas_meter::MemoryStorageWithGas;
 use cyber_std::CyberMsgWrapper;
 use cyber_std::Response;
 
-use cyber_std_test::{CyberApp, CyberAppWrapped, CyberModule};
+use cyber_std_test::CyberApp;
 
 use crate::contract::{execute, instantiate, query};
 use crate::msg::ExecuteMsg;
 use crate::registration::create_work_for_block_number;
-use crate::root::init_new_network;
+use crate::root::{get_network_lock_cost, init_new_network};
 use crate::utils::{
-    get_difficulty_as_u64, set_difficulty, set_network_registration_allowed,
+    get_burn_as_u64, get_difficulty_as_u64, set_difficulty, set_network_registration_allowed,
     set_weights_set_rate_limit,
 };
 use crate::ContractError;
@@ -214,7 +214,7 @@ pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: &st
 
     // TODO stake as funds
     let env = mock_env();
-    let info = mock_info(&ROOT, &[]);
+    let info = mock_info(&ROOT, &[coin(1, "boot".to_string())]);
     let res = execute(deps, env, info, msg);
     assert_eq!(res.is_ok(), true);
 }
@@ -247,7 +247,12 @@ pub fn burned_register_ok_neuron(
         hotkey: hotkey.to_string(),
     };
 
-    let info = mock_info(coldkey, &[]);
+    let mut amount = get_burn_as_u64(deps.storage, netuid);
+    // need to send at least 1 boot
+    if amount == 0 {
+        amount = 1;
+    }
+    let info = mock_info(coldkey, &[coin(amount as u128, "boot".to_string())]);
     let result = execute(deps, env, info, msg);
 
     result
@@ -266,16 +271,17 @@ pub fn add_stake(
     };
 
     // TODO Add funds here
-    let info = mock_info(coldkey, &[]);
+    let info = mock_info(coldkey, &[coin(amount as u128, "boot".to_string())]);
     let result = execute(deps, env, info, msg);
 
     result
 }
 
 pub fn register_network(deps: DepsMut, env: Env, key: &str) -> Result<Response, ContractError> {
+    let amount = get_network_lock_cost(deps.storage, deps.api, env.block.height).unwrap();
     let msg = ExecuteMsg::RegisterNetwork {};
 
-    let info = mock_info(key, &[]);
+    let info = mock_info(key, &[coin(amount as u128, "boot".to_string())]);
     let result = execute(deps, env, info, msg);
 
     result
@@ -466,3 +472,6 @@ fn test_deps() {
     let after = get_difficulty_as_u64(&deps.storage, 1);
     assert_eq!(after, 1);
 }
+
+#[cfg(test)]
+pub fn add_balance_to_coldkey_account(_coldkey: &Addr, _amount: u64) {}

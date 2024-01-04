@@ -1,6 +1,10 @@
+use crate::math::{
+    col_clip_sparse, inplace_col_normalize_sparse, inplace_normalize, inplace_normalize_using_sum,
+    mat_ema_sparse, matmul_sparse, matmul_transpose_sparse, row_hadamard_sparse, row_sum_sparse,
+    vecdiv, weighted_median_col_sparse,
+};
 use std::collections::HashMap;
 use substrate_fixed::types::{I32F32, I64F64, I96F32};
-use crate::math::{col_clip_sparse, inplace_col_normalize_sparse, inplace_normalize, inplace_normalize_using_sum, mat_ema_sparse, matmul_sparse, matmul_transpose_sparse, row_hadamard_sparse, row_sum_sparse, vecdiv, weighted_median_col_sparse};
 
 pub fn find_intersection(arr1: &[i32], arr2: &[i32]) -> Vec<i32> {
     let mut intersection = Vec::new();
@@ -35,6 +39,7 @@ struct UserOutLink {
 #[test]
 pub fn test() {
 
+    #[rustfmt::skip]
     let user_out_links = vec![
         UserOutLink { user_id: 1, out_link: 1 },
         UserOutLink { user_id: 1, out_link: 2 },
@@ -54,7 +59,10 @@ pub fn test() {
     // Create a user-outlink matrix
     let mut user_out_link_matrix: HashMap<u16, Vec<i32>> = HashMap::new();
     for uol in user_out_links {
-        user_out_link_matrix.entry(uol.user_id).or_insert_with(Vec::new).push(uol.out_link as i32);
+        user_out_link_matrix
+            .entry(uol.user_id)
+            .or_insert_with(Vec::new)
+            .push(uol.out_link as i32);
     }
 
     let mut sparseWeightsMatrix: Vec<Vec<(u16, I32F32)>> = vec![vec![]; 4];
@@ -64,9 +72,12 @@ pub fn test() {
         for (&user_id2, out_links2) in &user_out_link_matrix {
             if user_id1 != user_id2 {
                 let cosim = cosine_similarity(out_links1, out_links2);
-                sparseWeightsMatrix[user_id1 as usize].push( (user_id2, I32F32::from_num(cosim)));
+                sparseWeightsMatrix[user_id1 as usize].push((user_id2, I32F32::from_num(cosim)));
 
-                println!("Cosine similarity between user {} and user {}: {:.2}", user_id1, user_id2, cosim);
+                println!(
+                    "Cosine similarity between user {} and user {}: {:.2}",
+                    user_id1, user_id2, cosim
+                );
             }
         }
     }
@@ -148,8 +159,7 @@ pub fn test() {
     println!("ΔBonds (norm): {:?}", &bonds_delta);
 
     // Compute bonds moving average.
-    let bonds_moving_average: I64F64 =
-        I64F64::from_num(900_000) / I64F64::from_num(1_000_000);
+    let bonds_moving_average: I64F64 = I64F64::from_num(900_000) / I64F64::from_num(1_000_000);
     let alpha: I32F32 = I32F32::from_num(1) - I32F32::from_num(bonds_moving_average);
     let mut ema_bonds: Vec<Vec<(u16, I32F32)>> = mat_ema_sparse(&bonds_delta, &bonds, alpha);
 

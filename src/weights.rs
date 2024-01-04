@@ -87,10 +87,7 @@ pub fn do_set_weights(
     let hotkey = info.sender;
     deps.api.debug(&format!(
         "💡 do_set_weights ( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
-        hotkey,
-        netuid,
-        uids,
-        values
+        hotkey, netuid, uids, values
     ));
 
     // --- 2. Check that the length of uid list and value list are equal for this network.

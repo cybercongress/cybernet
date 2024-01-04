@@ -114,8 +114,10 @@ pub fn do_serve_axon(
     AXONS.save(deps.storage, (netuid, &hotkey_id), &prev_axon)?;
 
     // --- 8. We deposit axon served event.
-    deps.api
-        .debug(&format!("📡 AxonServed ( hotkey:{:?} ) ", hotkey_id.clone()));
+    deps.api.debug(&format!(
+        "📡 AxonServed ( hotkey:{:?} ) ",
+        hotkey_id.clone()
+    ));
 
     // --- 9. Return is successful dispatch.
     Ok(Response::default()

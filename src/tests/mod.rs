@@ -1,10 +1,10 @@
 mod block_step;
 mod difficulty;
 mod epoch;
+mod graph;
 mod neuron_info;
 mod registration;
 mod root;
 mod serving;
 mod uids;
 mod weights;
-mod graph;

@@ -5,6 +5,7 @@ use cosmwasm_std::{
     Uint128,
 };
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
+use cyber_std::Response;
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
 use crate::block_step::block_step;
@@ -25,9 +26,9 @@ use crate::state::{
     LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY,
     MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
     NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
-    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS, NETWORK_MIN_LOCK_COST,
-    NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
-    OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
+    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT,
+    NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, OWNER, PENDING_EMISSION,
+    POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
     RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
     ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED,
     SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
@@ -36,6 +37,7 @@ use crate::state::{
 };
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
+use crate::uids::get_registered_networks_for_hotkey;
 use crate::utils::{
     do_sudo_set_activity_cutoff, do_sudo_set_adjustment_alpha, do_sudo_set_adjustment_interval,
     do_sudo_set_block_emission, do_sudo_set_bonds_moving_average, do_sudo_set_default_take,
@@ -55,14 +57,8 @@ use crate::utils::{
 };
 use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
-// use cw2::set_contract_version;
-
-// version info for migration info
 const CONTRACT_NAME: &str = "cybernet";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-use crate::uids::get_registered_networks_for_hotkey;
-use cyber_std::Response;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -75,7 +71,12 @@ pub fn instantiate(
 
     ROOT.save(deps.storage, &info.sender)?;
     ALLOW_FAUCET.save(deps.storage, &false)?;
-    DENOM.save(deps.storage, &"boot".to_string())?;
+
+    if info.funds.len() > 0 {
+        DENOM.save(deps.storage, &info.funds[0].denom)?;
+    } else {
+        DENOM.save(deps.storage, &"boot".to_string())?;
+    }
 
     // TODO remove from InstantiateMsg
     // // Set initial total issuance from balances
@@ -88,16 +89,16 @@ pub fn instantiate(
     NETWORK_IMMUNITY_PERIOD.save(deps.storage, &7200)?;
     BLOCK_EMISSION.save(deps.storage, &1_000_000_000)?;
 
-    NETWORK_MIN_ALLOWED_UIDS.save(deps.storage, &0)?;
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
 
-    DEFAULT_TAKE.save(deps.storage, &11_796)?;
-    TX_RATE_LIMIT.save(deps.storage, &1000)?;
+    // 6.25% (2^12/2^16)
+    DEFAULT_TAKE.save(deps.storage, &4096)?;
+    TX_RATE_LIMIT.save(deps.storage, &0)?;
 
     NETWORK_LAST_LOCK_COST.save(deps.storage, &100_000_000_000)?;
     NETWORK_MIN_LOCK_COST.save(deps.storage, &100_000_000_000)?;
-    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &2)?; // test value, change to 14 * 7200;
+    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &(7 * 7200))?; // test value, change to 14 * 7200;
 
     // -- Root network initialization --
 

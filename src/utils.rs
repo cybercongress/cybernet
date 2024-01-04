@@ -449,7 +449,6 @@ pub fn get_subnet_locked_balance(store: &mut dyn Storage, netuid: u16) -> u64 {
     SUBNET_LOCKED.load(store, netuid).unwrap()
 }
 
-#[cfg(test)]
 pub fn get_default_take(store: &dyn Storage) -> u16 {
     DEFAULT_TAKE.load(store).unwrap()
 }
@@ -1021,8 +1020,10 @@ pub fn do_sudo_set_rho(
 
     RHO.save(deps.storage, netuid, &rho)?;
 
-    deps.api
-        .debug(&format!("🛸 RhoSet ( netuid: {:?} rho: {:?} ) ", netuid, rho));
+    deps.api.debug(&format!(
+        "🛸 RhoSet ( netuid: {:?} rho: {:?} ) ",
+        netuid, rho
+    ));
 
     Ok(Response::default()
         .add_attribute("active", "rho_set")
@@ -1553,8 +1554,10 @@ pub fn do_sudo_set_subnet_limit(
 
     SUBNET_LIMIT.save(deps.storage, &max_subnets)?;
 
-    deps.api
-        .debug(&format!("🛸 SubnetLimit ( max_subnets: {:?} ) ", max_subnets));
+    deps.api.debug(&format!(
+        "🛸 SubnetLimit ( max_subnets: {:?} ) ",
+        max_subnets
+    ));
 
     Ok(Response::default()
         .add_attribute("action", "subnet_limit_set")

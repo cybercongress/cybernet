@@ -28,9 +28,8 @@ use crate::state::{
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, replace_neuron};
 use crate::utils::{
     get_block_emission, get_emission_value, get_max_allowed_uids, get_max_registrations_per_block,
-    get_registrations_this_block, get_registrations_this_interval, get_rho,
-    get_subnet_owner, get_target_registrations_per_interval, get_tempo,
-    set_subnet_locked_balance,
+    get_registrations_this_block, get_registrations_this_interval, get_rho, get_subnet_owner,
+    get_target_registrations_per_interval, get_tempo, set_subnet_locked_balance,
 };
 use crate::ContractError;
 
@@ -785,7 +784,6 @@ pub fn init_new_network(
     TARGET_REGISTRATIONS_PER_INTERVAL.save(store, netuid, &1)?;
     ADJUSTMENTS_ALPHA.save(store, netuid, &58000)?;
     IMMUNITY_PERIOD.save(store, netuid, &7200)?;
-    MIN_BURN.save(store, netuid, &1)?;
 
     DIFFICULTY.save(store, netuid, &10_000_000)?;
     MIN_DIFFICULTY.save(store, netuid, &10_000_000)?;
@@ -810,9 +808,11 @@ pub fn init_new_network(
     BONDS_MOVING_AVERAGE.save(store, netuid, &900_000)?;
     LAST_ADJUSTMENT_BLOCK.save(store, netuid, &0)?;
     ADJUSTMENT_INTERVAL.save(store, netuid, &100)?;
-    BURN.save(store, netuid, &0)?;
-    // MIN_BURN.save(store, netuid,&0)?;
-    MAX_BURN.save(store, netuid, &1_000_000_000)?;
+
+    BURN.save(store, netuid, &1_000_000_000)?;
+    MIN_BURN.save(store, netuid, &100_000_000)?;
+    MAX_BURN.save(store, netuid, &100_000_000_000)?;
+
     REGISTRATIONS_THIS_BLOCK.save(store, netuid, &0)?;
     // MAX_REGISTRATION_PER_BLOCK.save(store, netuid, &3)?;
     KAPPA.save(store, netuid, &32_767)?;
