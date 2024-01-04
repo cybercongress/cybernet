@@ -60,7 +60,7 @@ fn test_replace_neuron() {
             .unwrap();
 
     // Replace the neuron.
-    replace_neuron(
+    let _msgs = replace_neuron(
         &mut deps.storage,
         &deps.api,
         netuid,
@@ -178,7 +178,7 @@ fn test_replace_neuron_multiple_subnets() {
 
     // Replace the neuron.
     // Only replace on ONE network.
-    replace_neuron(
+    let _msgs = replace_neuron(
         &mut deps.storage,
         &deps.api,
         netuid,
@@ -326,7 +326,7 @@ fn test_replace_neuron_multiple_subnets_unstake_all() {
     );
 
     // Replace the neuron.
-    replace_neuron(
+    let _msgs = replace_neuron(
         &mut deps.storage,
         &deps.api,
         netuid,
@@ -375,7 +375,7 @@ fn test_replace_neuron_multiple_subnets_unstake_all() {
     );
 
     // replace on second network
-    replace_neuron(
+    let _msgs = replace_neuron(
         &mut deps.storage,
         &deps.api,
         netuid1,

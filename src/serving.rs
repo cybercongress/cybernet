@@ -115,7 +115,7 @@ pub fn do_serve_axon(
 
     // --- 8. We deposit axon served event.
     deps.api
-        .debug(&format!("AxonServed( hotkey:{:?} ) ", hotkey_id.clone()));
+        .debug(&format!("📡 AxonServed ( hotkey:{:?} ) ", hotkey_id.clone()));
 
     // --- 9. Return is successful dispatch.
     Ok(Response::default()
@@ -218,7 +218,7 @@ pub fn do_serve_prometheus(
 
     // --- 9. We deposit prometheus served event.
     deps.api.debug(&format!(
-        "PrometheusServed( hotkey:{:?} ) ",
+        "📡 PrometheusServed ( hotkey:{:?} ) ",
         hotkey_id.clone()
     ));
 

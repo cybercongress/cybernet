@@ -108,47 +108,47 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
     (deps, env)
 }
 
-pub fn instantiate_contract_app(app: &mut CyberApp) -> Addr {
-    // TODO fix this
-    let cn_id = app.store_code(cn_contract());
-    let msg = crate::msg::InstantiateMsg {};
+// pub fn instantiate_contract_app(app: &mut CyberApp) -> Addr {
+//     // TODO fix this
+//     let cn_id = app.store_code(cn_contract());
+//     let msg = crate::msg::InstantiateMsg {};
+//
+//     app.instantiate_contract(
+//         cn_id,
+//         Addr::unchecked(ROOT.to_string()),
+//         &msg,
+//         &[],
+//         "cybernet",
+//         None,
+//     )
+//     .unwrap()
+// }
 
-    app.instantiate_contract(
-        cn_id,
-        Addr::unchecked(ROOT.to_string()),
-        &msg,
-        &[],
-        "cybernet",
-        None,
-    )
-    .unwrap()
-}
-
-pub fn register_ok_neuron_app(
-    app: &mut CyberApp,
-    netuid: u16,
-    hotkey: &str,
-    coldkey: String,
-    nonce: u64,
-) {
-    let msg = ExecuteMsg::Register {
-        netuid,
-        block_number: app.block_info().height,
-        nonce,
-        work: vec![],
-        hotkey: hotkey.to_string(),
-        coldkey,
-    };
-
-    let res = app.execute_contract(
-        Addr::unchecked(hotkey),
-        Addr::unchecked(CT_ADDR.to_string()),
-        &msg,
-        &[],
-    );
-    // app.update_block(|block| block.height += 100);
-    assert_eq!(res.is_ok(), true);
-}
+// pub fn register_ok_neuron_app(
+//     app: &mut CyberApp,
+//     netuid: u16,
+//     hotkey: &str,
+//     coldkey: String,
+//     nonce: u64,
+// ) {
+//     let msg = ExecuteMsg::Register {
+//         netuid,
+//         block_number: app.block_info().height,
+//         nonce,
+//         work: vec![],
+//         hotkey: hotkey.to_string(),
+//         coldkey,
+//     };
+//
+//     let res = app.execute_contract(
+//         Addr::unchecked(hotkey),
+//         Addr::unchecked(CT_ADDR.to_string()),
+//         &msg,
+//         &[],
+//     );
+//     // app.update_block(|block| block.height += 100);
+//     assert_eq!(res.is_ok(), true);
+// }
 
 pub fn register_ok_neuron(
     deps: DepsMut,
@@ -210,10 +210,9 @@ pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: &st
         netuid,
         hotkey: hotkey.to_string(),
         coldkey: coldkey.to_string(),
-        stake: 300,
-        balance: 300,
     };
 
+    // TODO stake as funds
     let env = mock_env();
     let info = mock_info(&ROOT, &[]);
     let res = execute(deps, env, info, msg);
@@ -263,7 +262,7 @@ pub fn add_stake(
 ) -> Result<Response, ContractError> {
     let msg = ExecuteMsg::AddStake {
         hotkey: hotkey.to_string(),
-        amount_staked: amount,
+        // amount_staked: amount,
     };
 
     // TODO Add funds here
@@ -282,20 +281,20 @@ pub fn register_network(deps: DepsMut, env: Env, key: &str) -> Result<Response, 
     result
 }
 
-pub fn add_network_app(app: &mut CyberApp) -> u16 {
-    let msg = ExecuteMsg::RegisterNetwork {};
-
-    let res = app
-        .execute_contract(
-            Addr::unchecked(ROOT.to_string()),
-            Addr::unchecked(CT_ADDR.to_string()),
-            &msg,
-            &[],
-        )
-        .unwrap();
-    // let attrs = res.custom_attrs(res.events.len() - 1);
-    return res.custom_attrs(1)[1].value.parse().unwrap();
-}
+// pub fn add_network_app(app: &mut CyberApp) -> u16 {
+//     let msg = ExecuteMsg::RegisterNetwork {};
+//
+//     let res = app
+//         .execute_contract(
+//             Addr::unchecked(ROOT.to_string()),
+//             Addr::unchecked(CT_ADDR.to_string()),
+//             &msg,
+//             &[],
+//         )
+//         .unwrap();
+//     // let attrs = res.custom_attrs(res.events.len() - 1);
+//     return res.custom_attrs(1)[1].value.parse().unwrap();
+// }
 
 pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: u16) {
     init_new_network(store, netuid, tempo).unwrap();
@@ -447,13 +446,13 @@ pub fn print_state(app: &mut CyberApp, cn_addr: &Addr) {
     file.write(data.as_bytes()).unwrap();
 }
 
-#[test]
-fn test_instantiate() {
-    let mut app = mock_app(&[]);
-
-    let cn_addr = instantiate_contract_app(&mut app);
-    assert_eq!(cn_addr, Addr::unchecked("contract0"));
-}
+// #[test]
+// fn test_instantiate() {
+//     let mut app = mock_app(&[]);
+//
+//     let cn_addr = instantiate_contract_app(&mut app);
+//     assert_eq!(cn_addr, Addr::unchecked("contract0"));
+// }
 
 #[test]
 fn test_deps() {

@@ -32,10 +32,17 @@ pub fn ensure_subnet_owner_or_root(
         if_subnet_exist(store, netuid),
         ContractError::NetworkDoesNotExist {}
     );
-    ensure!(
-        SUBNET_OWNER.load(store, netuid).unwrap() == coldkey,
-        ContractError::Unauthorized {}
-    );
+
+    let subnet_owner = SUBNET_OWNER.load(store, netuid);
+    let root = ROOT.load(store)?;
+    if subnet_owner.is_ok() {
+        ensure!(
+            subnet_owner.unwrap() == coldkey || root == coldkey,
+            ContractError::Unauthorized {}
+        );
+    } else {
+        ensure!(root == coldkey, ContractError::Unauthorized {});
+    }
     Ok(())
 }
 
@@ -204,13 +211,6 @@ pub fn set_pruning_score_for_uid(
     uid: u16,
     pruning_score: u16,
 ) {
-    api.debug(&format!("netuid = {:?}", netuid));
-    api.debug(&format!(
-        "SubnetworkN.load( netuid ) = {:?}",
-        SUBNETWORK_N.load(store, netuid).unwrap()
-    ));
-    api.debug(&format!("uid = {:?}", uid));
-    // assert!(uid < SubnetworkN.load(netuid));
     PRUNING_SCORES
         .update::<_, ContractError>(store, netuid, |v| {
             let mut v = v.unwrap();
@@ -440,7 +440,7 @@ pub fn do_sudo_set_default_take(
 
     DEFAULT_TAKE.save(deps.storage, &default_take)?;
     deps.api.debug(&format!(
-        "DefaultTakeSet( default_take: {:?} ) ",
+        "🛸 DefaultTakeSet ( default_take: {:?} ) ",
         default_take
     ));
 
@@ -469,7 +469,7 @@ pub fn do_sudo_set_tx_rate_limit(
     TX_RATE_LIMIT.save(deps.storage, &tx_rate_limit)?;
 
     deps.api.debug(&format!(
-        "TxRateLimitSet( tx_rate_limit: {:?} ) ",
+        "🛸 TxRateLimitSet ( tx_rate_limit: {:?} ) ",
         tx_rate_limit
     ));
 
@@ -498,7 +498,7 @@ pub fn do_sudo_set_serving_rate_limit(
     SERVING_RATE_LIMIT.save(deps.storage, netuid, &serving_rate_limit)?;
 
     deps.api.debug(&format!(
-        "ServingRateLimitSet( serving_rate_limit: {:?} ) ",
+        "🛸 ServingRateLimitSet ( serving_rate_limit: {:?} ) ",
         serving_rate_limit
     ));
 
@@ -533,7 +533,7 @@ pub fn do_sudo_set_min_difficulty(
     MIN_DIFFICULTY.save(deps.storage, netuid, &min_difficulty)?;
 
     deps.api.debug(&format!(
-        "MinDifficultySet( netuid: {:?} min_difficulty: {:?} ) ",
+        "🛸 MinDifficultySet ( netuid: {:?} min_difficulty: {:?} ) ",
         netuid, min_difficulty
     ));
 
@@ -568,7 +568,7 @@ pub fn do_sudo_set_max_difficulty(
     MAX_DIFFICULTY.save(deps.storage, netuid, &max_difficulty)?;
 
     deps.api.debug(&format!(
-        "MaxDifficultySet( netuid: {:?} max_difficulty: {:?} ) ",
+        "🛸 MaxDifficultySet ( netuid: {:?} max_difficulty: {:?} ) ",
         netuid, max_difficulty
     ));
 
@@ -597,14 +597,9 @@ pub fn do_sudo_set_weights_version_key(
 ) -> Result<Response, ContractError> {
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
-    ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
     WEIGHTS_VERSION_KEY.save(deps.storage, netuid, &weights_version_key)?;
     deps.api.debug(&format!(
-        "WeightsVersionKeySet( netuid: {:?} weights_version_key: {:?} ) ",
+        "🛸 WeightsVersionKeySet ( netuid: {:?} weights_version_key: {:?} ) ",
         netuid, weights_version_key
     ));
 
@@ -633,15 +628,10 @@ pub fn do_sudo_set_weights_set_rate_limit(
 ) -> Result<Response, ContractError> {
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
-    ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
     WEIGHTS_SET_RATE_LIMIT.save(deps.storage, netuid, &weights_set_rate_limit)?;
 
     deps.api.debug(&format!(
-        "WeightsSetRateLimitSet( netuid: {:?} weights_set_rate_limit: {:?} ) ",
+        "🛸 WeightsSetRateLimitSet ( netuid: {:?} weights_set_rate_limit: {:?} ) ",
         netuid, weights_set_rate_limit
     ));
 
@@ -681,7 +671,7 @@ pub fn do_sudo_set_adjustment_interval(
     ADJUSTMENT_INTERVAL.save(deps.storage, netuid, &adjustment_interval)?;
 
     deps.api.debug(&format!(
-        "AdjustmentIntervalSet( netuid: {:?} adjustment_interval: {:?} ) ",
+        "🛸 AdjustmentIntervalSet ( netuid: {:?} adjustment_interval: {:?} ) ",
         netuid, adjustment_interval
     ));
 
@@ -718,7 +708,7 @@ pub fn do_sudo_set_adjustment_alpha(
     ADJUSTMENTS_ALPHA.save(deps.storage, netuid, &adjustment_alpha)?;
 
     deps.api.debug(&format!(
-        "AdjustmentAlphaSet( adjustment_alpha: {:?} ) ",
+        "🛸 AdjustmentAlphaSet ( adjustment_alpha: {:?} ) ",
         adjustment_alpha
     ));
 
@@ -749,7 +739,7 @@ pub fn do_sudo_set_validator_prune_len(
     VALIDATOR_PRUNE_LEN.save(deps.storage, netuid, &validator_prune_len)?;
 
     deps.api.debug(&format!(
-        "ValidatorPruneLenSet( netuid: {:?} validator_prune_len: {:?} ) ",
+        "🛸 ValidatorPruneLenSet ( netuid: {:?} validator_prune_len: {:?} ) ",
         netuid, validator_prune_len
     ));
 
@@ -786,7 +776,7 @@ pub fn do_sudo_set_scaling_law_power(
     SCALING_LAW_POWER.save(deps.storage, netuid, &scaling_law_power)?;
 
     deps.api.debug(&format!(
-        "ScalingLawPowerSet( netuid: {:?} scaling_law_power: {:?} ) ",
+        "🛸 ScalingLawPowerSet ( netuid: {:?} scaling_law_power: {:?} ) ",
         netuid, scaling_law_power
     ));
 
@@ -813,15 +803,10 @@ pub fn do_sudo_set_max_weight_limit(
 ) -> Result<Response, ContractError> {
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
-    ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
     MAX_WEIGHTS_LIMIT.save(deps.storage, netuid, &max_weight_limit)?;
 
     deps.api.debug(&format!(
-        "MaxWeightLimitSet( netuid: {:?} max_weight_limit: {:?} ) ",
+        "🛸 MaxWeightLimitSet ( netuid: {:?} max_weight_limit: {:?} ) ",
         netuid, max_weight_limit
     ));
 
@@ -851,11 +836,6 @@ pub fn do_sudo_set_immunity_period(
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
     ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
-    ensure!(
         immunity_period <= 7200,
         ContractError::StorageValueOutOfRange {}
     );
@@ -863,7 +843,7 @@ pub fn do_sudo_set_immunity_period(
     IMMUNITY_PERIOD.save(deps.storage, netuid, &immunity_period)?;
 
     deps.api.debug(&format!(
-        "ImmunityPeriodSet( netuid: {:?} immunity_period: {:?} ) ",
+        "🛸 ImmunityPeriodSet ( netuid: {:?} immunity_period: {:?} ) ",
         netuid, immunity_period
     ));
 
@@ -892,15 +872,10 @@ pub fn do_sudo_set_min_allowed_weights(
 ) -> Result<Response, ContractError> {
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
-    ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
     MIN_ALLOWED_WEIGHTS.save(deps.storage, netuid, &min_allowed_weights)?;
 
     deps.api.debug(&format!(
-        "MinAllowedWeightSet( netuid: {:?} min_allowed_weights: {:?} ) ",
+        "🛸 MinAllowedWeightSet ( netuid: {:?} min_allowed_weights: {:?} ) ",
         netuid, min_allowed_weights
     ));
 
@@ -942,7 +917,7 @@ pub fn do_sudo_set_max_allowed_uids(
     MAX_ALLOWED_UIDS.save(deps.storage, netuid, &max_allowed_uids)?;
 
     deps.api.debug(&format!(
-        "MaxAllowedUidsSet( netuid: {:?} max_allowed_uids: {:?} ) ",
+        "🛸 MaxAllowedUidsSet ( netuid: {:?} max_allowed_uids: {:?} ) ",
         netuid, max_allowed_uids
     ));
 
@@ -973,7 +948,7 @@ pub fn do_sudo_set_kappa(
     KAPPA.save(deps.storage, netuid, &kappa)?;
 
     deps.api.debug(&format!(
-        "KappaSet( netuid: {:?} kappa: {:?} ) ",
+        "🛸 KappaSet ( netuid: {:?} kappa: {:?} ) ",
         netuid, kappa
     ));
 
@@ -1004,7 +979,7 @@ pub fn do_sudo_set_rho(
     RHO.save(deps.storage, netuid, &rho)?;
 
     deps.api
-        .debug(&format!("RhoSet( netuid: {:?} rho: {:?} ) ", netuid, rho));
+        .debug(&format!("🛸 RhoSet ( netuid: {:?} rho: {:?} ) ", netuid, rho));
 
     Ok(Response::default()
         .add_attribute("active", "rho_set")
@@ -1031,15 +1006,10 @@ pub fn do_sudo_set_activity_cutoff(
 ) -> Result<Response, ContractError> {
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
-    ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
     ACTIVITY_CUTOFF.save(deps.storage, netuid, &activity_cutoff)?;
 
     deps.api.debug(&format!(
-        "ActivityCutoffSet( netuid: {:?} activity_cutoff: {:?} ) ",
+        "🛸 ActivityCutoffSet ( netuid: {:?} activity_cutoff: {:?} ) ",
         netuid, activity_cutoff
     ));
 
@@ -1075,7 +1045,7 @@ pub fn do_sudo_set_network_registration_allowed(
     NETWORK_REGISTRATION_ALLOWED.save(deps.storage, netuid, &registration_allowed)?;
 
     deps.api.debug(&format!(
-        "NetworkRegistrationAllowed( registration_allowed: {:?} ) ",
+        "🛸 NetworkRegistrationAllowed ( registration_allowed: {:?} ) ",
         registration_allowed
     ));
 
@@ -1122,7 +1092,7 @@ pub fn do_sudo_set_target_registrations_per_interval(
     )?;
 
     deps.api.debug(&format!(
-        "RegistrationPerIntervalSet( netuid: {:?} target_registrations_per_interval: {:?} ) ",
+        "🛸 RegistrationPerIntervalSet ( netuid: {:?} target_registrations_per_interval: {:?} ) ",
         netuid, target_registrations_per_interval
     ));
 
@@ -1164,7 +1134,7 @@ pub fn do_sudo_set_min_burn(
     MIN_BURN.save(deps.storage, netuid, &min_burn)?;
 
     deps.api.debug(&format!(
-        "MinBurnSet( netuid: {:?} min_burn: {:?} ) ",
+        "🛸 MinBurnSet ( netuid: {:?} min_burn: {:?} ) ",
         netuid, min_burn
     ));
 
@@ -1195,7 +1165,7 @@ pub fn do_sudo_set_max_burn(
     MAX_BURN.save(deps.storage, netuid, &max_burn)?;
 
     deps.api.debug(&format!(
-        "MaxBurnSet( netuid: {:?} max_burn: {:?} ) ",
+        "🛸 MaxBurnSet ( netuid: {:?} max_burn: {:?} ) ",
         netuid, max_burn
     ));
 
@@ -1230,7 +1200,7 @@ pub fn do_sudo_set_difficulty(
     DIFFICULTY.save(deps.storage, netuid, &difficulty)?;
 
     deps.api.debug(&format!(
-        "DifficultySet( netuid: {:?} difficulty: {:?} ) ",
+        "🛸 DifficultySet ( netuid: {:?} difficulty: {:?} ) ",
         netuid, difficulty
     ));
 
@@ -1260,11 +1230,6 @@ pub fn do_sudo_set_max_allowed_validators(
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
     ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
-    ensure!(
         max_allowed_validators <= get_max_allowed_uids(deps.storage, netuid),
         ContractError::StorageValueOutOfRange {}
     );
@@ -1272,7 +1237,7 @@ pub fn do_sudo_set_max_allowed_validators(
     MAX_ALLOWED_VALIDATORS.save(deps.storage, netuid, &max_allowed_validators)?;
 
     deps.api.debug(&format!(
-        "MaxAllowedValidatorsSet( netuid: {:?} max_allowed_validators: {:?} ) ",
+        "🛸 MaxAllowedValidatorsSet ( netuid: {:?} max_allowed_validators: {:?} ) ",
         netuid, max_allowed_validators
     ));
 
@@ -1306,7 +1271,7 @@ pub fn do_sudo_set_bonds_moving_average(
     BONDS_MOVING_AVERAGE.save(deps.storage, netuid, &bonds_moving_average)?;
 
     deps.api.debug(&format!(
-        "BondsMovingAverageSet( netuid: {:?} bonds_moving_average: {:?} ) ",
+        "🛸 BondsMovingAverageSet ( netuid: {:?} bonds_moving_average: {:?} ) ",
         netuid, bonds_moving_average
     ));
 
@@ -1347,7 +1312,7 @@ pub fn do_sudo_set_max_registrations_per_block(
     MAX_REGISTRATION_PER_BLOCK.save(deps.storage, netuid, &max_registrations_per_block)?;
 
     deps.api.debug(&format!(
-        "MaxRegistrationsPerBlock( netuid: {:?} max_registrations_per_block: {:?} ) ",
+        "🛸 MaxRegistrationsPerBlock ( netuid: {:?} max_registrations_per_block: {:?} ) ",
         netuid, max_registrations_per_block
     ));
 
@@ -1379,7 +1344,7 @@ pub fn do_sudo_set_subnet_owner_cut(
     SUBNET_OWNER_CUT.save(deps.storage, &subnet_owner_cut)?;
 
     deps.api.debug(&format!(
-        "SubnetOwnerCut( subnet_owner_cut: {:?} ) ",
+        "🛸 SubnetOwnerCut ( subnet_owner_cut: {:?} ) ",
         subnet_owner_cut
     ));
 
@@ -1399,7 +1364,7 @@ pub fn do_sudo_set_network_rate_limit(
     NETWORK_RATE_LIMIT.save(deps.storage, &rate_limit)?;
 
     deps.api.debug(&format!(
-        "NetworkRateLimit( rate_limit: {:?} ) ",
+        "🛸 NetworkRateLimit ( rate_limit: {:?} ) ",
         rate_limit
     ));
 
@@ -1425,7 +1390,7 @@ pub fn do_sudo_set_tempo(
     TEMPO.save(deps.storage, netuid, &tempo)?;
 
     deps.api.debug(&format!(
-        "TempoSet( netuid: {:?} tempo: {:?} ) ",
+        "🛸 TempoSet ( netuid: {:?} tempo: {:?} ) ",
         netuid, tempo
     ));
 
@@ -1495,7 +1460,7 @@ pub fn do_sudo_set_network_immunity_period(
     NETWORK_IMMUNITY_PERIOD.save(deps.storage, &immunity_period)?;
 
     deps.api.debug(&format!(
-        "NetworkImmunityPeriod( period: {:?} ) ",
+        "🛸 NetworkImmunityPeriod ( period: {:?} ) ",
         immunity_period
     ));
 
@@ -1515,7 +1480,7 @@ pub fn do_sudo_set_network_min_lock_cost(
     NETWORK_MIN_LOCK_COST.save(deps.storage, &lock_cost)?;
 
     deps.api.debug(&format!(
-        "NetworkMinLockCost( lock_cost: {:?} ) ",
+        "🛸 NetworkMinLockCost ( lock_cost: {:?} ) ",
         lock_cost
     ));
 
@@ -1535,7 +1500,7 @@ pub fn do_sudo_set_subnet_limit(
     SUBNET_LIMIT.save(deps.storage, &max_subnets)?;
 
     deps.api
-        .debug(&format!("SubnetLimit( max_subnets: {:?} ) ", max_subnets));
+        .debug(&format!("🛸 SubnetLimit ( max_subnets: {:?} ) ", max_subnets));
 
     Ok(Response::default()
         .add_attribute("action", "subnet_limit_set")
@@ -1553,7 +1518,7 @@ pub fn do_sudo_set_lock_reduction_interval(
     NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &interval)?;
 
     deps.api.debug(&format!(
-        "NetworkLockReductionInterval( interval: {:?} ) ",
+        "🛸 NetworkLockReductionInterval ( interval: {:?} ) ",
         interval
     ));
 
@@ -1576,7 +1541,7 @@ pub fn do_sudo_set_validator_permit_for_uid(
     set_validator_permit_for_uid(deps.storage, netuid, uid, validator_permit);
 
     deps.api.debug(&format!(
-        "VALIDATOR_PERMIT( netuid: {:?} uid: {:?} validator_permit: {:?} ) ",
+        "🛸 ValidatorPermit ( netuid: {:?} uid: {:?} validator_permit: {:?} ) ",
         netuid, uid, validator_permit,
     ));
 
@@ -1598,7 +1563,7 @@ pub fn do_sudo_set_block_emission(
     BLOCK_EMISSION.save(deps.storage, &emission)?;
 
     deps.api
-        .debug(&format!("BLOCK_EMISSION( emission: {:?} ) ", emission));
+        .debug(&format!("🛸 BlockEmission ( emission: {:?} ) ", emission));
 
     Ok(Response::default()
         .add_attribute("action", "block_emission_set")

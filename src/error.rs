@@ -19,7 +19,7 @@ pub enum ContractError {
     InvalidModality {},
 
     #[error(
-        "Thrown when the user tries to serve an axon which is not of type	4 (IPv4) or 6 (IPv6)."
+        "Thrown when the user tries to serve an axon which is not of type 4 (IPv4) or 6 (IPv6)."
     )]
     InvalidIpType {},
 
@@ -143,21 +143,6 @@ pub enum ContractError {
     #[error("Thrown when the hotkey passed is not the origin, but it should be")]
     HotkeyOriginMismatch {},
 
-    // {} Senate errors
-    // #[error("Thrown when attempting to do something to a senate member that is limited")]
-    // SenateMember {},
-    //
-    // #[error("Thrown when a hotkey attempts to do something only senate members can do")]
-    // NotSenateMember {},
-    //
-    // #[error("Thrown when a hotkey attempts to join the senate while already being a member")]
-    // AlreadySenateMember {},
-    //
-    // #[error("Thrown when a hotkey attempts to join the senate without enough stake")]
-    // BelowStakeThreshold {},
-    //
-    // #[error("Thrown when a hotkey attempts to join the senate without being a delegate first")]
-    // NotDelegate {},
     #[error("Thrown when an incorrect amount of Netuids are passed as input")]
     IncorrectNetuidsLength {},
 

@@ -1,5 +1,5 @@
 use crate::contract::execute;
-use crate::epoch::{epoch, epoch_dense, get_bonds};
+use crate::epoch::{epoch, get_bonds};
 use crate::msg::ExecuteMsg;
 use crate::registration::create_work_for_block_number;
 use crate::root::{get_subnet_emission_value, set_emission_values};
@@ -11,6 +11,7 @@ use crate::test_helpers::{
     add_network, instantiate_contract, pow_register_ok_neuron, run_step_to_block, set_weights,
     step_block, TestDeps, ROOT,
 };
+use crate::tests::block_step::epoch_dense;
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n};
 use crate::utils::{
     get_activity_cutoff, get_consensus_for_uid, get_dividends_for_uid, get_emission_for_uid,

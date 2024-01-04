@@ -55,7 +55,7 @@ pub fn do_become_delegate(
     let hotkey = deps.api.addr_validate(&hotkey_address)?;
 
     deps.api.debug(&format!(
-        "do_become_delegate( origin:{:?} hotkey:{:?}, take:{:?} )",
+        "🌐 do_become_delegate ( coldkey:{:?} hotkey:{:?}, take:{:?} )",
         coldkey, hotkey, take
     ));
 
@@ -95,7 +95,7 @@ pub fn do_become_delegate(
 
     // --- 7. Emit the staking event.
     deps.api.debug(&format!(
-        "DelegateAdded( coldkey:{:?}, hotkey:{:?}, take:{:?} )",
+        "🌐 DelegateAdded( coldkey:{:?}, hotkey:{:?}, take:{:?} )",
         coldkey,
         hotkey.clone(),
         take
@@ -155,22 +155,9 @@ pub fn do_add_stake(
         must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
 
     deps.api.debug(&format!(
-        "do_add_stake( origin:{:?} hotkey:{:?}, stake_to_be_added:{:?} )",
+        "🌐 do_add_stake ( coldkey:{:?}, hotkey:{:?}, stake_to_be_added:{:?} )",
         coldkey, hotkey, stake_to_be_added
     ));
-
-    // --- 2. We convert the stake u64 into a balancer.
-    // let stake_as_balance = u64_to_balance(stake_to_be_added);
-    // ensure!(
-    //     stake_as_balance.is_some(),
-    //     ContractError::CouldNotConvertToBalance {}
-    // );
-
-    // --- 3. Ensure the callers coldkey has enough stake to perform the transaction.
-    // ensure!(
-    //     can_remove_balance_from_coldkey_account(&coldkey, stake_as_balance.unwrap()),
-    //     ContractError::NotEnoughBalanceToStake {}
-    // );
 
     // --- 4. Ensure that the hotkey account exists this is only possible through registration.
     ensure!(
@@ -194,12 +181,6 @@ pub fn do_add_stake(
         ContractError::TxRateLimitExceeded {}
     );
 
-    // --- 7. Ensure the remove operation from the coldkey is a success.
-    // ensure!(
-    //     remove_balance_from_coldkey_account(&coldkey, stake_as_balance.unwrap()) == true,
-    //     ContractError::BalanceWithdrawalError {}
-    // );
-
     // --- 8. If we reach here, add the balance to the hotkey.
     increase_stake_on_coldkey_hotkey_account(
         deps.storage,
@@ -210,7 +191,7 @@ pub fn do_add_stake(
 
     // --- 9. Emit the staking event.
     deps.api.debug(&format!(
-        "StakeAdded( hotkey:{:?}, stake_to_be_added:{:?} )",
+        "🌐 StakeAdded ( hotkey:{:?}, stake_to_be_added:{:?} )",
         hotkey.clone(),
         stake_to_be_added
     ));
@@ -267,7 +248,7 @@ pub fn do_remove_stake(
     let hotkey = deps.api.addr_validate(&hotkey_address)?;
 
     deps.api.debug(&format!(
-        "do_remove_stake( origin:{:?} hotkey:{:?}, stake_to_be_removed:{:?} )",
+        "🌐 do_remove_stake ( coldkey:{:?}, hotkey:{:?}, stake_to_be_removed:{:?} )",
         coldkey, hotkey, stake_to_be_removed
     ));
 
@@ -296,13 +277,6 @@ pub fn do_remove_stake(
         ContractError::NotEnoughStaketoWithdraw {}
     );
 
-    // --- 5. Ensure that we can convert this u64 to a balance.
-    // let stake_to_be_added_as_currency = u64_to_balance(stake_to_be_removed);
-    // ensure!(
-    //     stake_to_be_added_as_currency.is_some(),
-    //     ContractError::CouldNotConvertToBalance {}
-    // );
-
     // --- 6. Ensure we don't exceed tx rate limit
     ensure!(
         !exceeds_tx_rate_limit(
@@ -314,11 +288,9 @@ pub fn do_remove_stake(
     );
 
     // --- 7. We remove the balance from the hotkey.
-    decrease_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake_to_be_removed);
+    decrease_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake_to_be_removed)?;
 
-    // --- 8. We add the balancer to the coldkey.  If the above fails we will not credit this coldkey.
-    // add_balance_to_coldkey_account(&coldkey, stake_to_be_added_as_currency.unwrap());
-
+    // --- 8. We add the balance to the coldkey
     let denom = DENOM.load(deps.storage)?;
     let msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: info.sender.to_string(),
@@ -327,7 +299,7 @@ pub fn do_remove_stake(
 
     // --- 9. Emit the unstaking event.
     deps.api.debug(&format!(
-        "StakeRemoved( hotkey:{:?}, stake_to_be_removed:{:?} )",
+        "🌐 StakeRemoved ( hotkey:{:?}, stake_to_be_removed:{:?} )",
         hotkey, stake_to_be_removed
     ));
 
@@ -448,9 +420,15 @@ pub fn increase_stake_on_hotkey_account(store: &mut dyn Storage, hotkey: &Addr, 
 
 // Decreases the stake on the hotkey account under its owning coldkey.
 //
-pub fn decrease_stake_on_hotkey_account(store: &mut dyn Storage, hotkey: &Addr, decrement: u64) {
+pub fn decrease_stake_on_hotkey_account(
+    store: &mut dyn Storage,
+    hotkey: &Addr,
+    decrement: u64,
+) -> Result<(), ContractError> {
     let coldkey = get_owning_coldkey_for_hotkey(store, hotkey);
-    decrease_stake_on_coldkey_hotkey_account(store, &coldkey, &hotkey, decrement);
+    decrease_stake_on_coldkey_hotkey_account(store, &coldkey, &hotkey, decrement)?;
+
+    Ok(())
 }
 
 // Increases the stake on the cold - hot pairing by increment while also incrementing other counters.
@@ -499,93 +477,54 @@ pub fn decrease_stake_on_coldkey_hotkey_account(
     coldkey: &Addr,
     hotkey: &Addr,
     decrement: u64,
-) {
-    TOTAL_COLDKEY_STAKE
-        .update(store, coldkey, |s| -> StdResult<_> {
-            let stake = s.unwrap();
-            Ok(stake.saturating_sub(decrement))
-        })
-        .unwrap();
-    TOTAL_HOTKEY_STAKE
-        .update(store, hotkey, |s| -> StdResult<_> {
-            let stake = s.unwrap();
-            Ok(stake.saturating_sub(decrement))
-        })
-        .unwrap();
-    STAKE
-        .update(store, (hotkey, coldkey), |s| -> StdResult<_> {
-            let stake = s.unwrap();
-            Ok(stake.saturating_sub(decrement))
-        })
-        .unwrap();
-    TOTAL_STAKE
-        .update(store, |s| -> StdResult<_> {
-            Ok(s.saturating_sub(decrement))
-        })
-        .unwrap();
-    TOTAL_ISSUANCE
-        .update(store, |s| -> StdResult<_> {
-            Ok(s.saturating_sub(decrement))
-        })
-        .unwrap();
+) -> Result<(), ContractError> {
+    TOTAL_COLDKEY_STAKE.update(store, coldkey, |s| -> StdResult<_> {
+        let stake = s.unwrap();
+        Ok(stake.saturating_sub(decrement))
+    })?;
+    TOTAL_HOTKEY_STAKE.update(store, hotkey, |s| -> StdResult<_> {
+        let stake = s.unwrap();
+        Ok(stake.saturating_sub(decrement))
+    })?;
+    STAKE.update(store, (hotkey, coldkey), |s| -> StdResult<_> {
+        let stake = s.unwrap();
+        Ok(stake.saturating_sub(decrement))
+    })?;
+    TOTAL_STAKE.update(store, |s| -> StdResult<_> {
+        Ok(s.saturating_sub(decrement))
+    })?;
+    TOTAL_ISSUANCE.update(store, |s| -> StdResult<_> {
+        Ok(s.saturating_sub(decrement))
+    })?;
+
+    Ok(())
 }
 
-pub fn u64_to_balance(input: u64) -> Option<u64> {
-    // TODO revisit this
-    // input.try_into().ok()
-    Some(input)
-}
+#[cfg(test)]
+pub fn add_balance_to_coldkey_account(_coldkey: &Addr, _amount: u64) {}
 
-// TODO replace this logic
-pub fn add_balance_to_coldkey_account(coldkey: &Addr, amount: u64) {
-    // TODO return message and then return in response
-    // T::Currency::deposit_creating(&coldkey, amount); // Infallibe
-}
-
-pub fn can_remove_balance_from_coldkey_account(coldkey: &Addr, amount: u64) -> bool {
-    // let current_balance = get_coldkey_balance(coldkey);
-    // if amount > current_balance {
-    //     return false;
-    // }
-    //
-    // // This bit is currently untested. @todo
-    // let new_potential_balance = current_balance - amount;
-    // let can_withdraw = T::Currency::ensure_can_withdraw(
-    //     &coldkey,
-    //     amount,
-    //     WithdrawReasons::except(WithdrawReasons::TIP),
-    //     new_potential_balance,
-    // )
-    //     .is_ok();
-    // can_withdraw
+#[cfg(test)]
+pub fn can_remove_balance_from_coldkey_account(_coldkey: &Addr, _amount: u64) -> bool {
     true
 }
 
-pub fn get_coldkey_balance(coldkey: &Addr) -> u64 {
-    // return T::Currency::free_balance(&coldkey);
+#[cfg(test)]
+pub fn get_coldkey_balance(_coldkey: &Addr) -> u64 {
     return 0;
 }
 
-pub fn remove_balance_from_coldkey_account(coldkey: &Addr, amount: u64) -> bool {
-    // TODO rewrite whole logic -> account should send tokens upfront with transaction
-    // return match T::Currency::withdraw(
-    //     &coldkey,
-    //     amount,
-    //     WithdrawReasons::except(WithdrawReasons::TIP),
-    //     ExistenceRequirement::KeepAlive,
-    // ) {
-    //     Ok(_result) => true,
-    //     Err(_error) => false,
-    // };
+#[cfg(test)]
+pub fn remove_balance_from_coldkey_account(_coldkey: &Addr, _amount: u64) -> bool {
     true
 }
 
-pub fn unstake_all_coldkeys_from_hotkey_account(store: &mut dyn Storage, hotkey: &Addr) {
-    // TODO we use messages to send tokens from contract balance to coldkey
-    // can be issue when there are a lot of stakers on account on replacement
-
-    // TODO return messages from here as we send token from contarct balance to coldkey
+pub fn unstake_all_coldkeys_from_hotkey_account(
+    store: &mut dyn Storage,
+    hotkey: &Addr,
+) -> Result<Vec<CosmosMsg>, ContractError> {
+    // TODO can be issue when there are a lot of stakers (and messages) on account on replacement
     // Iterate through all coldkeys that have a stake on this hotkey account.
+    let mut msgs: Vec<CosmosMsg> = Vec::new();
 
     let stakes = STAKE
         .prefix(hotkey)
@@ -597,19 +536,21 @@ pub fn unstake_all_coldkeys_from_hotkey_account(store: &mut dyn Storage, hotkey:
         .collect::<Vec<(Addr, u64)>>();
 
     for (delegate_coldkey_i, stake_i) in stakes {
-        // Convert to balance and add to the coldkey account.
-        let stake_i_as_balance = u64_to_balance(stake_i);
-        if stake_i_as_balance.is_none() {
-            continue; // Don't unstake if we can't convert to balance.
+        if stake_i == 0 {
+            continue;
         } else {
             // Stake is successfully converted to balance.
 
             // Remove the stake from the coldkey - hotkey pairing.
-            decrease_stake_on_coldkey_hotkey_account(store, &delegate_coldkey_i, &hotkey, stake_i);
+            decrease_stake_on_coldkey_hotkey_account(store, &delegate_coldkey_i, &hotkey, stake_i)?;
 
-            // Add the balance to the coldkey account.
-            // TODO create messages here
-            // add_balance_to_coldkey_account(&delegate_coldkey_i, stake_i_as_balance.unwrap());
+            let denom = DENOM.load(store)?;
+            msgs.push(CosmosMsg::Bank(BankMsg::Send {
+                to_address: delegate_coldkey_i.to_string(),
+                amount: coins(Uint128::from(stake_i).u128(), denom),
+            }));
         }
     }
+
+    Ok(msgs)
 }

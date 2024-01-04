@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Api, Order, StdError, StdResult, Storage};
+use cosmwasm_std::{Addr, Api, CosmosMsg, Order, StdError, StdResult, Storage};
 
 use crate::staking::unstake_all_coldkeys_from_hotkey_account;
 use crate::state::{
@@ -21,9 +21,9 @@ pub fn replace_neuron(
     uid_to_replace: u16,
     new_hotkey: &Addr,
     block_number: u64,
-) -> Result<(), ContractError> {
+) -> Result<Vec<CosmosMsg>, ContractError> {
     api.debug(&format!(
-        "replace_neuron( netuid: {:?} | uid_to_replace: {:?} | new_hotkey: {:?} ) ",
+        "👾 replace_neuron ( netuid: {:?} | uid_to_replace: {:?} | new_hotkey: {:?} ) ",
         netuid,
         uid_to_replace,
         new_hotkey.to_string()
@@ -38,11 +38,12 @@ pub fn replace_neuron(
     KEYS.remove(store, (netuid.clone(), uid_to_replace));
 
     // 2a. Check if the uid is registered in any other subnetworks.
+    let mut msgs: Vec<CosmosMsg> = Vec::new();
     let hotkey_is_registered_on_any_network: bool =
         is_hotkey_registered_on_any_network(store, &old_hotkey);
     if !hotkey_is_registered_on_any_network {
         // If not, unstake all coldkeys under this hotkey.
-        unstake_all_coldkeys_from_hotkey_account(store, &old_hotkey);
+        msgs = unstake_all_coldkeys_from_hotkey_account(store, &old_hotkey)?;
     }
 
     // 3. Create new set memberships.
@@ -64,12 +65,7 @@ pub fn replace_neuron(
     )?; // Fill block at registration.
     IS_NETWORK_MEMBER.save(store, (&new_hotkey.clone(), netuid.clone()), &true)?; // Fill network is member.
 
-    // TODO added because original use default value
-    // no need because we init during account creation with not exist
-    // TOTAL_HOTKEY_STAKE.save(store, new_hotkey.clone(), &0u64)?;
-    // TOTAL_COLDKEY_STAKE.save(store, new_hotkey.clone(), &0u64)?;
-
-    Ok(())
+    Ok(msgs)
 }
 
 // Appends the uid to the network.
@@ -82,7 +78,14 @@ pub fn append_neuron(
 ) -> Result<(), StdError> {
     // 1. Get the next uid. This is always equal to subnetwork_n.
     let next_uid: u16 = get_subnetwork_n(store, netuid.clone());
-    // api.debug(&format!("append_neuron( netuid: {:?} | next_uid: {:?} | new_hotkey: {:?} ) ", netuid, new_hotkey.to_string(), next_uid.clone() ));
+
+    api.debug(&format!(
+        "👾 append_neuron ( netuid: {:?} | next_uid: {:?} | new_hotkey: {:?} ) ",
+        netuid,
+        new_hotkey.to_string(),
+        next_uid.clone()
+    ));
+
     // 2. Get and increase the uid count.
     SUBNETWORK_N.save(store, netuid.clone(), &(next_uid.clone() + 1))?;
 

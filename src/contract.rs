@@ -16,18 +16,15 @@ use crate::registration::{do_burned_registration, do_registration, do_sudo_regis
 use crate::root::{do_root_register, get_network_lock_cost, user_add_network, user_remove_network};
 use crate::serving::{do_serve_axon, do_serve_prometheus};
 use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys};
-use crate::staking::{
-    do_add_stake, do_become_delegate, do_remove_stake, increase_stake_on_coldkey_hotkey_account,
-};
+use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake};
 use crate::state::{
     AxonInfo, PrometheusInfo, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
-    ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION,
-    BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE,
-    DELEGATES, DENOM, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE,
-    IS_NETWORK_MEMBER, KAPPA, KEYS, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
-    MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK,
-    MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED,
-    NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
+    ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
+    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY,
+    DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
+    LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY,
+    MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
+    NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
     NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS, NETWORK_MIN_LOCK_COST,
     NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
     OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
@@ -72,7 +69,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
@@ -224,7 +221,7 @@ pub fn instantiate(
     Ok(Response::default().add_attribute("action", "instantiate"))
 }
 
-pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn activate(_deps: DepsMut, env: Env) -> Result<Response, ContractError> {
     let res = Response::new()
         .add_message(create_creat_thought_msg(
             env.contract.address.to_string(),
@@ -329,9 +326,7 @@ pub fn execute(
             netuid,
             hotkey,
             coldkey,
-            stake,
-            balance,
-        } => do_sudo_registration(deps, env, info, netuid, hotkey, coldkey, stake, balance),
+        } => do_sudo_registration(deps, env, info, netuid, hotkey, coldkey),
         ExecuteMsg::SudoSetDefaultTake { default_take } => {
             do_sudo_set_default_take(deps, env, info, default_take)
         }

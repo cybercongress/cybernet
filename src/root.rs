@@ -158,7 +158,7 @@ pub fn contains_invalid_root_uids(store: &dyn Storage, api: &dyn Api, netuids: &
     for netuid in netuids {
         if !if_subnet_exist(store, *netuid) {
             api.debug(&format!(
-                "contains_invalid_root_uids: netuid {:?} does not exist",
+                "🔵 contains_invalid_root_uids: netuid {:?} does not exist",
                 netuid
             ));
             return true;
@@ -177,28 +177,28 @@ pub fn set_emission_values(
     emission: Vec<u64>,
 ) -> Result<(), ContractError> {
     api.debug(&format!(
-        "set_emission_values: netuids: {:?} emission:{:?}",
+        "🔵 set_emission_values: netuids: {:?}, emission:{:?}",
         netuids, emission
     ));
 
     // Be careful this function can fail.
     if contains_invalid_root_uids(store, api, netuids) {
         api.debug(&format!(
-            "error set_emission_values: contains_invalid_root_uids"
+            "🔵 error set_emission_values: contains_invalid_root_uids"
         ));
         return Err(ContractError::InvalidUid {});
     }
     if netuids.len() != emission.len() {
         api.debug(&format!(
-            "error set_emission_values: netuids.len() != emission.len()"
+            "🔵 error set_emission_values: netuids.len() != emission.len()"
         ));
         return Err(ContractError::Std(GenericErr {
-            msg: "netuids and emission must have the same length".to_string(),
+            msg: "🔵 netuids and emission must have the same length".to_string(),
         }));
     }
     for (i, netuid_i) in netuids.iter().enumerate() {
         api.debug(&format!(
-            "set netuid:{:?} emission:{:?}",
+            "🔵 set netuid:{:?}, emission:{:?}",
             netuid_i, emission[i]
         ));
         EMISSION_VALUES.save(store, *netuid_i, &emission[i])?;
@@ -218,12 +218,12 @@ pub fn get_root_weights(store: &dyn Storage, api: &dyn Api) -> Vec<Vec<I64F64>> 
     let n: usize = get_num_root_validators(store) as usize;
 
     // --- 1 The number of subnets to validate.
-    api.debug(&format!(
-        "subnet size before cast: {:?}",
-        get_num_subnets(store)
-    ));
+    // api.debug(&format!(
+    //     "🔵 subnet size before cast: {:?}",
+    //     get_num_subnets(store)
+    // ));
     let k: usize = get_num_subnets(store) as usize;
-    api.debug(&format!("n: {:?} k: {:?}", n, k));
+    api.debug(&format!("🔵 root_validators: {:?}, subnets: {:?}", n, k));
 
     // --- 2. Initialize a 2D vector with zeros to store the weights. The dimensions are determined
     // by `n` (number of validators) and `k` (total number of subnets).
@@ -280,38 +280,38 @@ pub fn root_epoch(
     if blocks_until_next_epoch != 0 {
         // Not the block to update emission values.
         api.debug(&format!(
-            "blocks_until_next_epoch: {:?}",
+            "🔵 blocks_until_next_epoch: {:?}",
             blocks_until_next_epoch
         ));
         return Err(ContractError::Std(GenericErr {
-            msg: "Not the block to update emission values.".to_string(),
+            msg: "🔵 Not the block to update emission values.".to_string(),
         }));
     }
 
     // --- 1. Retrieves the number of root validators on subnets.
     let n: u16 = get_num_root_validators(store);
-    api.debug(&format!("n:\n{:?}\n", n));
+    api.debug(&format!("root_validators: {:?}", n));
     if n == 0 {
         // No validators.
         return Err(ContractError::Std(GenericErr {
-            msg: "No validators to validate emission values.".to_string(),
+            msg: "🔵 No validators to validate emission values.".to_string(),
         }));
     }
 
     // --- 2. Obtains the number of registered subnets.
     let k: u16 = get_all_subnet_netuids(store).len() as u16;
-    api.debug(&format!("k:\n{:?}\n", k));
+    api.debug(&format!("subnets 🔵: {:?}", k));
     if k == 0 {
         // No networks to validate.
         return Err(ContractError::Std(GenericErr {
-            msg: "No networks to validate emission values.".to_string(),
+            msg: "🔵 No networks to validate emission values.".to_string(),
         }));
     }
 
     // --- 4. Determines the total block emission across all the subnetworks. This is the
     // value which will be distributed based on the computation below.
     let block_emission: I64F64 = I64F64::from_num(get_block_emission(store));
-    api.debug(&format!("block_emission:\n{:?}\n", block_emission));
+    api.debug(&format!("🔵 block_emission: {:?}", block_emission));
 
     // --- 5. A collection of all registered hotkeys on the root network. Hotkeys
     // pairs with network UIDs and stake values.
@@ -324,7 +324,7 @@ pub fn root_epoch(
         let (uid_i, hotkey) = item?;
         hotkeys.push((uid_i, hotkey));
     }
-    api.debug(&format!("hotkeys:\n{:?}\n", hotkeys));
+    api.debug(&format!("🔵 hotkeys: {:?}\n", hotkeys));
 
     // --- 6. Retrieves and stores the stake value associated with each hotkey on the root network.
     // Stakes are stored in a 64-bit fixed point representation for precise calculations.
@@ -333,17 +333,17 @@ pub fn root_epoch(
         stake_i64[*uid_i as usize] = I64F64::from_num(get_total_stake_for_hotkey(store, &hotkey));
     }
     inplace_normalize_64(&mut stake_i64);
-    api.debug(&format!("S:\n{:?}\n", &stake_i64));
+    api.debug(&format!("🔵 stake: {:?}\n", &stake_i64));
 
     // --- 8. Retrieves the network weights in a 2D Vector format. Weights have shape
     // n x k where is n is the number of registered peers and k is the number of subnets.
     let weights: Vec<Vec<I64F64>> = get_root_weights(store, api);
-    api.debug(&format!("W:\n{:?}\n", &weights));
+    api.debug(&format!("🔵 weights: {:?}\n", &weights));
 
     // --- 9. Calculates the rank of networks. Rank is a product of weights and stakes.
     // Ranks will have shape k, a score for each subnet.
     let ranks: Vec<I64F64> = matmul_64(&weights, &stake_i64);
-    api.debug(&format!("R:\n{:?}\n", &ranks));
+    api.debug(&format!("🔵 ranks: {:?}\n", &ranks));
 
     // --- 10. Calculates the trust of networks. Trust is a sum of all stake with weights > 0.
     // Trust will have shape k, a score for each subnet.
@@ -360,12 +360,12 @@ pub fn root_epoch(
         }
     }
 
-    api.debug(&format!("T_before normalization:\n{:?}\n", &trust));
-    api.debug(&format!("Total_stake:\n{:?}\n", &total_stake));
+    api.debug(&format!("🔵 trust_nn: {:?}\n", &trust));
+    api.debug(&format!("🔵 total_stake: {:?}\n", &total_stake));
 
     if total_stake == 0 {
         return Err(ContractError::Std(GenericErr {
-            msg: "No stake on network".to_string(),
+            msg: "🔵 No stake on network".to_string(),
         }));
     }
 
@@ -380,7 +380,7 @@ pub fn root_epoch(
 
     // --- 11. Calculates the consensus of networks. Consensus is a sigmoid normalization of the trust scores.
     // Consensus will have shape k, a score for each subnet.
-    api.debug(&format!("T:\n{:?}\n", &trust));
+    api.debug(&format!("🔵 trust_n: {:?}\n", &trust));
     let one = I64F64::from_num(1);
     let mut consensus = vec![I64F64::from_num(0); total_networks as usize];
     for (idx, trust_score) in trust.iter_mut().enumerate() {
@@ -392,28 +392,28 @@ pub fn root_epoch(
         consensus[idx] = one / (one + exponentiated_trust);
     }
 
-    api.debug(&format!("C:\n{:?}\n", &consensus));
+    api.debug(&format!("🔵 consensus: {:?}\n", &consensus));
     let mut weighted_emission = vec![I64F64::from_num(0); total_networks as usize];
     for (idx, emission) in weighted_emission.iter_mut().enumerate() {
         *emission = consensus[idx] * ranks[idx];
     }
     inplace_normalize_64(&mut weighted_emission);
-    api.debug(&format!("Ei64:\n{:?}\n", &weighted_emission));
+    api.debug(&format!("🔵 emission_w: {:?}\n", &weighted_emission));
 
     // -- 11. Converts the normalized 64-bit fixed point rank values to u64 for the final emission calculation.
-    let emission_as_tao: Vec<I64F64> = weighted_emission
+    let emission_as_boot: Vec<I64F64> = weighted_emission
         .iter()
         .map(|v: &I64F64| *v * block_emission)
         .collect();
 
     // --- 12. Converts the normalized 64-bit fixed point rank values to u64 for the final emission calculation.
-    let emission_u64: Vec<u64> = vec_fixed64_to_u64(emission_as_tao);
-    api.debug(&format!("Eu64:\n{:?}\n", &emission_u64));
+    let emission_u64: Vec<u64> = vec_fixed64_to_u64(emission_as_boot);
+    api.debug(&format!("🔵 emission_f: {:?}\n", &emission_u64));
 
     // --- 13. Set the emission values for each subnet directly.
     let netuids: Vec<u16> = get_all_subnet_netuids(store);
     api.debug(&format!(
-        "netuids: {:?} values: {:?}",
+        "🔵 netuids: {:?}, values: {:?}",
         netuids, emission_u64
     ));
 
@@ -453,7 +453,7 @@ pub fn do_root_register(
     // --- 1. Ensure that the call originates from a signed source and retrieve the caller's account ID (coldkey).
     let coldkey = info.sender;
     deps.api.debug(&format!(
-        "do_root_register( coldkey: {:?}, hotkey: {:?} )",
+        "🔵 do_root_register ( coldkey: {:?}, hotkey: {:?} )",
         coldkey,
         hotkey.clone()
     ));
@@ -502,7 +502,7 @@ pub fn do_root_register(
             current_block_number,
         )?;
         deps.api.debug(&format!(
-            "add new neuron: {:?} on uid {:?}",
+            "🔵 add new neuron: {:?} on uid {:?}",
             hotkey, subnetwork_uid
         ));
     } else {
@@ -535,7 +535,7 @@ pub fn do_root_register(
 
         // --- 13.1.3 The new account has a higher stake than the one being replaced.
         // Replace the neuron account with new information.
-        replace_neuron(
+        let _msgs = replace_neuron(
             deps.storage,
             deps.api,
             root_netuid,
@@ -545,7 +545,7 @@ pub fn do_root_register(
         )?;
 
         deps.api.debug(&format!(
-            "replace neuron: {:?} with {:?} on uid {:?}",
+            "🔵 replace neuron: {:?} with {:?} on uid {:?}",
             replaced_hotkey, hotkey, subnetwork_uid
         ));
     }
@@ -594,7 +594,7 @@ pub fn do_root_register(
 
     // --- 15. Log and announce the successful registration.
     deps.api.debug(&format!(
-        "RootRegistered(netuid:{:?} uid:{:?} hotkey:{:?})",
+        "🔵 RootRegistered (netuid:{:?} uid:{:?} hotkey:{:?})",
         root_netuid, subnetwork_uid, hotkey
     ));
 
@@ -640,30 +640,18 @@ pub fn user_add_network(
 
     // --- 2. Calculate and lock the required tokens.
     let lock_amount: u64 = get_network_lock_cost(deps.storage, deps.api, env.block.height)?;
-    // TODO revisit this
-    // let lock_as_balance = u64_to_balance(lock_amount);
-    // let lock_as_balance = 0;
     deps.api
-        .debug(&format!("network lock_amount: {:?}", lock_amount));
+        .debug(&format!("🔵 network lock_amount: {:?}", lock_amount));
 
     ensure!(
         amount.u128() as u64 >= lock_amount,
         ContractError::NotEnoughTokens {}
     );
 
-    // ensure!(
-    //         lock_as_balance.is_some(),
-    //         Error::<T>::CouldNotConvertToBalance
-    //     );
-    // ensure!(
-    //     can_remove_balance_from_coldkey_account(&coldkey, lock_as_balance),
-    //     ContractError::NotEnoughBalanceToStake {}
-    // );
-
     // --- 4. Determine the netuid to register.
     let netuid_to_register: u16 = {
         deps.api.debug(&format!(
-            "subnet count: {:?}\nmax subnets: {:?}",
+            "🔵 subnet count: {:?}\nmax subnets: {:?}",
             get_num_subnets(deps.storage),
             get_max_subnets(deps.storage)
         ));
@@ -680,7 +668,7 @@ pub fn user_add_network(
             }
         } else {
             let netuid_to_prune = get_subnet_to_prune(deps.storage, env.block.height)?;
-            // ensure!(netuid_to_prune > 0, Error::<T>::AllNetworksInImmunity);
+            ensure!(netuid_to_prune > 0, ContractError::AllNetworksInImmunity {});
 
             remove_network(deps.storage, netuid_to_prune)?;
             deps.api
@@ -690,10 +678,6 @@ pub fn user_add_network(
     };
 
     // --- 5. Perform the lock operation.
-    // ensure!(
-    //     remove_balance_from_coldkey_account(&coldkey, lock_as_balance) == true,
-    //     ContractError::BalanceWithdrawalError {}
-    // );
     set_subnet_locked_balance(deps.storage, netuid_to_register, lock_amount);
     set_network_last_lock(deps.storage, lock_amount);
 
@@ -710,7 +694,7 @@ pub fn user_add_network(
 
     // --- 8. Emit the NetworkAdded event.
     deps.api.debug(&format!(
-        "NetworkAdded( netuid:{:?}, modality:{:?} )",
+        "🔵 NetworkAdded ( netuid:{:?}, modality:{:?} )",
         netuid_to_register, 0
     ));
 
@@ -735,7 +719,7 @@ pub fn user_add_network(
 //
 pub fn user_remove_network(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
     netuid: u16,
 ) -> Result<Response, ContractError> {
@@ -759,7 +743,7 @@ pub fn user_remove_network(
 
     // --- 5. Emit the NetworkRemoved event.
     deps.api
-        .debug(&format!("NetworkRemoved( netuid:{:?} )", netuid));
+        .debug(&format!("🔵 NetworkRemoved ( netuid:{:?} )", netuid));
 
     // --- 6. Return success.
     Ok(Response::default()
@@ -857,16 +841,8 @@ pub fn init_new_network(
 //
 pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), ContractError> {
     // --- 1. Return balance to subnet owner.
-    let owner_coldkey = get_subnet_owner(store, netuid);
-    let reserved_amount = get_subnet_locked_balance(store, netuid);
-
-    // Ensure that we can convert this u64 to a balance.
-    // TODO revisit this
-    // let reserved_amount_as_bal = u64_to_balance(reserved_amount);
-    // if !reserved_amount_as_bal.is_some() {
-    //     return;
-    // }
-    let reserved_amount_as_bal = 0;
+    // let _owner_coldkey = get_subnet_owner(store, netuid);
+    // let _reserved_amount = get_subnet_locked_balance(store, netuid);
 
     // --- 2. Remove network count.
     SUBNETWORK_N.remove(store, netuid);
@@ -921,8 +897,7 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     BURN_REGISTRATIONS_THIS_INTERVAL.remove(store, netuid);
 
     // --- 11. Add the balance back to the owner.
-    // TODO create messages send here
-    // add_balance_to_coldkey_account(&owner_coldkey, reserved_amount_as_bal);
+    // TODO create messages to send token here or burn them during creation, decide later
     set_subnet_locked_balance(store, netuid, 0);
     SUBNET_OWNER.remove(store, netuid);
 
@@ -994,7 +969,7 @@ pub fn get_network_lock_cost(
         lock_cost = min_lock;
     }
 
-    api.debug(&format!("last_lock: {:?}, min_lock: {:?}, last_lock_block: {:?}, lock_reduction_interval: {:?}, current_block: {:?}, mult: {:?} lock_cost: {:?}",
+    api.debug(&format!("🔵 last_lock: {:?}, min_lock: {:?}, last_lock_block: {:?}, lock_reduction_interval: {:?}, current_block: {:?}, mult: {:?} lock_cost: {:?}",
                        last_lock, min_lock, last_lock_block, lock_reduction_interval, current_block, mult, lock_cost));
 
     Ok(lock_cost)

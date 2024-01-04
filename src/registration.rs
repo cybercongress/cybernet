@@ -1,15 +1,9 @@
 use crate::root::{get_root_netuid, if_subnet_allows_registration, if_subnet_exist};
-use crate::staking::{
-    add_balance_to_coldkey_account, create_account_if_non_existent,
-    increase_stake_on_coldkey_hotkey_account, u64_to_balance,
-};
-use crate::staking::{
-    can_remove_balance_from_coldkey_account, coldkey_owns_hotkey,
-    remove_balance_from_coldkey_account,
-};
+use crate::staking::coldkey_owns_hotkey;
+use crate::staking::{create_account_if_non_existent, increase_stake_on_coldkey_hotkey_account};
 use crate::state::{
-    ALLOW_FAUCET, BURN_REGISTRATIONS_THIS_INTERVAL, DENOM, POW_REGISTRATIONS_THIS_INTERVAL,
-    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, TOTAL_ISSUANCE, UIDS, USED_WORK,
+    BURN_REGISTRATIONS_THIS_INTERVAL, DENOM, POW_REGISTRATIONS_THIS_INTERVAL,
+    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, UIDS, USED_WORK,
 };
 use crate::uids::{append_neuron, get_subnetwork_n, replace_neuron};
 use crate::utils::{
@@ -19,7 +13,7 @@ use crate::utils::{
     get_target_registrations_per_interval, increase_rao_recycled, set_pruning_score_for_uid,
 };
 use crate::ContractError;
-use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, StdResult, Storage};
+use cosmwasm_std::{ensure, Api, DepsMut, Env, MessageInfo, StdResult, Storage};
 use cw_utils::must_pay;
 
 use primitive_types::{H256, U256};
@@ -34,15 +28,17 @@ pub fn do_sudo_registration(
     netuid: u16,
     hotkey_address: String,
     coldkey_address: String,
-    stake: u64,
-    balance: u64,
 ) -> Result<Response, ContractError> {
-    // TODO update stake and balance to incoming tokens
-    // let denom = DENOM.load(deps.storage)?;
-    // let amount = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
+    let denom = DENOM.load(deps.storage)?;
+    let stake = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
 
     let hotkey = deps.api.addr_validate(&hotkey_address)?;
     let coldkey = deps.api.addr_validate(&coldkey_address)?;
+
+    deps.api.debug(&format!(
+        "👾 do_sudo_registration ( netuid:{:?} hotkey:{:?}, coldkey:{:?} )",
+        netuid, hotkey, coldkey
+    ));
 
     ensure_root(deps.storage, &info.sender)?;
 
@@ -66,14 +62,7 @@ pub fn do_sudo_registration(
         coldkey_owns_hotkey(deps.storage, &coldkey, &hotkey),
         ContractError::NonAssociatedColdKey {}
     );
-    increase_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake);
-
-    // let balance_to_be_added_as_balance = u64_to_balance(balance);
-    // ensure!(
-    //     balance_to_be_added_as_balance.is_some(),
-    //     ContractError::CouldNotConvertToBalance {}
-    // );
-    // add_balance_to_coldkey_account(&coldkey, balance_to_be_added_as_balance.unwrap());
+    increase_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake.u128() as u64);
 
     let subnetwork_uid: u16;
     let current_block_number: u64 = env.block.height;
@@ -91,14 +80,14 @@ pub fn do_sudo_registration(
             &hotkey,
             current_block_number,
         )?;
-        deps.api.debug(&format!("add new neuron account"));
+        deps.api.debug(&format!("👾 add new neuron account"));
     } else {
         // --- 12.1.1 Replacement required.
         // We take the neuron with the lowest pruning score here.
         subnetwork_uid = get_neuron_to_prune(deps.storage, deps.api, netuid, env.block.height);
 
         // --- 12.1.1 Replace the neuron account with the new info.
-        replace_neuron(
+        let _msgs = replace_neuron(
             deps.storage,
             deps.api,
             netuid,
@@ -106,11 +95,11 @@ pub fn do_sudo_registration(
             &hotkey,
             current_block_number,
         )?;
-        deps.api.debug(&format!("prune neuron"));
+        deps.api.debug(&format!("👾 prune neuron"));
     }
 
     deps.api.debug(&format!(
-        "NeuronRegistered( netuid:{:?} uid:{:?} hotkey:{:?}  ) ",
+        "👾 Neuron Registration Sudo ( netuid:{:?} uid:{:?} hotkey:{:?} ) ",
         netuid, subnetwork_uid, hotkey
     ));
 
@@ -120,7 +109,6 @@ pub fn do_sudo_registration(
         .add_attribute("hotkey", hotkey))
 }
 
-// ---- The implementation for the extrinsic do_burned_registration: registering by burning TAO.
 //
 // # Args:
 // 	* 'origin': (<T as frame_system::Config>RuntimeOrigin):
@@ -154,7 +142,7 @@ pub fn do_burned_registration(
     netuid: u16,
     hotkey_address: String,
 ) -> Result<Response, ContractError> {
-    // TODO cannot burn so just receive tokens for registration and account as burned increase_rao_recycled
+    // TODO update burn when token factory bindings will be available
     let denom = DENOM.load(deps.storage)?;
     let amount = must_pay(&info, &denom).map_err(|_| ContractError::CouldNotConvertToBalance {})?;
 
@@ -163,8 +151,8 @@ pub fn do_burned_registration(
     let hotkey = deps.api.addr_validate(&hotkey_address)?;
 
     deps.api.debug(&format!(
-        "do_registration( coldkey:{:?} netuid:{:?} hotkey:{:?} )",
-        coldkey, netuid, hotkey
+        "👾 do_burned_registration ( netuid:{:?} hotkey:{:?}, coldkey:{:?} )",
+        netuid, hotkey, coldkey
     ));
 
     // --- 2. Ensure the passed network is valid.
@@ -206,22 +194,11 @@ pub fn do_burned_registration(
     // --- 7. Ensure the callers coldkey has enough stake to perform the transaction.
     let current_block_number: u64 = env.block.height;
     let registration_cost_as_u64 = get_burn_as_u64(deps.storage, netuid);
-    let registration_cost_as_balance = u64_to_balance(registration_cost_as_u64).unwrap();
-    // ensure!(
-    //     can_remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance),
-    //     ContractError::NotEnoughBalanceToStake {}
-    // );
 
     ensure!(
-        amount.u128() as u64 >= registration_cost_as_balance,
+        amount.u128() as u64 >= registration_cost_as_u64,
         ContractError::NotEnoughTokens {}
     );
-
-    // --- 8. Ensure the remove operation from the coldkey is a success.
-    // ensure!(
-    //     remove_balance_from_coldkey_account(&coldkey, registration_cost_as_balance) == true,
-    //     ContractError::BalanceWithdrawalError {}
-    // );
 
     // The burn occurs here.
     // same as below
@@ -260,14 +237,14 @@ pub fn do_burned_registration(
             &hotkey,
             current_block_number,
         )?;
-        deps.api.debug(&format!("add new neuron account"));
+        deps.api.debug(&format!("👾 add new neuron account"));
     } else {
         // --- 13.1.1 Replacement required.
         // We take the neuron with the lowest pruning score here.
         subnetwork_uid = get_neuron_to_prune(deps.storage, deps.api, netuid, env.block.height);
 
         // --- 13.1.1 Replace the neuron account with the new info.
-        replace_neuron(
+        let _msgs = replace_neuron(
             deps.storage,
             deps.api,
             netuid,
@@ -275,7 +252,7 @@ pub fn do_burned_registration(
             &hotkey,
             current_block_number,
         )?;
-        deps.api.debug(&format!("prune neuron"));
+        deps.api.debug(&format!("👾 prune neuron"));
     }
 
     // --- 14. Record the registration and increment block and interval counters.
@@ -302,7 +279,7 @@ pub fn do_burned_registration(
 
     // --- 15. Deposit successful event.
     deps.api.debug(&format!(
-        "NeuronRegistered( netuid:{:?} uid:{:?} hotkey:{:?}  ) ",
+        "👾 Neuron Registration Burned ( netuid:{:?} uid:{:?} hotkey:{:?} ) ",
         netuid,
         subnetwork_uid,
         hotkey.clone()
@@ -381,7 +358,7 @@ pub fn do_registration(
     let coldkey = deps.api.addr_validate(&coldkey_address)?;
 
     deps.api.debug(&format!(
-        "do_registration( origin:{:?} netuid:{:?} hotkey:{:?}, coldkey:{:?} )",
+        "👾 do_registration ( origin:{:?} netuid:{:?} hotkey:{:?}, coldkey:{:?} )",
         signing_origin, netuid, hotkey, coldkey
     ));
 
@@ -484,14 +461,14 @@ pub fn do_registration(
             &hotkey.clone(),
             current_block_number,
         )?;
-        deps.api.debug(&format!("add new neuron account"));
+        deps.api.debug(&format!("👾 add new neuron account"));
     } else {
         // --- 11.1.1 Replacement required.
         // We take the neuron with the lowest pruning score here.
         subnetwork_uid = get_neuron_to_prune(deps.storage, deps.api, netuid, current_block_number);
 
         // --- 11.1.1 Replace the neuron account with the new info.
-        replace_neuron(
+        let _msgs = replace_neuron(
             deps.storage,
             deps.api,
             netuid,
@@ -499,7 +476,7 @@ pub fn do_registration(
             &hotkey.clone(),
             current_block_number,
         )?;
-        deps.api.debug(&format!("prune neuron"));
+        deps.api.debug(&format!("👾 prune neuron"));
     }
 
     // --- 12. Record the registration and increment block and interval counters.
@@ -524,7 +501,7 @@ pub fn do_registration(
 
     // --- 13. Deposit successful event.
     deps.api.debug(&format!(
-        "NeuronRegistered( netuid:{:?} uid:{:?} hotkey:{:?}  ) ",
+        "👾 Neuron Registration PoW( netuid:{:?} uid:{:?} hotkey:{:?} ) ",
         netuid, subnetwork_uid, hotkey
     ));
 
