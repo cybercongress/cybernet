@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use crate::ContractError;
 use cosmwasm_std::{Addr, Api, Order, Storage};
 use substrate_fixed::types::{I32F32, I64F64, I96F32};
@@ -16,11 +15,14 @@ use crate::state::{
     ACTIVE, BONDS, CONSENSUS, DIVIDENDS, EMISSION, INCENTIVE, KEYS, PRUNING_SCORES, RANK, TRUST,
     VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS,
 };
-use crate::uids::{get_stake_for_uid_and_subnetwork, get_subnetwork_n};
+use crate::uids::get_subnetwork_n;
 use crate::utils::{
     get_activity_cutoff, get_bonds_moving_average, get_kappa, get_last_update,
     get_max_allowed_validators, get_neuron_block_at_registration, get_rho, get_validator_permit,
 };
+
+#[cfg(test)]
+use crate::uids::get_stake_for_uid_and_subnetwork;
 
 // Calculates reward consensus values, then updates rank, trust, consensus, incentive, dividend, pruning_score, emission and bonds, and
 // returns the emissions for uids/hotkeys in a given `netuid`.
@@ -410,6 +412,7 @@ pub fn epoch(
     Ok(result)
 }
 
+#[cfg(test)]
 pub fn get_float_rho(store: &dyn Storage, netuid: u16) -> I32F32 {
     I32F32::from_num(get_rho(store, netuid))
 }
@@ -418,6 +421,7 @@ pub fn get_float_kappa(store: &dyn Storage, netuid: u16) -> I32F32 {
     I32F32::from_num(get_kappa(store, netuid)) / I32F32::from_num(u16::MAX)
 }
 
+#[cfg(test)]
 pub fn get_normalized_stake(store: &dyn Storage, netuid: u16) -> Vec<I32F32> {
     let n: usize = get_subnetwork_n(store, netuid) as usize;
     let mut stake_64: Vec<I64F64> = vec![I64F64::from_num(0.0); n];
@@ -462,6 +466,7 @@ pub fn get_weights_sparse(store: &dyn Storage, netuid: u16) -> Vec<Vec<(u16, I32
 }
 
 // Output unnormalized weights in [n, n] matrix, input weights are assumed to be row max-upscaled in u16.
+#[cfg(test)]
 pub fn get_weights(store: &dyn Storage, netuid: u16) -> Vec<Vec<I32F32>> {
     let n: usize = get_subnetwork_n(store, netuid) as usize;
     let mut weights: Vec<Vec<I32F32>> = vec![vec![I32F32::from_num(0.0); n]; n];
@@ -494,6 +499,7 @@ pub fn get_bonds_sparse(store: &dyn Storage, netuid: u16) -> Vec<Vec<(u16, I32F3
 }
 
 // Output unnormalized bonds in [n, n] matrix, input bonds are assumed to be column max-upscaled in u16.
+#[cfg(test)]
 pub fn get_bonds(store: &dyn Storage, netuid: u16) -> Vec<Vec<I32F32>> {
     let n: usize = get_subnetwork_n(store, netuid) as usize;
     let mut bonds: Vec<Vec<I32F32>> = vec![vec![I32F32::from_num(0.0); n]; n];

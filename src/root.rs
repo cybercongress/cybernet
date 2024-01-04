@@ -29,7 +29,7 @@ use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, r
 use crate::utils::{
     get_block_emission, get_emission_value, get_max_allowed_uids, get_max_registrations_per_block,
     get_registrations_this_block, get_registrations_this_interval, get_rho,
-    get_subnet_locked_balance, get_subnet_owner, get_target_registrations_per_interval, get_tempo,
+    get_subnet_owner, get_target_registrations_per_interval, get_tempo,
     set_subnet_locked_balance,
 };
 use crate::ContractError;
@@ -96,7 +96,7 @@ pub fn get_max_root_validators(store: &dyn Storage) -> u16 {
 //
 // # Returns:
 // * 'u64': The emission value for the given subnet.
-//
+#[cfg(test)]
 pub fn get_subnet_emission_value(store: &dyn Storage, netuid: u16) -> u64 {
     EMISSION_VALUES.load(store, netuid).unwrap()
 }
@@ -987,7 +987,7 @@ pub fn get_subnet_to_prune(store: &dyn Storage, current_block: u64) -> Result<u1
     let mut min_score = 1;
     let mut min_score_in_immunity_period = u64::MAX;
     let mut uid_with_min_score = 1;
-    let mut uid_with_min_score_in_immunity_period: u16 = 1;
+    // let mut uid_with_min_score_in_immunity_period: u16 = 1;
 
     // Iterate over all networks
     for netuid in 1..get_num_subnets(store) - 1 {
@@ -1001,7 +1001,7 @@ pub fn get_subnet_to_prune(store: &dyn Storage, current_block: u64) -> Result<u1
                 //neuron is in immunity period
                 if min_score_in_immunity_period > emission_value {
                     min_score_in_immunity_period = emission_value;
-                    uid_with_min_score_in_immunity_period = netuid;
+                    // uid_with_min_score_in_immunity_period = netuid;
                 }
             } else {
                 min_score = emission_value;
@@ -1014,7 +1014,7 @@ pub fn get_subnet_to_prune(store: &dyn Storage, current_block: u64) -> Result<u1
                 // network is in immunity period
                 if min_score_in_immunity_period > emission_value {
                     min_score_in_immunity_period = emission_value;
-                    uid_with_min_score_in_immunity_period = netuid;
+                    // uid_with_min_score_in_immunity_period = netuid;
                 }
             } else {
                 min_score = emission_value;
@@ -1039,12 +1039,14 @@ pub fn get_network_immunity_period(store: &dyn Storage) -> u64 {
     NETWORK_IMMUNITY_PERIOD.load(store).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_network_immunity_period(store: &mut dyn Storage, net_immunity_period: u64) {
     NETWORK_IMMUNITY_PERIOD
         .save(store, &net_immunity_period)
         .unwrap();
 }
 
+#[cfg(test)]
 pub fn set_network_min_lock(store: &mut dyn Storage, net_min_lock: u64) {
     NETWORK_MIN_LOCK_COST.save(store, &net_min_lock).unwrap();
 }
@@ -1065,6 +1067,7 @@ pub fn get_network_last_lock_block(store: &dyn Storage) -> u64 {
     NETWORK_LAST_REGISTERED.load(store).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_lock_reduction_interval(store: &mut dyn Storage, interval: u64) {
     NETWORK_LOCK_REDUCTION_INTERVAL
         .save(store, &interval)

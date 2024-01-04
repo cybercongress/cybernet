@@ -206,7 +206,7 @@ pub fn get_uid_for_net_and_hotkey(
 }
 
 // Returns the stake of the uid on network or 0 if it doesnt exist.
-//
+#[cfg(test)]
 pub fn get_stake_for_uid_and_subnetwork(store: &dyn Storage, netuid: u16, neuron_uid: u16) -> u64 {
     return if KEYS.has(store, (netuid, neuron_uid)) {
         let hotkey = get_hotkey_for_net_and_uid(store, netuid, neuron_uid).unwrap();
@@ -217,7 +217,7 @@ pub fn get_stake_for_uid_and_subnetwork(store: &dyn Storage, netuid: u16, neuron
 }
 
 // Return the total number of subnetworks available on the chain.
-//
+#[cfg(test)]
 pub fn get_number_of_subnets(store: &dyn Storage) -> u16 {
     let mut number_of_subnets: u16 = 0;
     for _ in SUBNETWORK_N.range(store, None, None, Order::Descending) {

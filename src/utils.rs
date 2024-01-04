@@ -55,16 +55,19 @@ pub fn ensure_root(store: &dyn Storage, address: &Addr) -> Result<(), ContractEr
 // ========================
 // ==== Global Setters ====
 // ========================
+#[cfg(test)]
 pub fn set_tempo(store: &mut dyn Storage, netuid: u16, tempo: u16) {
     TEMPO.save(store, netuid, &tempo).unwrap();
 }
 
+#[cfg(test)]
 pub fn set_last_adjustment_block(store: &mut dyn Storage, netuid: u16, last_adjustment_block: u64) {
     LAST_ADJUSTMENT_BLOCK
         .save(store, netuid, &last_adjustment_block)
         .unwrap();
 }
 
+#[cfg(test)]
 pub fn set_blocks_since_last_step(
     store: &mut dyn Storage,
     netuid: u16,
@@ -75,6 +78,7 @@ pub fn set_blocks_since_last_step(
         .unwrap();
 }
 
+#[cfg(test)]
 pub fn set_registrations_this_block(
     store: &mut dyn Storage,
     netuid: u16,
@@ -85,6 +89,7 @@ pub fn set_registrations_this_block(
         .unwrap();
 }
 
+#[cfg(test)]
 pub fn set_last_mechanism_step_block(
     store: &mut dyn Storage,
     netuid: u16,
@@ -95,6 +100,7 @@ pub fn set_last_mechanism_step_block(
         .unwrap();
 }
 
+#[cfg(test)]
 pub fn set_registrations_this_interval(
     store: &mut dyn Storage,
     netuid: u16,
@@ -105,6 +111,7 @@ pub fn set_registrations_this_interval(
         .unwrap();
 }
 
+#[cfg(test)]
 pub fn set_pow_registrations_this_interval(
     store: &mut dyn Storage,
     netuid: u16,
@@ -115,6 +122,7 @@ pub fn set_pow_registrations_this_interval(
         .unwrap();
 }
 
+#[cfg(test)]
 pub fn set_burn_registrations_this_interval(
     store: &mut dyn Storage,
     netuid: u16,
@@ -128,6 +136,7 @@ pub fn set_burn_registrations_this_interval(
 // ========================
 // ==== Global Getters ====
 // ========================
+#[cfg(test)]
 pub fn get_total_issuance(store: &dyn Storage) -> u64 {
     TOTAL_ISSUANCE.load(store).unwrap()
 }
@@ -139,10 +148,12 @@ pub fn get_block_emission(store: &dyn Storage) -> u64 {
 // ==============================
 // ==== YumaConsensus params ====
 // ==============================
+#[cfg(test)]
 pub fn get_rank(store: &dyn Storage, netuid: u16) -> Vec<u16> {
     RANK.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_trust(store: &dyn Storage, netuid: u16) -> Vec<u16> {
     TRUST.load(store, netuid).unwrap()
 }
@@ -151,18 +162,22 @@ pub fn get_active(store: &dyn Storage, netuid: u16) -> Vec<bool> {
     ACTIVE.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_emission(store: &dyn Storage, netuid: u16) -> Vec<u64> {
     EMISSION.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_consensus(store: &dyn Storage, netuid: u16) -> Vec<u16> {
     CONSENSUS.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_incentive(store: &dyn Storage, netuid: u16) -> Vec<u16> {
     INCENTIVE.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_dividends(store: &dyn Storage, netuid: u16) -> Vec<u16> {
     DIVIDENDS.load(store, netuid).unwrap()
 }
@@ -171,10 +186,12 @@ pub fn get_last_update(store: &dyn Storage, netuid: u16) -> Vec<u64> {
     LAST_UPDATE.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_pruning_score(store: &dyn Storage, netuid: u16) -> Vec<u16> {
     PRUNING_SCORES.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_validator_trust(store: &dyn Storage, netuid: u16) -> Vec<u16> {
     VALIDATOR_TRUST.load(store, netuid).unwrap()
 }
@@ -206,7 +223,7 @@ pub fn set_active_for_uid(store: &mut dyn Storage, netuid: u16, uid: u16, active
 
 pub fn set_pruning_score_for_uid(
     store: &mut dyn Storage,
-    api: &dyn Api,
+    _api: &dyn Api,
     netuid: u16,
     uid: u16,
     pruning_score: u16,
@@ -345,10 +362,12 @@ pub fn get_emission_value(store: &dyn Storage, netuid: u16) -> u64 {
     EMISSION_VALUES.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_pending_emission(store: &dyn Storage, netuid: u16) -> u64 {
     PENDING_EMISSION.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_last_adjustment_block(store: &dyn Storage, netuid: u16) -> u64 {
     LAST_ADJUSTMENT_BLOCK.load(store, netuid).unwrap()
 }
@@ -367,6 +386,7 @@ pub fn get_registrations_this_block(store: &dyn Storage, netuid: u16) -> u16 {
         .unwrap_or_default()
 }
 
+#[cfg(test)]
 pub fn get_last_mechanism_step_block(store: &dyn Storage, netuid: u16) -> u64 {
     LAST_MECHANISM_STEP_BLOCK.load(store, netuid).unwrap()
 }
@@ -375,10 +395,12 @@ pub fn get_registrations_this_interval(store: &dyn Storage, netuid: u16) -> u16 
     REGISTRATIONS_THIS_INTERVAL.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_pow_registrations_this_interval(store: &dyn Storage, netuid: u16) -> u16 {
     POW_REGISTRATIONS_THIS_INTERVAL.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_burn_registrations_this_interval(store: &dyn Storage, netuid: u16) -> u16 {
     BURN_REGISTRATIONS_THIS_INTERVAL
         .load(store, netuid)
@@ -422,10 +444,12 @@ pub fn set_subnet_locked_balance(store: &mut dyn Storage, netuid: u16, amount: u
     SUBNET_LOCKED.save(store, netuid, &amount).unwrap();
 }
 
+#[cfg(test)]
 pub fn get_subnet_locked_balance(store: &mut dyn Storage, netuid: u16) -> u64 {
     SUBNET_LOCKED.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_default_take(store: &dyn Storage) -> u16 {
     DEFAULT_TAKE.load(store).unwrap()
 }
@@ -482,6 +506,7 @@ pub fn get_serving_rate_limit(store: &dyn Storage, netuid: u16) -> u64 {
     SERVING_RATE_LIMIT.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_serving_rate_limit(store: &mut dyn Storage, netuid: u16, rate_limit: u64) {
     SERVING_RATE_LIMIT.save(store, netuid, &rate_limit).unwrap()
 }
@@ -508,10 +533,12 @@ pub fn do_sudo_set_serving_rate_limit(
         .add_attribute("serving_rate_limit", format!("{}", serving_rate_limit)))
 }
 
+#[cfg(test)]
 pub fn get_min_difficulty(store: &dyn Storage, netuid: u16) -> u64 {
     MIN_DIFFICULTY.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_min_difficulty(store: &mut dyn Storage, netuid: u16, min_difficulty: u64) {
     MIN_DIFFICULTY.save(store, netuid, &min_difficulty).unwrap()
 }
@@ -543,10 +570,12 @@ pub fn do_sudo_set_min_difficulty(
         .add_attribute("min_diffuculty", format!("{}", min_difficulty)))
 }
 
+#[cfg(test)]
 pub fn get_max_difficulty(store: &dyn Storage, netuid: u16) -> u64 {
     MAX_DIFFICULTY.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_max_difficulty(store: &mut dyn Storage, netuid: u16, max_difficulty: u64) {
     MAX_DIFFICULTY.save(store, netuid, &max_difficulty).unwrap()
 }
@@ -578,10 +607,12 @@ pub fn do_sudo_set_max_difficulty(
         .add_attribute("max_difficulty", format!("{}", max_difficulty)))
 }
 
+#[cfg(test)]
 pub fn get_weights_version_key(store: &dyn Storage, netuid: u16) -> u64 {
     WEIGHTS_VERSION_KEY.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_weights_version_key(store: &mut dyn Storage, netuid: u16, version_key: u64) {
     WEIGHTS_VERSION_KEY
         .save(store, netuid, &version_key)
@@ -613,6 +644,7 @@ pub fn get_weights_set_rate_limit(store: &dyn Storage, netuid: u16) -> u64 {
     WEIGHTS_SET_RATE_LIMIT.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_weights_set_rate_limit(store: &mut dyn Storage, netuid: u16, rate_limit: u64) {
     WEIGHTS_SET_RATE_LIMIT
         .save(store, netuid, &rate_limit)
@@ -644,10 +676,12 @@ pub fn do_sudo_set_weights_set_rate_limit(
         ))
 }
 
+#[cfg(test)]
 pub fn get_adjustment_interval(store: &dyn Storage, netuid: u16) -> u16 {
     ADJUSTMENT_INTERVAL.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_adjustment_interval(store: &mut dyn Storage, netuid: u16, adjustment_interval: u16) {
     ADJUSTMENT_INTERVAL
         .save(store, netuid, &adjustment_interval)
@@ -681,10 +715,12 @@ pub fn do_sudo_set_adjustment_interval(
         .add_attribute("adjustment_interval", format!("{}", adjustment_interval)))
 }
 
+#[cfg(test)]
 pub fn get_adjustment_alpha(store: &dyn Storage, netuid: u16) -> u64 {
     ADJUSTMENTS_ALPHA.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_adjustment_alpha(store: &mut dyn Storage, netuid: u16, adjustments_alpha: u64) {
     ADJUSTMENTS_ALPHA
         .save(store, netuid, &adjustments_alpha)
@@ -718,6 +754,7 @@ pub fn do_sudo_set_adjustment_alpha(
         .add_attribute("adjustment_alpha", format!("{}", adjustment_alpha)))
 }
 
+#[cfg(test)]
 pub fn get_validator_prune_len(store: &dyn Storage, netuid: u16) -> u64 {
     VALIDATOR_PRUNE_LEN.load(store, netuid).unwrap()
 }
@@ -749,6 +786,7 @@ pub fn do_sudo_set_validator_prune_len(
         .add_attribute("validator_prune_len", format!("{}", validator_prune_len)))
 }
 
+#[cfg(test)]
 pub fn get_scaling_law_power(store: &dyn Storage, netuid: u16) -> u16 {
     SCALING_LAW_POWER.load(store, netuid).unwrap()
 }
@@ -790,6 +828,7 @@ pub fn get_max_weight_limit(store: &dyn Storage, netuid: u16) -> u16 {
     MAX_WEIGHTS_LIMIT.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_max_weight_limit(store: &mut dyn Storage, netuid: u16, max_weights: u16) {
     MAX_WEIGHTS_LIMIT.save(store, netuid, &max_weights).unwrap()
 }
@@ -820,6 +859,7 @@ pub fn get_immunity_period(store: &dyn Storage, netuid: u16) -> u16 {
     IMMUNITY_PERIOD.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_immunity_period(store: &mut dyn Storage, netuid: u16, immunity_period: u16) {
     IMMUNITY_PERIOD
         .save(store, netuid, &immunity_period)
@@ -853,10 +893,12 @@ pub fn do_sudo_set_immunity_period(
         .add_attribute("immunity_period", format!("{}", immunity_period)))
 }
 
+#[cfg(test)]
 pub fn get_min_allowed_weights(store: &dyn Storage, netuid: u16) -> u16 {
     MIN_ALLOWED_WEIGHTS.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_min_allowed_weights(store: &mut dyn Storage, netuid: u16, min_weights: u16) {
     MIN_ALLOWED_WEIGHTS
         .save(store, netuid, &min_weights)
@@ -889,6 +931,7 @@ pub fn get_max_allowed_uids(store: &dyn Storage, netuid: u16) -> u16 {
     MAX_ALLOWED_UIDS.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_max_allowed_uids(store: &mut dyn Storage, netuid: u16, max_allowed_uids: u16) {
     MAX_ALLOWED_UIDS
         .save(store, netuid, &max_allowed_uids)
@@ -991,6 +1034,7 @@ pub fn get_activity_cutoff(store: &dyn Storage, netuid: u16) -> u16 {
     ACTIVITY_CUTOFF.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_activity_cutoff(store: &mut dyn Storage, netuid: u16, activity_cutoff: u16) {
     ACTIVITY_CUTOFF
         .save(store, netuid, &activity_cutoff)
@@ -1019,10 +1063,12 @@ pub fn do_sudo_set_activity_cutoff(
         .add_attribute("activity_cutoff", format!("{}", activity_cutoff)))
 }
 
+#[cfg(test)]
 pub fn get_network_registration_allowed(store: &dyn Storage, netuid: u16) -> bool {
     NETWORK_REGISTRATION_ALLOWED.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_network_registration_allowed(
     store: &mut dyn Storage,
     netuid: u16,
@@ -1061,6 +1107,7 @@ pub fn get_target_registrations_per_interval(store: &dyn Storage, netuid: u16) -
         .unwrap()
 }
 
+#[cfg(test)]
 pub fn set_target_registrations_per_interval(
     store: &mut dyn Storage,
     netuid: u16,
@@ -1109,10 +1156,12 @@ pub fn get_burn_as_u64(store: &dyn Storage, netuid: u16) -> u64 {
     BURN.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_burn(store: &mut dyn Storage, netuid: u16, burn: u64) {
     BURN.save(store, netuid, &burn).unwrap();
 }
 
+#[cfg(test)]
 pub fn get_min_burn_as_u64(store: &dyn Storage, netuid: u16) -> u64 {
     MIN_BURN.load(store, netuid).unwrap()
 }
@@ -1144,6 +1193,7 @@ pub fn do_sudo_set_min_burn(
         .add_attribute("min_burn", format!("{}", min_burn)))
 }
 
+#[cfg(test)]
 pub fn get_max_burn_as_u64(store: &dyn Storage, netuid: u16) -> u64 {
     MAX_BURN.load(store, netuid).unwrap()
 }
@@ -1179,6 +1229,7 @@ pub fn get_difficulty_as_u64(store: &dyn Storage, netuid: u16) -> u64 {
     DIFFICULTY.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_difficulty(store: &mut dyn Storage, netuid: u16, difficulty: u64) {
     DIFFICULTY.save(store, netuid, &difficulty).unwrap();
 }
@@ -1214,6 +1265,7 @@ pub fn get_max_allowed_validators(store: &dyn Storage, netuid: u16) -> u16 {
     MAX_ALLOWED_VALIDATORS.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_max_allowed_validators(store: &mut dyn Storage, netuid: u16, max_allowed: u16) {
     MAX_ALLOWED_VALIDATORS
         .save(store, netuid, &max_allowed)
@@ -1285,6 +1337,7 @@ pub fn get_max_registrations_per_block(store: &dyn Storage, netuid: u16) -> u16 
     MAX_REGISTRATION_PER_BLOCK.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn set_max_registrations_per_block(
     store: &mut dyn Storage,
     netuid: u16,
@@ -1329,6 +1382,7 @@ pub fn get_subnet_owner(store: &dyn Storage, netuid: u16) -> Addr {
     SUBNET_OWNER.load(store, netuid).unwrap()
 }
 
+#[cfg(test)]
 pub fn get_subnet_owner_cut(store: &dyn Storage) -> u16 {
     SUBNET_OWNER_CUT.load(store).unwrap()
 }

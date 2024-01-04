@@ -1,6 +1,7 @@
-use substrate_fixed::transcendental::exp;
 use substrate_fixed::types::{I32F32, I64F64};
-// use num_traits::CheckedAdd;
+
+#[cfg(test)]
+use substrate_fixed::transcendental::exp;
 
 #[cfg(test)]
 pub fn fixed(val: f32) -> I32F32 {
@@ -68,6 +69,7 @@ pub fn vec_u16_proportions_to_fixed(vec: Vec<u16>) -> Vec<I32F32> {
         .collect()
 }
 
+#[cfg(test)]
 pub fn vec_fixed_proportions_to_u16(vec: Vec<I32F32>) -> Vec<u16> {
     vec.into_iter()
         .map(|e| fixed_proportion_to_u16(e))
@@ -252,6 +254,7 @@ pub fn vecdiv(x: &Vec<I32F32>, y: &Vec<I32F32>) -> Vec<I32F32> {
 }
 
 // Normalizes (sum to 1 except 0) each row (dim=0) of a matrix in-place.
+#[cfg(test)]
 pub fn inplace_row_normalize(x: &mut Vec<Vec<I32F32>>) {
     for i in 0..x.len() {
         let row_sum: I32F32 = x[i].iter().sum();
@@ -275,6 +278,7 @@ pub fn inplace_row_normalize_sparse(sparse_matrix: &mut Vec<Vec<(u16, I32F32)>>)
 }
 
 // Sum across each row (dim=0) of a matrix.
+#[cfg(test)]
 pub fn row_sum(x: &Vec<Vec<I32F32>>) -> Vec<I32F32> {
     if x.len() == 0 {
         return vec![];
@@ -355,6 +359,7 @@ pub fn inplace_col_normalize_sparse(sparse_matrix: &mut Vec<Vec<(u16, I32F32)>>,
 }
 
 // Normalizes (sum to 1 except 0) each column (dim=1) of a matrix in-place.
+#[cfg(test)]
 pub fn inplace_col_normalize(x: &mut Vec<Vec<I32F32>>) {
     if x.len() == 0 {
         return;
@@ -401,6 +406,7 @@ pub fn inplace_col_max_upscale_sparse(sparse_matrix: &mut Vec<Vec<(u16, I32F32)>
 }
 
 // Max-upscale each column (dim=1) of a matrix in-place.
+#[cfg(test)]
 pub fn inplace_col_max_upscale(x: &mut Vec<Vec<I32F32>>) {
     if x.len() == 0 {
         return;
@@ -443,6 +449,7 @@ pub fn inplace_mask_vector(mask: &Vec<bool>, vector: &mut Vec<I32F32>) {
 }
 
 // Apply mask to matrix, mask=true will mask out, i.e. set to 0.
+#[cfg(test)]
 pub fn inplace_mask_matrix(mask: &Vec<Vec<bool>>, matrix: &mut Vec<Vec<I32F32>>) {
     if mask.len() == 0 {
         return;
@@ -462,6 +469,7 @@ pub fn inplace_mask_matrix(mask: &Vec<Vec<bool>>, matrix: &mut Vec<Vec<I32F32>>)
 }
 
 // Apply row mask to matrix, mask=true will mask out, i.e. set to 0.
+#[cfg(test)]
 pub fn inplace_mask_rows(mask: &Vec<bool>, matrix: &mut Vec<Vec<I32F32>>) {
     let rows = matrix.len();
     if rows == 0 {
@@ -478,6 +486,7 @@ pub fn inplace_mask_rows(mask: &Vec<bool>, matrix: &mut Vec<Vec<I32F32>>) {
 }
 
 // Mask out the diagonal of the input matrix in-place.
+#[cfg(test)]
 pub fn inplace_mask_diag(matrix: &mut Vec<Vec<I32F32>>) {
     if matrix.len() == 0 {
         return;
@@ -542,6 +551,7 @@ pub fn vec_mask_sparse_matrix(
 }
 
 // Row-wise matrix-vector hadamard product.
+#[cfg(test)]
 pub fn row_hadamard(matrix: &Vec<Vec<I32F32>>, vector: &Vec<I32F32>) -> Vec<Vec<I32F32>> {
     if matrix.len() == 0 {
         return vec![vec![]];
@@ -574,6 +584,7 @@ pub fn row_hadamard_sparse(
 }
 
 // Row-wise matrix-vector product, column-wise sum: result_j = SUM(i) vector_i * matrix_ij.
+#[cfg(test)]
 pub fn matmul(matrix: &Vec<Vec<I32F32>>, vector: &Vec<I32F32>) -> Vec<I32F32> {
     if matrix.len() == 0 {
         return vec![];
@@ -595,6 +606,7 @@ pub fn matmul(matrix: &Vec<Vec<I32F32>>, vector: &Vec<I32F32>) -> Vec<I32F32> {
 }
 
 // Column-wise matrix-vector product, row-wise sum: result_i = SUM(j) vector_j * matrix_ij.
+#[cfg(test)]
 pub fn matmul_transpose(matrix: &Vec<Vec<I32F32>>, vector: &Vec<I32F32>) -> Vec<I32F32> {
     if matrix.len() == 0 {
         return vec![];
@@ -673,6 +685,7 @@ pub fn matmul_transpose_sparse(
 }
 
 // Set inplace matrix values above column threshold to threshold value.
+#[cfg(test)]
 pub fn inplace_col_clip(x: &mut Vec<Vec<I32F32>>, col_threshold: &Vec<I32F32>) {
     for i in 0..x.len() {
         for j in 0..x[i].len() {
@@ -848,6 +861,7 @@ pub fn weighted_median(
 }
 
 /// Column-wise weighted median, e.g. stake-weighted median scores per server (column) over all validators (rows).
+#[cfg(test)]
 pub fn weighted_median_col(
     stake: &Vec<I32F32>,
     score: &Vec<Vec<I32F32>>,
@@ -976,6 +990,7 @@ pub fn hadamard_sparse(
 // Return matrix exponential moving average: `alpha * a_ij + one_minus_alpha * b_ij`.
 // `alpha` is the EMA coefficient, how much to add of the new observation, typically small,
 // higher alpha discounts older observations faster.
+#[cfg(test)]
 pub fn mat_ema(new: &Vec<Vec<I32F32>>, old: &Vec<Vec<I32F32>>, alpha: I32F32) -> Vec<Vec<I32F32>> {
     if new.len() == 0 {
         return vec![vec![]; 1];

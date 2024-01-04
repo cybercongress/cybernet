@@ -324,13 +324,13 @@ pub fn delegate_hotkey(store: &mut dyn Storage, hotkey: &Addr, take: u16) {
 }
 
 // Returns the total amount of stake in the staking table.
-//
+#[cfg(test)]
 pub fn get_total_stake(store: &dyn Storage) -> u64 {
     return TOTAL_STAKE.load(store).unwrap();
 }
 
 // Increases the total amount of stake by the passed amount.
-//
+#[cfg(test)]
 pub fn increase_total_stake(store: &mut dyn Storage, increment: u64) {
     TOTAL_STAKE
         .update(store, |s| -> StdResult<_> {
@@ -340,7 +340,7 @@ pub fn increase_total_stake(store: &mut dyn Storage, increment: u64) {
 }
 
 // Decreases the total amount of stake by the passed amount.
-//
+#[cfg(test)]
 pub fn decrease_total_stake(store: &mut dyn Storage, decrement: u64) {
     TOTAL_STAKE
         .update(store, |s| -> StdResult<_> {
@@ -357,7 +357,7 @@ pub fn get_total_stake_for_hotkey(store: &dyn Storage, hotkey: &Addr) -> u64 {
 }
 
 // Returns the total amount of stake held by the coldkey (delegative or otherwise)
-//
+#[cfg(test)]
 pub fn get_total_stake_for_coldkey(store: &dyn Storage, coldkey: &Addr) -> u64 {
     return TOTAL_COLDKEY_STAKE.load(store, coldkey).unwrap();
 }
@@ -419,7 +419,7 @@ pub fn increase_stake_on_hotkey_account(store: &mut dyn Storage, hotkey: &Addr, 
 }
 
 // Decreases the stake on the hotkey account under its owning coldkey.
-//
+#[cfg(test)]
 pub fn decrease_stake_on_hotkey_account(
     store: &mut dyn Storage,
     hotkey: &Addr,

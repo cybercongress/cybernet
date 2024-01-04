@@ -5,7 +5,7 @@ use crate::staking::{
 };
 use crate::state::{
     ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BURN,
-    BURN_REGISTRATIONS_THIS_INTERVAL, DELEGATES, DENOM, DIFFICULTY, EMISSION_VALUES,
+    BURN_REGISTRATIONS_THIS_INTERVAL, DELEGATES, DIFFICULTY, EMISSION_VALUES,
     LAST_ADJUSTMENT_BLOCK, LAST_MECHANISM_STEP_BLOCK, LOADED_EMISSION, MAX_BURN, MAX_DIFFICULTY,
     MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
     REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, STAKE, SUBNET_OWNER, SUBNET_OWNER_CUT,
@@ -80,6 +80,7 @@ pub fn blocks_until_next_epoch(netuid: u16, tempo: u16, block_number: u64) -> u6
 // Helper function returns the number of tuples to drain on a particular step based on
 // the remaining tuples to sink and the block number
 //
+#[cfg(test)]
 pub fn tuples_to_drain_this_block(
     netuid: u16,
     tempo: u16,
@@ -221,9 +222,12 @@ pub fn generate_emission(
     Ok(msgs)
 }
 
+#[cfg(test)]
 pub fn has_loaded_emission_tuples(store: &dyn Storage, netuid: u16) -> bool {
     LOADED_EMISSION.has(store, netuid)
 }
+
+#[cfg(test)]
 pub fn get_loaded_emission_tuples(store: &dyn Storage, netuid: u16) -> Vec<(Addr, u64, u64)> {
     LOADED_EMISSION.load(store, netuid).unwrap()
 }

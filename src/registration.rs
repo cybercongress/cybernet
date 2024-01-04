@@ -698,6 +698,7 @@ pub fn get_block_hash_from_u64(_: u64) -> H256 {
     return real_hash;
 }
 
+#[cfg(test)]
 pub fn hash_to_vec(hash: H256) -> Vec<u8> {
     let hash_as_bytes: &[u8] = hash.as_bytes();
     let hash_as_vec: Vec<u8> = hash_as_bytes.iter().cloned().collect();
@@ -859,6 +860,7 @@ pub fn get_difficulty(store: &dyn Storage, netuid: u16) -> U256 {
 
 // Helper function for creating nonce and work.
 // TODO rewrite to use only address and nonce
+#[cfg(test)]
 pub fn create_work_for_block_number(
     store: &dyn Storage,
     netuid: u16,

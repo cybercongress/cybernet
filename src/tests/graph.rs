@@ -17,7 +17,7 @@ pub fn find_intersection(arr1: &[i32], arr2: &[i32]) -> Vec<i32> {
     intersection
 }
 pub fn cosine_similarity(a: &[i32], b: &[i32]) -> f64 {
-    let intersection = crate::epoch::find_intersection(a, b);
+    let intersection = find_intersection(a, b);
 
     intersection.len() as f64 / ((a.len() * b.len()) as f64).sqrt()
 }
@@ -63,7 +63,7 @@ pub fn test() {
     for (&user_id1, out_links1) in &user_out_link_matrix {
         for (&user_id2, out_links2) in &user_out_link_matrix {
             if user_id1 != user_id2 {
-                let cosim = crate::epoch::cosine_similarity(out_links1, out_links2);
+                let cosim = cosine_similarity(out_links1, out_links2);
                 sparseWeightsMatrix[user_id1 as usize].push( (user_id2, I32F32::from_num(cosim)));
 
                 println!("Cosine similarity between user {} and user {}: {:.2}", user_id1, user_id2, cosim);

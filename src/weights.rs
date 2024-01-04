@@ -337,6 +337,7 @@ pub fn check_length(
 }
 
 // Implace normalizes the passed positive integer weights so that they sum to u16 max value.
+#[cfg(test)]
 pub fn normalize_weights(mut weights: Vec<u16>) -> Vec<u16> {
     let sum: u64 = weights.iter().map(|x| *x as u64).sum();
     if sum.clone() == 0 {
