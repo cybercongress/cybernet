@@ -5,25 +5,26 @@ use crate::registration::create_work_for_block_number;
 use crate::root::{
     get_all_subnet_netuids, get_max_subnets, get_network_lock_cost, get_num_subnets,
     get_subnet_emission_value, if_subnet_exist, remove_network, root_epoch,
-    set_lock_reduction_interval, set_network_last_lock,
+    set_lock_reduction_interval,
 };
-use crate::staking::{add_balance_to_coldkey_account, hotkey_is_delegate};
+use crate::staking::hotkey_is_delegate;
 use crate::state_info::get_state_info;
 use crate::test_helpers::{
-    add_network, add_stake, burned_register_ok_neuron, instantiate_contract,
-    pow_register_ok_neuron, register_network, root_register, set_weights, step_block,
+    add_balance_to_coldkey_account, add_network, add_stake, burned_register_ok_neuron,
+    instantiate_contract, pow_register_ok_neuron, register_network, root_register, set_weights,
+    step_block,
 };
 use crate::uids::{get_subnetwork_n, get_uid_for_net_and_hotkey, is_hotkey_registered_on_network};
 use crate::utils::{
-    get_pending_emission, get_total_issuance, set_burn, set_difficulty, set_max_allowed_uids,
-    set_max_registrations_per_block, set_target_registrations_per_interval, set_tempo,
-    set_weights_set_rate_limit,
+    do_sudo_set_block_emission, get_pending_emission, get_total_issuance, set_block_emission,
+    set_burn, set_difficulty, set_max_allowed_uids, set_max_registrations_per_block,
+    set_target_registrations_per_interval, set_tempo, set_weights_set_rate_limit,
 };
 use crate::ContractError;
 
 #[test]
 fn test_root_register_network_exist() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let hotkey_account_id = "addr1";
     let coldkey_account_id = "addr667";
@@ -42,7 +43,7 @@ fn test_root_register_network_exist() {
 
 #[test]
 fn test_root_register_normal_on_root_fails() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     // Test fails because normal registrations are not allowed
     // on the root network.
@@ -89,7 +90,7 @@ fn test_root_register_normal_on_root_fails() {
 
 #[test]
 fn test_root_register_stake_based_pruning_works() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     // Add two networks.
     let root_netuid: u16 = 0;
@@ -211,6 +212,7 @@ fn test_root_register_stake_based_pruning_works() {
 #[test]
 fn test_root_set_weights() {
     let (mut deps, mut env) = instantiate_contract();
+    set_block_emission(&mut deps.storage, 1_000_000_000);
 
     let n: usize = 10;
     let root_netuid: u16 = 0;
@@ -357,6 +359,7 @@ fn test_root_set_weights() {
 #[test]
 fn test_root_set_weights_out_of_order_netuids() {
     let (mut deps, mut env) = instantiate_contract();
+    set_block_emission(&mut deps.storage, 1_000_000_000);
 
     let n: usize = 10;
     let root_netuid: u16 = 0;
@@ -539,28 +542,28 @@ fn test_root_subnet_creation_deletion() {
     // // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 1, mult: 2 lock_cost: 200000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        200_000_000_000
+        20_000_000_000
     ); // Doubles from previous subnet creation
 
     step_block(deps.as_mut(), &mut env).unwrap();
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 2, mult: 2 lock_cost: 150000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        150_000_000_000
+        15_000_000_000
     ); // Reduced by 50%
 
     step_block(deps.as_mut(), &mut env).unwrap();
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 3, mult: 2 lock_cost: 100000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        100_000_000_000
+        10_000_000_000
     ); // Reduced another 50%
 
     step_block(deps.as_mut(), &mut env).unwrap();
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 4, mult: 2 lock_cost: 100000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        100_000_000_000
+        10_000_000_000
     ); // Reaches min value
     assert_eq!(
         register_network(deps.as_mut(), env.clone(), owner).is_ok(),
@@ -569,7 +572,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 4, lock_reduction_interval: 2, current_block: 4, mult: 2 lock_cost: 200000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        200_000_000_000
+        20_000_000_000
     ); // Doubles from previous subnet creation
 
     step_block(deps.as_mut(), &mut env).unwrap();
@@ -581,7 +584,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 150000000000, min_lock: 100000000000, last_lock_block: 5, lock_reduction_interval: 2, current_block: 5, mult: 2 lock_cost: 300000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        300_000_000_000
+        30_000_000_000
     ); // Doubles from previous subnet creation
 
     step_block(deps.as_mut(), &mut env).unwrap();
@@ -593,7 +596,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 225000000000, min_lock: 100000000000, last_lock_block: 6, lock_reduction_interval: 2, current_block: 6, mult: 2 lock_cost: 450000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        450_000_000_000
+        45_000_000_000
     ); // Increasing
 
     step_block(deps.as_mut(), &mut env).unwrap();
@@ -605,7 +608,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 337500000000, min_lock: 100000000000, last_lock_block: 7, lock_reduction_interval: 2, current_block: 7, mult: 2 lock_cost: 675000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        675_000_000_000
+        67_500_000_000
     ); // Increasing.
     assert_eq!(
         register_network(deps.as_mut(), env.clone(), owner).is_ok(),
@@ -614,7 +617,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 337500000000, min_lock: 100000000000, last_lock_block: 7, lock_reduction_interval: 2, current_block: 7, mult: 2 lock_cost: 675000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        1_350_000_000_000
+        135_000_000_000
     ); // Double increasing.
     assert_eq!(
         register_network(deps.as_mut(), env.clone(), owner).is_ok(),
@@ -622,38 +625,39 @@ fn test_root_subnet_creation_deletion() {
     );
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        2_700_000_000_000
+        270_000_000_000
     ); // Double increasing again.
 
     // Now drop it like its hot to min again.
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        2_025_000_000_000
+        202_500_000_000
     ); // 675_000_000_000 decreasing.
 
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        1_350_000_000_000
+        135_000_000_000
     ); // 675_000_000_000 decreasing.
 
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        675_000_000_000
+        67_500_000_000
     ); // 675_000_000_000 decreasing.
 
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        100_000_000_000
+        10_000_000_000
     ); // 675_000_000_000 decreasing with 100000000000 min
 }
 
 #[test]
 fn test_network_pruning() {
     let (mut deps, mut env) = instantiate_contract();
+    set_block_emission(&mut deps.storage, 1_000_000_000);
 
     assert_eq!(get_total_issuance(&deps.storage), 0);
 

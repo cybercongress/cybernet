@@ -5,11 +5,11 @@ use crate::contract::execute;
 use crate::msg::ExecuteMsg;
 use crate::registration::{create_work_for_block_number, get_neuron_to_prune};
 use crate::serving::get_axon_info;
-use crate::staking::{add_balance_to_coldkey_account, get_owning_coldkey_for_hotkey};
+use crate::staking::get_owning_coldkey_for_hotkey;
 use crate::state::AxonInfoOf;
 use crate::test_helpers::{
-    add_network, burned_register_ok_neuron, instantiate_contract, pow_register_ok_neuron,
-    register_ok_neuron, run_step_to_block, step_block,
+    add_balance_to_coldkey_account, add_network, burned_register_ok_neuron, instantiate_contract,
+    pow_register_ok_neuron, register_ok_neuron, run_step_to_block, step_block,
 };
 use crate::uids::{
     get_hotkey_for_net_and_uid, get_stake_for_uid_and_subnetwork, get_subnetwork_n,
@@ -172,16 +172,17 @@ fn test_burned_registration_ok() {
     // Give it some $$$ in his coldkey balance
     add_balance_to_coldkey_account(&Addr::unchecked(coldkey_account_id), 10000);
 
-    let result = execute(
-        deps.as_mut(),
-        env.clone(),
-        mock_info(coldkey_account_id, &[]),
-        ExecuteMsg::BurnedRegister {
+    assert_eq!(
+        burned_register_ok_neuron(
+            deps.as_mut(),
+            env.clone(),
             netuid,
-            hotkey: hotkey_account_id.to_string(),
-        },
+            hotkey_account_id,
+            coldkey_account_id,
+        )
+        .is_ok(),
+        true
     );
-    assert!(result.is_ok());
 
     // Check if balance has  decreased to pay for the burn.
     // assert_eq!(
@@ -221,7 +222,7 @@ fn test_burn_adjustment() {
 
     let netuid: u16 = 2;
     let tempo: u16 = 13;
-    let burn_cost: u64 = 1000;
+    let burn_cost: u64 = 1000000000;
     let adjustment_interval = 1;
     let target_registrations_per_interval = 1;
     add_network(&mut deps.storage, netuid, tempo, 0);
@@ -270,7 +271,7 @@ fn test_burn_adjustment() {
     step_block(deps.as_mut(), &mut env).unwrap();
 
     // Check the adjusted burn.
-    assert_eq!(get_burn_as_u64(&deps.storage, netuid), 1500)
+    assert_eq!(get_burn_as_u64(&deps.storage, netuid), 1500000000)
 }
 
 #[test]

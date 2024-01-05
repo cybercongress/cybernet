@@ -1,10 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage,
-    Uint128,
-};
+use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage, Uint128, CosmosMsg, BankMsg, coins};
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
+use cyber_std::Response;
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
 use crate::block_step::block_step;
@@ -16,29 +14,27 @@ use crate::registration::{do_burned_registration, do_registration, do_sudo_regis
 use crate::root::{do_root_register, get_network_lock_cost, user_add_network, user_remove_network};
 use crate::serving::{do_serve_axon, do_serve_prometheus};
 use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys};
-use crate::staking::{
-    do_add_stake, do_become_delegate, do_remove_stake, increase_stake_on_coldkey_hotkey_account,
-};
+use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake};
 use crate::state::{
     AxonInfo, PrometheusInfo, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
-    ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_AT_REGISTRATION, BLOCK_EMISSION,
-    BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE,
-    DELEGATES, DENOM, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE,
-    IS_NETWORK_MEMBER, KAPPA, KEYS, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
-    MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK,
-    MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED,
-    NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED,
-    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS, NETWORK_MIN_LOCK_COST,
+    ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
+    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY,
+    DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
+    LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY,
+    MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN,
+    MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
+    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
     NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
     OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
     RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
-    ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED,
-    SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
+    ROOT, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER,
+    SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
     TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS,
     VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
+use crate::uids::get_registered_networks_for_hotkey;
 use crate::utils::{
     do_sudo_set_activity_cutoff, do_sudo_set_adjustment_alpha, do_sudo_set_adjustment_interval,
     do_sudo_set_block_emission, do_sudo_set_bonds_moving_average, do_sudo_set_default_take,
@@ -49,8 +45,8 @@ use crate::utils::{
     do_sudo_set_min_allowed_weights, do_sudo_set_min_burn, do_sudo_set_min_difficulty,
     do_sudo_set_network_immunity_period, do_sudo_set_network_min_lock_cost,
     do_sudo_set_network_rate_limit, do_sudo_set_network_registration_allowed,
-    do_sudo_set_rao_recycled, do_sudo_set_rho, do_sudo_set_scaling_law_power,
-    do_sudo_set_serving_rate_limit, do_sudo_set_subnet_limit, do_sudo_set_subnet_owner_cut,
+    do_sudo_set_rao_recycled, do_sudo_set_rho, do_sudo_set_serving_rate_limit,
+    do_sudo_set_subnet_limit, do_sudo_set_subnet_metadata, do_sudo_set_subnet_owner_cut,
     do_sudo_set_target_registrations_per_interval, do_sudo_set_tempo, do_sudo_set_total_issuance,
     do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid,
     do_sudo_set_validator_prune_len, do_sudo_set_weights_set_rate_limit,
@@ -58,30 +54,27 @@ use crate::utils::{
 };
 use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
-// use cw2::set_contract_version;
-
-// version info for migration info
 const CONTRACT_NAME: &str = "cybernet";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-use crate::uids::get_registered_networks_for_hotkey;
-use cyber_std::Response;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     ROOT.save(deps.storage, &info.sender)?;
     ALLOW_FAUCET.save(deps.storage, &false)?;
-    DENOM.save(deps.storage, &"boot".to_string())?;
 
-    // TODO remove from InstantiateMsg
-    // // Set initial total issuance from balances
+    if info.funds.len() > 0 {
+        DENOM.save(deps.storage, &info.funds[0].denom)?;
+    } else {
+        DENOM.save(deps.storage, &"boot".to_string())?;
+    }
+
     TOTAL_ISSUANCE.save(deps.storage, &0)?;
     TOTAL_STAKE.save(deps.storage, &0)?;
 
@@ -89,29 +82,26 @@ pub fn instantiate(
 
     SUBNET_LIMIT.save(deps.storage, &16)?;
     NETWORK_IMMUNITY_PERIOD.save(deps.storage, &7200)?;
-    BLOCK_EMISSION.save(deps.storage, &1_000_000_000)?;
+    BLOCK_EMISSION.save(deps.storage, &4_200_000)?;
 
-    NETWORK_MIN_ALLOWED_UIDS.save(deps.storage, &0)?;
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
 
-    DEFAULT_TAKE.save(deps.storage, &11_796)?;
-    TX_RATE_LIMIT.save(deps.storage, &1000)?;
+    // 6.25% (2^12/2^16)
+    DEFAULT_TAKE.save(deps.storage, &4096)?;
+    TX_RATE_LIMIT.save(deps.storage, &0)?;
 
-    NETWORK_LAST_LOCK_COST.save(deps.storage, &100_000_000_000)?;
-    NETWORK_MIN_LOCK_COST.save(deps.storage, &100_000_000_000)?;
-    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &2)?; // test value, change to 14 * 7200;
+    NETWORK_LAST_LOCK_COST.save(deps.storage, &10_000_000_000)?;
+    NETWORK_MIN_LOCK_COST.save(deps.storage, &10_000_000_000)?;
+    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &(7 * 7200))?;
 
     // -- Root network initialization --
-
-    // Get the root network uid.
     let root_netuid: u16 = 0;
 
     SUBNET_OWNER.save(deps.storage, root_netuid, &info.sender)?;
-    // TODO revisit set of 1
     SUBNETWORK_N.save(deps.storage, root_netuid, &0)?;
     NETWORKS_ADDED.save(deps.storage, root_netuid, &true)?;
-    NETWORK_MODALITY.save(deps.storage, root_netuid, &u16::MAX)?;
+    NETWORK_MODALITY.save(deps.storage, root_netuid, &u16::MAX)?; // revisit
     MAX_ALLOWED_UIDS.save(deps.storage, root_netuid, &64)?;
     MAX_ALLOWED_VALIDATORS.save(deps.storage, root_netuid, &64)?;
     MIN_ALLOWED_WEIGHTS.save(deps.storage, root_netuid, &1)?;
@@ -120,7 +110,6 @@ pub fn instantiate(
     NETWORK_REGISTRATION_ALLOWED.save(deps.storage, root_netuid, &true)?;
     TARGET_REGISTRATIONS_PER_INTERVAL.save(deps.storage, root_netuid, &1)?;
     WEIGHTS_VERSION_KEY.save(deps.storage, root_netuid, &0)?;
-    SUBNET_OWNER.save(deps.storage, root_netuid, &info.sender)?;
     NETWORK_REGISTERED_AT.save(deps.storage, root_netuid, &env.block.height)?;
     WEIGHTS_SET_RATE_LIMIT.save(deps.storage, root_netuid, &100)?;
 
@@ -150,20 +139,20 @@ pub fn instantiate(
     EMISSION_VALUES.save(deps.storage, root_netuid, &0)?;
     NETWORK_LAST_REGISTERED.save(deps.storage, &0)?;
     TOTAL_NETWORKS.save(deps.storage, &1)?;
-    SCALING_LAW_POWER.save(deps.storage, root_netuid, &50)?;
+    METADATA.save(
+        deps.storage,
+        root_netuid,
+        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+    )?;
 
     // -- Subnetwork 1 initialization --
-
-    // Subnet config values
     let netuid: u16 = 1;
-    let tempo = 10;
-    let max_uids = 4096;
 
     SUBNET_OWNER.save(deps.storage, netuid, &info.sender)?;
     NETWORKS_ADDED.save(deps.storage, netuid, &true)?;
-    TEMPO.save(deps.storage, netuid, &tempo)?;
+    TEMPO.save(deps.storage, netuid, &10)?;
     NETWORK_MODALITY.save(deps.storage, netuid, &0)?;
-    // TEMPO.save(deps.storage, netuid, &0)?;
+    TEMPO.save(deps.storage, netuid, &10)?;
     KAPPA.save(deps.storage, netuid, &0)?;
     DIFFICULTY.save(deps.storage, netuid, &10_000_000)?;
     IMMUNITY_PERIOD.save(deps.storage, netuid, &7200)?;
@@ -175,7 +164,7 @@ pub fn instantiate(
     POW_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     BURN_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     MAX_ALLOWED_VALIDATORS.save(deps.storage, netuid, &64)?;
-    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &max_uids)?;
+    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &1024)?;
     WEIGHTS_VERSION_KEY.save(deps.storage, netuid, &0)?;
     WEIGHTS_SET_RATE_LIMIT.save(deps.storage, netuid, &100)?;
 
@@ -201,8 +190,12 @@ pub fn instantiate(
     SUBNETWORK_N.save(deps.storage, netuid, &0)?;
     SUBNET_LOCKED.save(deps.storage, netuid, &0)?;
     TARGET_REGISTRATIONS_PER_INTERVAL.save(deps.storage, netuid, &1)?;
-    SCALING_LAW_POWER.save(deps.storage, netuid, &50)?;
     NETWORK_REGISTRATION_ALLOWED.save(deps.storage, netuid, &true)?;
+    METADATA.save(
+        deps.storage,
+        root_netuid,
+        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+    )?;
 
     RANK.save(deps.storage, netuid, &vec![])?;
     TRUST.save(deps.storage, netuid, &vec![])?;
@@ -224,7 +217,7 @@ pub fn instantiate(
     Ok(Response::default().add_attribute("action", "instantiate"))
 }
 
-pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn activate(_deps: DepsMut, env: Env) -> Result<Response, ContractError> {
     let res = Response::new()
         .add_message(create_creat_thought_msg(
             env.contract.address.to_string(),
@@ -243,7 +236,25 @@ pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
             env.contract.address.as_str()[0..32].to_string(),
             "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
         ))
-        .add_attribute("action", "dmn");
+        .add_attribute("action", "activate");
+
+    Ok(res)
+}
+
+pub fn deactivate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+    let denom = DENOM.load(deps.storage)?;
+    let root = ROOT.load(deps.storage)?;
+
+    let coin = deps.querier.query_balance(env.contract.address, denom).unwrap();
+
+    let msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: root.to_string(),
+        amount: vec![coin],
+    });
+
+    let res = Response::new()
+        .add_message(msg)
+        .add_attribute("action", "deactivate");
 
     Ok(res)
 }
@@ -257,6 +268,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Activate {} => activate(deps, env),
+        ExecuteMsg::Deactivate {} => deactivate(deps, env),
         ExecuteMsg::BlockStep {} => block_step(deps, env),
 
         ExecuteMsg::SetWeights {
@@ -329,9 +341,7 @@ pub fn execute(
             netuid,
             hotkey,
             coldkey,
-            stake,
-            balance,
-        } => do_sudo_registration(deps, env, info, netuid, hotkey, coldkey, stake, balance),
+        } => do_sudo_registration(deps, env, info, netuid, hotkey, coldkey),
         ExecuteMsg::SudoSetDefaultTake { default_take } => {
             do_sudo_set_default_take(deps, env, info, default_take)
         }
@@ -409,10 +419,6 @@ pub fn execute(
             netuid,
             validator_prune_len,
         } => do_sudo_set_validator_prune_len(deps, env, info, netuid, validator_prune_len),
-        ExecuteMsg::SudoSetScalingLawPower {
-            netuid,
-            scaling_law_power,
-        } => do_sudo_set_scaling_law_power(deps, env, info, netuid, scaling_law_power),
         ExecuteMsg::SudoSetImmunityPeriod {
             netuid,
             immunity_period,
@@ -477,6 +483,9 @@ pub fn execute(
         } => do_sudo_set_validator_permit_for_uid(deps, env, info, netuid, uid, permit),
         ExecuteMsg::SudoSetBlockEmission { emission } => {
             do_sudo_set_block_emission(deps, env, info, emission)
+        }
+        ExecuteMsg::SudoSetSubnetMetadata { netuid, particle } => {
+            do_sudo_set_subnet_metadata(deps, env, info, netuid, particle)
         }
     }
 }

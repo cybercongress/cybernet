@@ -26,7 +26,7 @@ mod test {
 }
 #[test]
 fn test_serving_ok() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
@@ -77,7 +77,7 @@ fn test_serving_ok() {
 
 #[test]
 fn test_serving_set_metadata_update() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
@@ -323,7 +323,7 @@ fn test_axon_invalid_port() {
 
 #[test]
 fn test_prometheus_serving_ok() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let hotkey_account_id = "addr1";
     let netuid: u16 = 1;
@@ -369,7 +369,7 @@ fn test_prometheus_serving_ok() {
 
 #[test]
 fn test_prometheus_serving_set_metadata_update() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let hotkey_account_id = "addr1";
     let netuid: u16 = 1;

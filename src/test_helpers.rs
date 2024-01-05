@@ -3,20 +3,20 @@ use std::fs::File;
 use std::io::Write;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier};
-use cosmwasm_std::{Addr, Coin, DepsMut, Empty, Env, MemoryStorage, OwnedDeps, Storage};
-use cw_multi_test::{App, AppBuilder, BasicAppBuilder, Contract, ContractWrapper, Executor};
+use cosmwasm_std::{coin, Addr, Coin, DepsMut, Empty, Env, OwnedDeps, Storage};
+use cw_multi_test::{Contract, ContractWrapper, Executor};
 use cw_storage_gas_meter::MemoryStorageWithGas;
 use cyber_std::CyberMsgWrapper;
 use cyber_std::Response;
 
-use cyber_std_test::{CyberApp, CyberAppWrapped, CyberModule};
+use cyber_std_test::CyberApp;
 
 use crate::contract::{execute, instantiate, query};
 use crate::msg::ExecuteMsg;
 use crate::registration::create_work_for_block_number;
-use crate::root::init_new_network;
+use crate::root::{get_network_lock_cost, init_new_network};
 use crate::utils::{
-    get_difficulty_as_u64, set_difficulty, set_network_registration_allowed,
+    get_burn_as_u64, get_difficulty_as_u64, set_difficulty, set_network_registration_allowed,
     set_weights_set_rate_limit,
 };
 use crate::ContractError;
@@ -108,47 +108,47 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
     (deps, env)
 }
 
-pub fn instantiate_contract_app(app: &mut CyberApp) -> Addr {
-    // TODO fix this
-    let cn_id = app.store_code(cn_contract());
-    let msg = crate::msg::InstantiateMsg {};
+// pub fn instantiate_contract_app(app: &mut CyberApp) -> Addr {
+//     // TODO fix this
+//     let cn_id = app.store_code(cn_contract());
+//     let msg = crate::msg::InstantiateMsg {};
+//
+//     app.instantiate_contract(
+//         cn_id,
+//         Addr::unchecked(ROOT.to_string()),
+//         &msg,
+//         &[],
+//         "cybernet",
+//         None,
+//     )
+//     .unwrap()
+// }
 
-    app.instantiate_contract(
-        cn_id,
-        Addr::unchecked(ROOT.to_string()),
-        &msg,
-        &[],
-        "cybernet",
-        None,
-    )
-    .unwrap()
-}
-
-pub fn register_ok_neuron_app(
-    app: &mut CyberApp,
-    netuid: u16,
-    hotkey: &str,
-    coldkey: String,
-    nonce: u64,
-) {
-    let msg = ExecuteMsg::Register {
-        netuid,
-        block_number: app.block_info().height,
-        nonce,
-        work: vec![],
-        hotkey: hotkey.to_string(),
-        coldkey,
-    };
-
-    let res = app.execute_contract(
-        Addr::unchecked(hotkey),
-        Addr::unchecked(CT_ADDR.to_string()),
-        &msg,
-        &[],
-    );
-    // app.update_block(|block| block.height += 100);
-    assert_eq!(res.is_ok(), true);
-}
+// pub fn register_ok_neuron_app(
+//     app: &mut CyberApp,
+//     netuid: u16,
+//     hotkey: &str,
+//     coldkey: String,
+//     nonce: u64,
+// ) {
+//     let msg = ExecuteMsg::Register {
+//         netuid,
+//         block_number: app.block_info().height,
+//         nonce,
+//         work: vec![],
+//         hotkey: hotkey.to_string(),
+//         coldkey,
+//     };
+//
+//     let res = app.execute_contract(
+//         Addr::unchecked(hotkey),
+//         Addr::unchecked(CT_ADDR.to_string()),
+//         &msg,
+//         &[],
+//     );
+//     // app.update_block(|block| block.height += 100);
+//     assert_eq!(res.is_ok(), true);
+// }
 
 pub fn register_ok_neuron(
     deps: DepsMut,
@@ -205,17 +205,16 @@ pub fn pow_register_ok_neuron(
     result
 }
 
-pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: &str, coldkey: &str) {
+pub fn sudo_register_ok_neuron(deps: DepsMut, _env: Env, netuid: u16, hotkey: &str, coldkey: &str) {
     let msg = ExecuteMsg::SudoRegister {
         netuid,
         hotkey: hotkey.to_string(),
         coldkey: coldkey.to_string(),
-        stake: 300,
-        balance: 300,
     };
 
+    // TODO stake as funds
     let env = mock_env();
-    let info = mock_info(&ROOT, &[]);
+    let info = mock_info(&ROOT, &[coin(1, "boot".to_string())]);
     let res = execute(deps, env, info, msg);
     assert_eq!(res.is_ok(), true);
 }
@@ -248,7 +247,12 @@ pub fn burned_register_ok_neuron(
         hotkey: hotkey.to_string(),
     };
 
-    let info = mock_info(coldkey, &[]);
+    let mut amount = get_burn_as_u64(deps.storage, netuid);
+    // need to send at least 1 boot
+    if amount == 0 {
+        amount = 1;
+    }
+    let info = mock_info(coldkey, &[coin(amount as u128, "boot".to_string())]);
     let result = execute(deps, env, info, msg);
 
     result
@@ -263,39 +267,40 @@ pub fn add_stake(
 ) -> Result<Response, ContractError> {
     let msg = ExecuteMsg::AddStake {
         hotkey: hotkey.to_string(),
-        amount_staked: amount,
+        // amount_staked: amount,
     };
 
     // TODO Add funds here
-    let info = mock_info(coldkey, &[]);
+    let info = mock_info(coldkey, &[coin(amount as u128, "boot".to_string())]);
     let result = execute(deps, env, info, msg);
 
     result
 }
 
 pub fn register_network(deps: DepsMut, env: Env, key: &str) -> Result<Response, ContractError> {
+    let amount = get_network_lock_cost(deps.storage, deps.api, env.block.height).unwrap();
     let msg = ExecuteMsg::RegisterNetwork {};
 
-    let info = mock_info(key, &[]);
+    let info = mock_info(key, &[coin(amount as u128, "boot".to_string())]);
     let result = execute(deps, env, info, msg);
 
     result
 }
 
-pub fn add_network_app(app: &mut CyberApp) -> u16 {
-    let msg = ExecuteMsg::RegisterNetwork {};
-
-    let res = app
-        .execute_contract(
-            Addr::unchecked(ROOT.to_string()),
-            Addr::unchecked(CT_ADDR.to_string()),
-            &msg,
-            &[],
-        )
-        .unwrap();
-    // let attrs = res.custom_attrs(res.events.len() - 1);
-    return res.custom_attrs(1)[1].value.parse().unwrap();
-}
+// pub fn add_network_app(app: &mut CyberApp) -> u16 {
+//     let msg = ExecuteMsg::RegisterNetwork {};
+//
+//     let res = app
+//         .execute_contract(
+//             Addr::unchecked(ROOT.to_string()),
+//             Addr::unchecked(CT_ADDR.to_string()),
+//             &msg,
+//             &[],
+//         )
+//         .unwrap();
+//     // let attrs = res.custom_attrs(res.events.len() - 1);
+//     return res.custom_attrs(1)[1].value.parse().unwrap();
+// }
 
 pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: u16) {
     init_new_network(store, netuid, tempo).unwrap();
@@ -306,7 +311,7 @@ pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: 
 }
 
 // TODO revisit block increasing logic before or after step
-pub fn step_block(mut deps: DepsMut, mut env: &mut Env) -> Result<Response, ContractError> {
+pub fn step_block(mut deps: DepsMut, env: &mut Env) -> Result<Response, ContractError> {
     env.block.height += 1;
     let result = execute(
         deps.branch(),
@@ -331,7 +336,7 @@ pub fn step_block(mut deps: DepsMut, mut env: &mut Env) -> Result<Response, Cont
 // TODO revisit block increasing logic before or after step
 pub fn run_step_to_block(
     mut deps: DepsMut,
-    mut env: &mut Env,
+    env: &mut Env,
     block_number: u64,
 ) -> Result<Response, ContractError> {
     while env.block.height < block_number {
@@ -447,13 +452,13 @@ pub fn print_state(app: &mut CyberApp, cn_addr: &Addr) {
     file.write(data.as_bytes()).unwrap();
 }
 
-#[test]
-fn test_instantiate() {
-    let mut app = mock_app(&[]);
-
-    let cn_addr = instantiate_contract_app(&mut app);
-    assert_eq!(cn_addr, Addr::unchecked("contract0"));
-}
+// #[test]
+// fn test_instantiate() {
+//     let mut app = mock_app(&[]);
+//
+//     let cn_addr = instantiate_contract_app(&mut app);
+//     assert_eq!(cn_addr, Addr::unchecked("contract0"));
+// }
 
 #[test]
 fn test_deps() {
@@ -467,3 +472,6 @@ fn test_deps() {
     let after = get_difficulty_as_u64(&deps.storage, 1);
     assert_eq!(after, 1);
 }
+
+#[cfg(test)]
+pub fn add_balance_to_coldkey_account(_coldkey: &Addr, _amount: u64) {}

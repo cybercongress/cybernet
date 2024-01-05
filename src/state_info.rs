@@ -10,16 +10,15 @@ use crate::state::{
     LAST_TX_BLOCK, LAST_UPDATE, LOADED_EMISSION, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS,
     MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS,
     MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
-    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_ALLOWED_UIDS,
-    NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT,
-    NETWORK_REGISTRATION_ALLOWED, NEURONS_TO_PRUNE_AT_NEXT_EPOCH, OWNER, PENDING_EMISSION,
-    POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
-    RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
-    ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED,
-    SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
-    TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS,
-    USED_WORK, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST, WEIGHTS,
-    WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
+    NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
+    NEURONS_TO_PRUNE_AT_NEXT_EPOCH, OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
+    PROMETHEUS, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK,
+    REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT,
+    SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO,
+    TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST,
+    TX_RATE_LIMIT, UIDS, USED_WORK, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST,
+    WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 
 #[cw_serde]
@@ -55,7 +54,6 @@ pub struct StateInfo {
     network_registered_at: Vec<(u16, u64)>,
     network_immunity_period: u64,
     network_last_registered: u64,
-    network_min_allowed_uids: u16,
     network_min_lock_cost: u64,
     network_last_lock_cost: u64,
     network_lock_reduction_interval: u64,
@@ -91,7 +89,6 @@ pub struct StateInfo {
     bonds_moving_average: Vec<(u16, u64)>,
     weights_set_rate_limit: Vec<(u16, u64)>,
     validator_prune_len: Vec<(u16, u64)>,
-    scaling_law_power: Vec<(u16, u16)>,
     target_registrations_per_interval: Vec<(u16, u16)>,
     block_at_registration: Vec<((u16, u16), u64)>,
     adjustments_alpha: Vec<(u16, u64)>,
@@ -212,7 +209,6 @@ pub fn get_state_info(store: &dyn Storage) -> StdResult<StateInfo> {
         .unwrap();
     let network_immunity_period: u64 = NETWORK_IMMUNITY_PERIOD.load(store)?;
     let network_last_registered: u64 = NETWORK_LAST_REGISTERED.load(store)?;
-    let network_min_allowed_uids: u16 = NETWORK_MIN_ALLOWED_UIDS.load(store)?;
     let network_min_lock_cost: u64 = NETWORK_MIN_LOCK_COST.load(store)?;
     let network_last_lock_cost: u64 = NETWORK_LAST_LOCK_COST.load(store)?;
     let network_lock_reduction_interval: u64 = NETWORK_LOCK_REDUCTION_INTERVAL.load(store)?;
@@ -331,10 +327,6 @@ pub fn get_state_info(store: &dyn Storage) -> StdResult<StateInfo> {
         .range(store, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()
         .unwrap();
-    let scaling_law_power: Vec<(u16, u16)> = SCALING_LAW_POWER
-        .range(store, None, None, Order::Ascending)
-        .collect::<StdResult<Vec<_>>>()
-        .unwrap();
     let target_registrations_per_interval: Vec<(u16, u16)> = TARGET_REGISTRATIONS_PER_INTERVAL
         .range(store, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()
@@ -445,7 +437,6 @@ pub fn get_state_info(store: &dyn Storage) -> StdResult<StateInfo> {
         network_registered_at,
         network_immunity_period,
         network_last_registered,
-        network_min_allowed_uids,
         network_min_lock_cost,
         network_last_lock_cost,
         network_lock_reduction_interval,
@@ -480,7 +471,6 @@ pub fn get_state_info(store: &dyn Storage) -> StdResult<StateInfo> {
         bonds_moving_average,
         weights_set_rate_limit,
         validator_prune_len,
-        scaling_law_power,
         target_registrations_per_interval,
         block_at_registration,
         adjustments_alpha,

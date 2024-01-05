@@ -19,7 +19,7 @@ pub enum ContractError {
     InvalidModality {},
 
     #[error(
-        "Thrown when the user tries to serve an axon which is not of type	4 (IPv4) or 6 (IPv6)."
+        "Thrown when the user tries to serve an axon which is not of type 4 (IPv4) or 6 (IPv6)."
     )]
     InvalidIpType {},
 
@@ -79,7 +79,7 @@ pub enum ContractError {
     #[error("Thrown if the vaule is invalid for MaxAllowedUids.")]
     MaxAllowedUIdsNotAllowed {},
 
-    #[error("Thrown when the dispatch attempts to convert between a u64 and T::balance but the call fails.")]
+    #[error("Thrown when wrong denom passed to the contract as payment")]
     CouldNotConvertToBalance {},
 
     #[error("Thrown when the caller requests adding stake for a hotkey to the total stake which already added.")]
@@ -143,21 +143,6 @@ pub enum ContractError {
     #[error("Thrown when the hotkey passed is not the origin, but it should be")]
     HotkeyOriginMismatch {},
 
-    // {} Senate errors
-    // #[error("Thrown when attempting to do something to a senate member that is limited")]
-    // SenateMember {},
-    //
-    // #[error("Thrown when a hotkey attempts to do something only senate members can do")]
-    // NotSenateMember {},
-    //
-    // #[error("Thrown when a hotkey attempts to join the senate while already being a member")]
-    // AlreadySenateMember {},
-    //
-    // #[error("Thrown when a hotkey attempts to join the senate without enough stake")]
-    // BelowStakeThreshold {},
-    //
-    // #[error("Thrown when a hotkey attempts to join the senate without being a delegate first")]
-    // NotDelegate {},
     #[error("Thrown when an incorrect amount of Netuids are passed as input")]
     IncorrectNetuidsLength {},
 
@@ -175,4 +160,7 @@ pub enum ContractError {
 
     #[error("Thrown when all subnets are in the immunity period")]
     AllNetworksInImmunity {},
+
+    #[error("Thrown when particle metadata size is invalid")]
+    MetadataSizeError {},
 }

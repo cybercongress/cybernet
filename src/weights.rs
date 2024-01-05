@@ -85,13 +85,10 @@ pub fn do_set_weights(
 ) -> Result<Response, ContractError> {
     // --- 1. Check the caller's signature. This is the hotkey of a registered account.
     let hotkey = info.sender;
-    // deps.api.debug(&format!(
-    //     "do_set_weights( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
-    //     hotkey,
-    //     netuid,
-    //     uids,
-    //     values
-    // ));
+    deps.api.debug(&format!(
+        "💡 do_set_weights ( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
+        hotkey, netuid, uids, values
+    ));
 
     // --- 2. Check that the length of uid list and value list are equal for this network.
     ensure!(
@@ -200,7 +197,7 @@ pub fn do_set_weights(
 
     // --- 18. Emit the tracking event.
     deps.api.debug(&format!(
-        "WeightsSet( netuid:{:?}, neuron_uid:{:?} )",
+        "💡 WeightsSet ( netuid:{:?}, neuron_uid:{:?} )",
         netuid, neuron_uid
     ));
 
@@ -225,7 +222,7 @@ pub fn check_version_key(
 ) -> bool {
     let network_version_key: u64 = WEIGHTS_VERSION_KEY.load(store, netuid).unwrap();
     api.debug(&format!(
-        "check_version_key( network_version_key:{:?}, version_key:{:?} )",
+        "💡 check_version_key ( network_version_key:{:?}, version_key:{:?} )",
         network_version_key.clone(),
         version_key
     ));
@@ -263,7 +260,7 @@ pub fn contains_invalid_uids(
     for uid in uids {
         if !is_uid_exist_on_network(store, netuid, uid.clone()) {
             api.debug(&format!(
-                "contains_invalid_uids( netuid:{:?}, uid:{:?} does not exist on network. )",
+                "💡 contains_invalid_uids ( netuid:{:?}, uid:{:?} does not exist on network. )",
                 netuid, uids
             ));
             return true;
@@ -337,6 +334,7 @@ pub fn check_length(
 }
 
 // Implace normalizes the passed positive integer weights so that they sum to u16 max value.
+#[cfg(test)]
 pub fn normalize_weights(mut weights: Vec<u16>) -> Vec<u16> {
     let sum: u64 = weights.iter().map(|x| *x as u64).sum();
     if sum.clone() == 0 {
@@ -407,16 +405,19 @@ pub fn get_network_weights(store: &dyn Storage, netuid: u16) -> StdResult<Vec<Ve
 }
 
 // Output unnormalized sparse weights, input weights are assumed to be row max-upscaled in u16.
-pub fn get_network_weights_sparse(store: &dyn Storage, netuid:u16 ) -> StdResult<Vec<Vec<(u16, u16)>>> {
+pub fn get_network_weights_sparse(
+    store: &dyn Storage,
+    netuid: u16,
+) -> StdResult<Vec<Vec<(u16, u16)>>> {
     let n: usize = get_subnetwork_n(store, netuid) as usize;
-    let mut weights: Vec<Vec<(u16, u16)>> = vec![ vec![]; n ];
+    let mut weights: Vec<Vec<(u16, u16)>> = vec![vec![]; n];
     for item in WEIGHTS
         .prefix(netuid)
         .range(store, None, None, Order::Ascending)
     {
         let (uid_i, weights_i) = item.unwrap();
         for (uid_j, weight_ij) in weights_i.iter() {
-            weights [ uid_i as usize ].push( ( *uid_j, *weight_ij ));
+            weights[uid_i as usize].push((*uid_j, *weight_ij));
         }
     }
     Ok(weights)

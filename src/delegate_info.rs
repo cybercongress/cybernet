@@ -112,10 +112,11 @@ pub fn get_delegates(deps: Deps) -> StdResult<Vec<DelegateInfo>> {
     return Ok(delegates);
 }
 
+// TODO add pagination and limit
 pub fn get_delegated(deps: Deps, delegatee: String) -> StdResult<Vec<(DelegateInfo, u64)>> {
     let delegatee = deps.api.addr_validate(&delegatee)?;
     let mut delegates: Vec<(DelegateInfo, u64)> = Vec::new();
-    // TODO iterator over all delegates? rewrite
+    // TODO iterator over all delegates?
     for item in DELEGATES
         .range(deps.storage, None, None, Order::Ascending)
         .into_iter()

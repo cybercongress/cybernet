@@ -1,8 +1,7 @@
 use crate::epoch::epoch;
 use crate::root::{get_root_netuid, root_epoch};
 use crate::staking::{
-    add_balance_to_coldkey_account, hotkey_is_delegate, increase_stake_on_coldkey_hotkey_account,
-    increase_stake_on_hotkey_account, u64_to_balance,
+    hotkey_is_delegate, increase_stake_on_coldkey_hotkey_account, increase_stake_on_hotkey_account,
 };
 use crate::state::{
     ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BURN,
@@ -15,35 +14,40 @@ use crate::state::{
 };
 use crate::utils::get_blocks_since_last_step;
 use crate::ContractError;
-use cosmwasm_std::{Addr, Api, DepsMut, Env, Order, StdResult, Storage};
+use cosmwasm_std::{
+    coins, Addr, Api, BankMsg, CosmosMsg, DepsMut, Env, Order, StdResult, Storage, Uint128,
+};
 use cyber_std::Response;
-use std::ops::Add;
 use substrate_fixed::types::I110F18;
 use substrate_fixed::types::I64F64;
 use substrate_fixed::types::I96F32;
 
 /// Executes the necessary operations for each block.
-/// TODO make it msg and then do call from native layer as sudo
 pub fn block_step(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
     let block_number: u64 = env.block.height;
     deps.api
-        .debug(&format!("block_step for block: {:?} ", block_number));
+        .debug(&format!("🕛 block_step for block: {:?} ", block_number));
     // --- 1. Adjust difficulties.
     adjust_registration_terms_for_networks(deps.storage, deps.api, env.block.height)?;
     // --- 2. Calculate per-subnet emissions
     match root_epoch(deps.storage, deps.api, block_number) {
-        Ok(_) => (),
-        Err(e) => {
-            // return Err(ContractError::Std(GenericErr {msg: format!("Error while running root epoch: {:?}", e)}))
+        Ok(_) => {
             deps.api
-                .debug(&format!("Error while running root epoch: {:?}", e));
+                .debug(&format!("🟩 Successfully executed root epoch"));
+        }
+        Err(e) => {
+            deps.api
+                .debug(&format!("🟥 Error while running root epoch: {:?}", e));
         }
     }
     // --- 3. Drains emission tuples ( hotkey, amount ).
     drain_emission(deps.storage, deps.api, block_number)?;
     // --- 4. Generates emission tuples from epoch functions.
-    generate_emission(deps.storage, deps.api, block_number)?;
-    // Return ok.
+    let _msgs = generate_emission(deps.storage, deps.api, block_number)?;
+    // Ok(Response::new()
+    //     .add_messages(msgs)
+    //     .add_attribute("action", "block_step")
+    // )
     Ok(Response::default().add_attribute("action", "block_step"))
 }
 
@@ -76,6 +80,7 @@ pub fn blocks_until_next_epoch(netuid: u16, tempo: u16, block_number: u64) -> u6
 // Helper function returns the number of tuples to drain on a particular step based on
 // the remaining tuples to sink and the block number
 //
+#[cfg(test)]
 pub fn tuples_to_drain_this_block(
     netuid: u16,
     tempo: u16,
@@ -110,8 +115,9 @@ pub fn generate_emission(
     store: &mut dyn Storage,
     api: &dyn Api,
     block_number: u64,
-) -> Result<(), ContractError> {
+) -> Result<Vec<CosmosMsg>, ContractError> {
     // --- 1. Iterate across each network and add pending emission into stash.
+    let msgs: Vec<CosmosMsg> = Vec::new();
     let netuid_tempo: Vec<(u16, u16)> = TEMPO
         .range(store, None, None, Order::Ascending)
         .map(|item| {
@@ -130,7 +136,7 @@ pub fn generate_emission(
         // --- 2. Queue the emission due to this network.
         let new_queued_emission = EMISSION_VALUES.load(store, netuid)?;
         api.debug(&format!(
-            "generate_emission for netuid: {:?} with tempo: {:?} and emission: {:?}",
+            "💎 generate_emission for netuid: {:?} with tempo: {:?} and emission: {:?}",
             netuid, tempo, new_queued_emission,
         ));
 
@@ -144,17 +150,14 @@ pub fn generate_emission(
 
             remaining = remaining.saturating_sub(cut);
 
-            let subnet_owner = SUBNET_OWNER.load(store, netuid)?;
-            // TODO create messages here
-            // add_balance_to_coldkey_account(
-            //     &subnet_owner,
-            //     u64_to_balance(cut.to_num::<u64>()).unwrap(),
-            // );
-            // let denom = DENOM.load(deps.storage)?;
-            // let msg = CosmosMsg::Bank(BankMsg::Send {
-            //     to_address: &subnet_owner.to_string(),
+            // TODO back to this, by default subnet owner cut is zero
+            // let subnet_owner = SUBNET_OWNER.load(store, netuid)?;
+            //
+            // let denom = DENOM.load(store)?;
+            // msgs.push(CosmosMsg::Bank(BankMsg::Send {
+            //     to_address: subnet_owner.to_string(),
             //     amount: coins(Uint128::from(cut.to_num::<u64>()).u128(), denom),
-            // });
+            // }));
 
             TOTAL_ISSUANCE.update(store, |a| -> StdResult<_> {
                 Ok(a.saturating_add(cut.to_num::<u64>()))
@@ -167,7 +170,7 @@ pub fn generate_emission(
             Ok(q)
         })?;
         api.debug(&format!(
-            "netuid_i: {:?} queued_emission: +{:?} ",
+            "💎 netuid_i: {:?} queued_emission: +{:?} ",
             netuid, new_queued_emission
         ));
 
@@ -189,7 +192,7 @@ pub fn generate_emission(
         let emission_tuples_this_block: Vec<(Addr, u64, u64)> =
             epoch(store, api, netuid, emission_to_drain, block_number)?;
         api.debug(&format!(
-            "netuid_i: {:?} emission_to_drain: {:?} ",
+            "💎 netuid_i: {:?} emission_to_drain: {:?} ",
             netuid, emission_to_drain
         ));
 
@@ -216,12 +219,15 @@ pub fn generate_emission(
         BLOCKS_SINCE_LAST_STEP.save(store, netuid, &0)?;
         LAST_MECHANISM_STEP_BLOCK.save(store, netuid, &block_number)?;
     }
-    Ok(())
+    Ok(msgs)
 }
 
+#[cfg(test)]
 pub fn has_loaded_emission_tuples(store: &dyn Storage, netuid: u16) -> bool {
     LOADED_EMISSION.has(store, netuid)
 }
+
+#[cfg(test)]
 pub fn get_loaded_emission_tuples(store: &dyn Storage, netuid: u16) -> Vec<(Addr, u64, u64)> {
     LOADED_EMISSION.load(store, netuid).unwrap()
 }
@@ -315,7 +321,7 @@ pub fn emit_inflation_through_hotkey_account(
             stake_proportion,
         );
         api.debug(&format!(
-            "owning_coldkey_i: {:?} hotkey: {:?} emission: +{:?} ",
+            "🤗 owning_coldkey_i: {:?} hotkey: {:?} emission: +{:?} ",
             owning_coldkey_i,
             hotkey.clone(),
             stake_proportion
@@ -327,7 +333,7 @@ pub fn emit_inflation_through_hotkey_account(
     // the delegate and effect calculation in 4.
     increase_stake_on_hotkey_account(store, &hotkey, delegate_take + remaining_validator_emission);
     api.debug(&format!(
-        "delkey: {:?} delegate_take: +{:?} ",
+        "🤗 delkey: {:?} delegate_take: +{:?} ",
         hotkey, delegate_take
     ));
     // Also emit the server_emission to the hotkey
@@ -342,6 +348,7 @@ pub fn emit_inflation_through_hotkey_account(
 // This function should be called rather than set_stake under account.
 //
 // TODO revisit
+#[cfg(test)]
 pub fn block_step_increase_stake_on_coldkey_hotkey_account(
     store: &mut dyn Storage,
     coldkey: &Addr,
@@ -369,6 +376,7 @@ pub fn block_step_increase_stake_on_coldkey_hotkey_account(
 // Decreases the stake on the cold - hot pairing by the decrement while decreasing other counters.
 //
 // TODO revisit
+#[cfg(test)]
 pub fn block_step_decrease_stake_on_coldkey_hotkey_account(
     store: &mut dyn Storage,
     coldkey: &Addr,
@@ -429,7 +437,7 @@ pub fn adjust_registration_terms_for_networks(
     api: &dyn Api,
     current_block: u64,
 ) -> Result<(), ContractError> {
-    api.debug(&format!("adjust_registration_terms_for_networks"));
+    api.debug(&format!("⚙️ adjust_registration_terms_for_networks"));
 
     let networks_added: Vec<(u16, bool)> = NETWORKS_ADDED
         .range(store, None, None, Order::Ascending)
@@ -444,7 +452,7 @@ pub fn adjust_registration_terms_for_networks(
         // --- 2. Pull counters for network difficulty.
         let last_adjustment_block: u64 = LAST_ADJUSTMENT_BLOCK.load(store, netuid)?;
         let adjustment_interval: u16 = ADJUSTMENT_INTERVAL.load(store, netuid)?;
-        api.debug(&format!("netuid: {:?} last_adjustment_block: {:?} adjustment_interval: {:?} current_block: {:?}",
+        api.debug(&format!("⚙️ netuid: {:?}, last_adjustment_block: {:?}, adjustment_interval: {:?}, current_block: {:?}",
                            netuid,
                            last_adjustment_block,
                            adjustment_interval,
@@ -454,7 +462,7 @@ pub fn adjust_registration_terms_for_networks(
         // --- 3. Check if we are at the adjustment interval for this network.
         // If so, we need to adjust the registration difficulty based on target and actual registrations.
         if (current_block - last_adjustment_block) >= adjustment_interval as u64 {
-            api.debug(&format!("interval reached."));
+            api.debug(&format!("ℹ️ interval reached"));
 
             // --- 4. Get the current counters for this network w.r.t burn and difficulty values.
             let current_burn: u64 = BURN.load(store, netuid)?;
@@ -573,7 +581,7 @@ pub fn adjust_registration_terms_for_networks(
             POW_REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
             BURN_REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
         } else {
-            api.debug(&format!("interval not reached."));
+            api.debug(&format!("ℹ️ interval not reached."));
         }
 
         // --- 7. Drain block registrations for each network. Needed for registration rate limits.
