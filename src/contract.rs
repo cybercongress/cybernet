@@ -1,9 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage,
-    Uint128,
-};
+use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage, Uint128, CosmosMsg, BankMsg, coins};
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
 use cyber_std::Response;
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
@@ -239,7 +236,25 @@ pub fn activate(_deps: DepsMut, env: Env) -> Result<Response, ContractError> {
             env.contract.address.as_str()[0..32].to_string(),
             "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
         ))
-        .add_attribute("action", "dmn");
+        .add_attribute("action", "activate");
+
+    Ok(res)
+}
+
+pub fn deactivate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+    let denom = DENOM.load(deps.storage)?;
+    let root = ROOT.load(deps.storage)?;
+
+    let coin = deps.querier.query_balance(env.contract.address, denom).unwrap();
+
+    let msg = CosmosMsg::Bank(BankMsg::Send {
+        to_address: root.to_string(),
+        amount: vec![coin],
+    });
+
+    let res = Response::new()
+        .add_message(msg)
+        .add_attribute("action", "deactivate");
 
     Ok(res)
 }
@@ -253,6 +268,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Activate {} => activate(deps, env),
+        ExecuteMsg::Deactivate {} => deactivate(deps, env),
         ExecuteMsg::BlockStep {} => block_step(deps, env),
 
         ExecuteMsg::SetWeights {

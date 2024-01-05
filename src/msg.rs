@@ -6,6 +6,7 @@ pub struct InstantiateMsg {}
 #[cw_serde]
 pub enum ExecuteMsg {
     Activate {},
+    Deactivate {},
     // TODO remove later, use for manual block_step
     BlockStep {},
 
