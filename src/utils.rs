@@ -1571,6 +1571,11 @@ pub fn do_sudo_set_validator_permit_for_uid(
         .add_attribute("validator_permit", format!("{}", validator_permit)))
 }
 
+#[cfg(test)]
+pub fn set_block_emission(store: &mut dyn Storage, emission: u64) {
+    BLOCK_EMISSION.save(store, &emission).unwrap();
+}
+
 pub fn do_sudo_set_block_emission(
     deps: DepsMut,
     _env: Env,

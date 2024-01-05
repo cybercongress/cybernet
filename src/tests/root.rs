@@ -16,9 +16,9 @@ use crate::test_helpers::{
 };
 use crate::uids::{get_subnetwork_n, get_uid_for_net_and_hotkey, is_hotkey_registered_on_network};
 use crate::utils::{
-    get_pending_emission, get_total_issuance, set_burn, set_difficulty, set_max_allowed_uids,
-    set_max_registrations_per_block, set_target_registrations_per_interval, set_tempo,
-    set_weights_set_rate_limit,
+    do_sudo_set_block_emission, get_pending_emission, get_total_issuance, set_block_emission,
+    set_burn, set_difficulty, set_max_allowed_uids, set_max_registrations_per_block,
+    set_target_registrations_per_interval, set_tempo, set_weights_set_rate_limit,
 };
 use crate::ContractError;
 
@@ -212,6 +212,7 @@ fn test_root_register_stake_based_pruning_works() {
 #[test]
 fn test_root_set_weights() {
     let (mut deps, mut env) = instantiate_contract();
+    set_block_emission(&mut deps.storage, 1_000_000_000);
 
     let n: usize = 10;
     let root_netuid: u16 = 0;
@@ -358,6 +359,7 @@ fn test_root_set_weights() {
 #[test]
 fn test_root_set_weights_out_of_order_netuids() {
     let (mut deps, mut env) = instantiate_contract();
+    set_block_emission(&mut deps.storage, 1_000_000_000);
 
     let n: usize = 10;
     let root_netuid: u16 = 0;
@@ -655,6 +657,7 @@ fn test_root_subnet_creation_deletion() {
 #[test]
 fn test_network_pruning() {
     let (mut deps, mut env) = instantiate_contract();
+    set_block_emission(&mut deps.storage, 1_000_000_000);
 
     assert_eq!(get_total_issuance(&deps.storage), 0);
 

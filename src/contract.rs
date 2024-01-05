@@ -85,7 +85,7 @@ pub fn instantiate(
 
     SUBNET_LIMIT.save(deps.storage, &16)?;
     NETWORK_IMMUNITY_PERIOD.save(deps.storage, &7200)?;
-    BLOCK_EMISSION.save(deps.storage, &1_000_000_000)?;
+    BLOCK_EMISSION.save(deps.storage, &4_200_000)?;
 
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
