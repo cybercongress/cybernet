@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nullable_AxonInfo",
+  "anyOf": [
+    {
+      "$ref": "#/definitions/AxonInfo"
+    },
+    {
+      "type": "null"
+    }
+  ],
+  "definitions": {
+    "AxonInfo": {
+      "type": "object",
+      "required": [
+        "block",
+        "ip",
+        "ip_type",
+        "placeholder1",
+        "placeholder2",
+        "port",
+        "protocol",
+        "version"
+      ],
+      "properties": {
+        "block": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "ip": {
+          "type": "integer",
+          "format": "uint128",
+          "minimum": 0.0
+        },
+        "ip_type": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "placeholder1": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "placeholder2": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "port": {
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "protocol": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}

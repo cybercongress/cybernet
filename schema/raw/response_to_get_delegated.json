@@ -25,9 +25,9 @@
     "DelegateInfo": {
       "type": "object",
       "required": [
-        "delegate_ss58",
+        "delegate",
         "nominators",
-        "owner_ss58",
+        "owner",
         "registrations",
         "return_per_1000",
         "take",
@@ -35,7 +35,7 @@
         "validator_permits"
       ],
       "properties": {
-        "delegate_ss58": {
+        "delegate": {
           "$ref": "#/definitions/Addr"
         },
         "nominators": {
@@ -56,7 +56,7 @@
             "minItems": 2
           }
         },
-        "owner_ss58": {
+        "owner": {
           "$ref": "#/definitions/Addr"
         },
         "registrations": {

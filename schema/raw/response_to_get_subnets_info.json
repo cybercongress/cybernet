@@ -22,13 +22,12 @@
         "max_allowed_uids",
         "max_allowed_validators",
         "max_weights_limit",
+        "metadata",
         "min_allowed_weights",
         "netuid",
-        "network_connect",
         "network_modality",
         "owner",
         "rho",
-        "scaling_law_power",
         "subnetwork_n",
         "tempo"
       ],
@@ -78,6 +77,9 @@
           "format": "uint16",
           "minimum": 0.0
         },
+        "metadata": {
+          "type": "string"
+        },
         "min_allowed_weights": {
           "type": "integer",
           "format": "uint16",
@@ -88,19 +90,6 @@
           "format": "uint16",
           "minimum": 0.0
         },
-        "network_connect": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "uint16",
-              "minimum": 0.0
-            },
-            "maxItems": 2,
-            "minItems": 2
-          }
-        },
         "network_modality": {
           "type": "integer",
           "format": "uint16",
@@ -110,11 +99,6 @@
           "$ref": "#/definitions/Addr"
         },
         "rho": {
-          "type": "integer",
-          "format": "uint16",
-          "minimum": 0.0
-        },
-        "scaling_law_power": {
           "type": "integer",
           "format": "uint16",
           "minimum": 0.0
