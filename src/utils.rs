@@ -10,11 +10,11 @@ use crate::state::{
     EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
     LAST_MECHANISM_STEP_BLOCK, LAST_TX_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
     MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK,
-    MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD,
-    NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_RATE_LIMIT,
-    NETWORK_REGISTRATION_ALLOWED, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
-    PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK,
-    REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, SUBNETWORK_N,
+    MAX_WEIGHTS_LIMIT, METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
+    NETWORK_IMMUNITY_PERIOD, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
+    NETWORK_RATE_LIMIT, NETWORK_REGISTRATION_ALLOWED, PENDING_EMISSION,
+    POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION,
+    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT,
     SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL,
     TEMPO, TOTAL_ISSUANCE, TRUST, TX_RATE_LIMIT, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN,
     VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
@@ -783,44 +783,6 @@ pub fn do_sudo_set_validator_prune_len(
         .add_attribute("active", "validator_prune_len_set")
         .add_attribute("netuid", format!("{}", netuid))
         .add_attribute("validator_prune_len", format!("{}", validator_prune_len)))
-}
-
-#[cfg(test)]
-pub fn get_scaling_law_power(store: &dyn Storage, netuid: u16) -> u16 {
-    SCALING_LAW_POWER.load(store, netuid).unwrap()
-}
-
-pub fn do_sudo_set_scaling_law_power(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    netuid: u16,
-    scaling_law_power: u16,
-) -> Result<Response, ContractError> {
-    ensure_root(deps.storage, &info.sender)?;
-
-    ensure!(
-        if_subnet_exist(deps.storage, netuid),
-        ContractError::NetworkDoesNotExist {}
-    );
-
-    // The scaling law power must be between 0 and 100 => 0% and 100%
-    ensure!(
-        scaling_law_power > 100,
-        ContractError::StorageValueOutOfRange {}
-    );
-
-    SCALING_LAW_POWER.save(deps.storage, netuid, &scaling_law_power)?;
-
-    deps.api.debug(&format!(
-        "🛸 ScalingLawPowerSet ( netuid: {:?} scaling_law_power: {:?} ) ",
-        netuid, scaling_law_power
-    ));
-
-    Ok(Response::default()
-        .add_attribute("active", "scaling_law_power_set")
-        .add_attribute("netuid", format!("{}", netuid))
-        .add_attribute("scaling_law_power", format!("{}", scaling_law_power)))
 }
 
 pub fn get_max_weight_limit(store: &dyn Storage, netuid: u16) -> u16 {
@@ -1624,5 +1586,23 @@ pub fn do_sudo_set_block_emission(
 
     Ok(Response::default()
         .add_attribute("action", "block_emission_set")
-        .add_attribute("netuid", format!("{}", emission)))
+        .add_attribute("emission", format!("{}", emission)))
+}
+
+pub fn do_sudo_set_subnet_metadata(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    netuid: u16,
+    particle: String,
+) -> Result<Response, ContractError> {
+    ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
+    ensure!(particle.len() == 46, ContractError::MetadataSizeError {});
+
+    METADATA.save(deps.storage, netuid, &particle)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "metadata_set")
+        .add_attribute("netuid", format!("{}", netuid))
+        .add_attribute("metadata", format!("{}", particle)))
 }

@@ -14,12 +14,11 @@ use crate::state::{
     NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
     NEURONS_TO_PRUNE_AT_NEXT_EPOCH, OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
     PROMETHEUS, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK,
-    REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SCALING_LAW_POWER, SERVING_RATE_LIMIT, STAKE,
-    SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT,
-    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE,
-    TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS, USED_WORK,
-    VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT,
-    WEIGHTS_VERSION_KEY,
+    REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT,
+    SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO,
+    TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST,
+    TX_RATE_LIMIT, UIDS, USED_WORK, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST,
+    WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 
 #[cw_serde]
@@ -90,7 +89,6 @@ pub struct StateInfo {
     bonds_moving_average: Vec<(u16, u64)>,
     weights_set_rate_limit: Vec<(u16, u64)>,
     validator_prune_len: Vec<(u16, u64)>,
-    scaling_law_power: Vec<(u16, u16)>,
     target_registrations_per_interval: Vec<(u16, u16)>,
     block_at_registration: Vec<((u16, u16), u64)>,
     adjustments_alpha: Vec<(u16, u64)>,
@@ -329,10 +327,6 @@ pub fn get_state_info(store: &dyn Storage) -> StdResult<StateInfo> {
         .range(store, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()
         .unwrap();
-    let scaling_law_power: Vec<(u16, u16)> = SCALING_LAW_POWER
-        .range(store, None, None, Order::Ascending)
-        .collect::<StdResult<Vec<_>>>()
-        .unwrap();
     let target_registrations_per_interval: Vec<(u16, u16)> = TARGET_REGISTRATIONS_PER_INTERVAL
         .range(store, None, None, Order::Ascending)
         .collect::<StdResult<Vec<_>>>()
@@ -477,7 +471,6 @@ pub fn get_state_info(store: &dyn Storage) -> StdResult<StateInfo> {
         bonds_moving_average,
         weights_set_rate_limit,
         validator_prune_len,
-        scaling_law_power,
         target_registrations_per_interval,
         block_at_registration,
         adjustments_alpha,

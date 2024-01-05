@@ -1,5 +1,5 @@
 use cosmwasm_std::Addr;
-use cw_multi_test::Executor;
+
 use substrate_fixed::types::I32F32;
 
 use crate::epoch::get_weights;
@@ -332,7 +332,7 @@ fn test_weights_err_has_duplicate_ids() {
         register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 100000).is_ok(),
         true
     );
-    let neuron_uid =
+    let _neuron_uid =
         get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr1")).unwrap();
 
     // uid 2
@@ -340,7 +340,7 @@ fn test_weights_err_has_duplicate_ids() {
         register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr2", "addr2", 100000).is_ok(),
         true
     );
-    let neuron_uid =
+    let _neuron_uid =
         get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr2")).unwrap();
 
     // uid 3
@@ -348,7 +348,7 @@ fn test_weights_err_has_duplicate_ids() {
         register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr3", "addr3", 100000).is_ok(),
         true
     );
-    let neuron_uid =
+    let _neuron_uid =
         get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr3")).unwrap();
 
     let weights_keys: Vec<u16> = vec![1, 1, 1]; // Contains duplicates
@@ -457,7 +457,7 @@ fn test_set_weights_err_not_active() {
         .is_ok(),
         true
     );
-    let neuron_uid =
+    let _neuron_uid =
         get_uid_for_net_and_hotkey(&deps.storage, netuid, &Addr::unchecked("addr666")).unwrap();
 
     let weights_keys: Vec<u16> = vec![0]; // Uid 0 is valid.
@@ -731,13 +731,13 @@ fn test_set_weights_sum_larger_than_u16_max() {
 
 #[test]
 fn test_check_length_allows_singleton() {
-    let (mut deps, env) = instantiate_contract();
+    let (mut deps, _) = instantiate_contract();
 
     let netuid = 2;
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("addr1");
+    let _hotkey_account = Addr::unchecked("addr1");
 
     let max_allowed: u16 = 1;
     let min_allowed_weights = max_allowed;
@@ -756,13 +756,13 @@ fn test_check_length_allows_singleton() {
 
 #[test]
 fn test_check_length_weights_length_exceeds_min_allowed() {
-    let (mut deps, env) = instantiate_contract();
+    let (mut deps, _env) = instantiate_contract();
 
     let netuid = 2;
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let hotkey_account = Addr::unchecked("addr1");
+    let _hotkey_account = Addr::unchecked("addr1");
 
     let max_allowed: u16 = 3;
     let min_allowed_weights = max_allowed;
@@ -863,7 +863,7 @@ fn test_normalize_weights_does_not_mutate_when_sum_not_zero() {
 
 #[test]
 fn test_max_weight_limited_allow_self_weights_to_exceed_max_weight_limit() {
-    let (mut deps, env) = instantiate_contract();
+    let (mut deps, _env) = instantiate_contract();
 
     let netuid = 2;
     let tempo: u16 = 13;
@@ -886,7 +886,7 @@ fn test_max_weight_limited_allow_self_weights_to_exceed_max_weight_limit() {
 
 #[test]
 fn test_max_weight_limited_when_weight_limit_is_u16_max() {
-    let (mut deps, env) = instantiate_contract();
+    let (mut deps, _env) = instantiate_contract();
 
     let netuid = 2;
     let tempo: u16 = 13;
@@ -910,7 +910,7 @@ fn test_max_weight_limited_when_weight_limit_is_u16_max() {
 
 #[test]
 fn test_max_weight_limited_when_max_weight_is_within_limit() {
-    let (mut deps, env) = instantiate_contract();
+    let (mut deps, _env) = instantiate_contract();
 
     let netuid = 2;
     let tempo: u16 = 13;
@@ -935,7 +935,7 @@ fn test_max_weight_limited_when_max_weight_is_within_limit() {
 
 #[test]
 fn test_max_weight_limited_when_guard_checks_are_not_triggered() {
-    let (mut deps, env) = instantiate_contract();
+    let (mut deps, _env) = instantiate_contract();
 
     let netuid = 2;
     let tempo: u16 = 13;
@@ -1019,7 +1019,7 @@ fn test_check_len_uids_within_allowed_within_network_pool() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let max_registrations_per_block: u16 = 100;
+    let _max_registrations_per_block: u16 = 100;
 
     assert_eq!(
         register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 0).is_ok(),
@@ -1055,7 +1055,7 @@ fn test_check_len_uids_within_allowed_not_within_network_pool() {
     let tempo: u16 = 13;
     add_network(&mut deps.storage, netuid, tempo, 0);
 
-    let max_registrations_per_block: u16 = 100;
+    let _max_registrations_per_block: u16 = 100;
 
     assert_eq!(
         register_ok_neuron(deps.as_mut(), env.clone(), netuid, "addr1", "addr1", 0).is_ok(),
@@ -1070,7 +1070,7 @@ fn test_check_len_uids_within_allowed_not_within_network_pool() {
         true
     );
 
-    let max_allowed = get_subnetwork_n(&deps.storage, netuid);
+    let _max_allowed = get_subnetwork_n(&deps.storage, netuid);
 
     let max_default_allowed = 256; // set during add_network as default
     let uids: Vec<u16> = Vec::from_iter((0..(max_default_allowed + 1)).map(|uid| uid));

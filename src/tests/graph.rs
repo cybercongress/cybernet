@@ -38,7 +38,6 @@ struct UserOutLink {
 
 #[test]
 pub fn test() {
-
     #[rustfmt::skip]
     let user_out_links = vec![
         UserOutLink { user_id: 1, out_link: 1 },
@@ -90,7 +89,7 @@ pub fn test() {
 
     println!("Sparse Matrix: : {:?}", &sparseWeightsMatrix);
 
-    let mut active_stake: Vec<I32F32> = vec![
+    let active_stake: Vec<I32F32> = vec![
         I32F32::from_num(0),
         I32F32::from_num(2000u16),
         I32F32::from_num(3000u16),

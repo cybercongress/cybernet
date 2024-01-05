@@ -24,7 +24,7 @@ use crate::ContractError;
 
 #[test]
 fn test_root_register_network_exist() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let hotkey_account_id = "addr1";
     let coldkey_account_id = "addr667";
@@ -43,7 +43,7 @@ fn test_root_register_network_exist() {
 
 #[test]
 fn test_root_register_normal_on_root_fails() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     // Test fails because normal registrations are not allowed
     // on the root network.
@@ -90,7 +90,7 @@ fn test_root_register_normal_on_root_fails() {
 
 #[test]
 fn test_root_register_stake_based_pruning_works() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     // Add two networks.
     let root_netuid: u16 = 0;
@@ -540,28 +540,28 @@ fn test_root_subnet_creation_deletion() {
     // // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 1, mult: 2 lock_cost: 200000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        200_000_000_000
+        20_000_000_000
     ); // Doubles from previous subnet creation
 
     step_block(deps.as_mut(), &mut env).unwrap();
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 2, mult: 2 lock_cost: 150000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        150_000_000_000
+        15_000_000_000
     ); // Reduced by 50%
 
     step_block(deps.as_mut(), &mut env).unwrap();
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 3, mult: 2 lock_cost: 100000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        100_000_000_000
+        10_000_000_000
     ); // Reduced another 50%
 
     step_block(deps.as_mut(), &mut env).unwrap();
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 1, lock_reduction_interval: 2, current_block: 4, mult: 2 lock_cost: 100000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        100_000_000_000
+        10_000_000_000
     ); // Reaches min value
     assert_eq!(
         register_network(deps.as_mut(), env.clone(), owner).is_ok(),
@@ -570,7 +570,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 100000000000, min_lock: 100000000000, last_lock_block: 4, lock_reduction_interval: 2, current_block: 4, mult: 2 lock_cost: 200000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        200_000_000_000
+        20_000_000_000
     ); // Doubles from previous subnet creation
 
     step_block(deps.as_mut(), &mut env).unwrap();
@@ -582,7 +582,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 150000000000, min_lock: 100000000000, last_lock_block: 5, lock_reduction_interval: 2, current_block: 5, mult: 2 lock_cost: 300000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        300_000_000_000
+        30_000_000_000
     ); // Doubles from previous subnet creation
 
     step_block(deps.as_mut(), &mut env).unwrap();
@@ -594,7 +594,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 225000000000, min_lock: 100000000000, last_lock_block: 6, lock_reduction_interval: 2, current_block: 6, mult: 2 lock_cost: 450000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        450_000_000_000
+        45_000_000_000
     ); // Increasing
 
     step_block(deps.as_mut(), &mut env).unwrap();
@@ -606,7 +606,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 337500000000, min_lock: 100000000000, last_lock_block: 7, lock_reduction_interval: 2, current_block: 7, mult: 2 lock_cost: 675000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        675_000_000_000
+        67_500_000_000
     ); // Increasing.
     assert_eq!(
         register_network(deps.as_mut(), env.clone(), owner).is_ok(),
@@ -615,7 +615,7 @@ fn test_root_subnet_creation_deletion() {
     // last_lock: 337500000000, min_lock: 100000000000, last_lock_block: 7, lock_reduction_interval: 2, current_block: 7, mult: 2 lock_cost: 675000000000
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        1_350_000_000_000
+        135_000_000_000
     ); // Double increasing.
     assert_eq!(
         register_network(deps.as_mut(), env.clone(), owner).is_ok(),
@@ -623,32 +623,32 @@ fn test_root_subnet_creation_deletion() {
     );
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        2_700_000_000_000
+        270_000_000_000
     ); // Double increasing again.
 
     // Now drop it like its hot to min again.
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        2_025_000_000_000
+        202_500_000_000
     ); // 675_000_000_000 decreasing.
 
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        1_350_000_000_000
+        135_000_000_000
     ); // 675_000_000_000 decreasing.
 
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        675_000_000_000
+        67_500_000_000
     ); // 675_000_000_000 decreasing.
 
     step_block(deps.as_mut(), &mut env).unwrap();
     assert_eq!(
         get_network_lock_cost(&deps.storage, &deps.api, env.block.height).unwrap(),
-        100_000_000_000
+        10_000_000_000
     ); // 675_000_000_000 decreasing with 100000000000 min
 }
 

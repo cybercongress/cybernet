@@ -147,10 +147,6 @@ pub enum ExecuteMsg {
         netuid: u16,
         validator_prune_len: u64,
     },
-    SudoSetScalingLawPower {
-        netuid: u16,
-        scaling_law_power: u16,
-    },
     SudoSetImmunityPeriod {
         netuid: u16,
         immunity_period: u16,
@@ -209,6 +205,10 @@ pub enum ExecuteMsg {
     },
     SudoSetBlockEmission {
         emission: u64,
+    },
+    SudoSetSubnetMetadata {
+        netuid: u16,
+        particle: String,
     },
 }
 

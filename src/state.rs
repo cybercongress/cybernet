@@ -115,6 +115,8 @@ pub const LAST_MECHANISM_STEP_BLOCK: Map<u16, u64> = Map::new("last_mechanism_st
 pub const SUBNET_OWNER: Map<u16, Addr> = Map::new("subnet_owner");
 // --- MAP (netuid ) --> subnet_locked
 pub const SUBNET_LOCKED: Map<u16, u64> = Map::new("subnet_locked");
+// --- MAP (netuid ) --> metadata
+pub const METADATA: Map<u16, String> = Map::new("metadata");
 
 // =================================
 // ==== Axon / Promo Endpoints =====
@@ -198,8 +200,6 @@ pub const BONDS_MOVING_AVERAGE: Map<u16, u64> = Map::new("bonds_moving_average")
 pub const WEIGHTS_SET_RATE_LIMIT: Map<u16, u64> = Map::new("weights_set_rate_limit");
 // --- MAP ( netuid ) --> validator_prune_len
 pub const VALIDATOR_PRUNE_LEN: Map<u16, u64> = Map::new("validator_prune_len");
-// --- MAP ( netuid ) --> scaling_law_power
-pub const SCALING_LAW_POWER: Map<u16, u16> = Map::new("scaling_law_power");
 // --- MAP ( netuid ) --> target_registrations_this_interval
 // TODO update to target_regs_per_interval, check later
 pub const TARGET_REGISTRATIONS_PER_INTERVAL: Map<u16, u16> = Map::new("target_regs_per_interval");

@@ -160,4 +160,7 @@ pub enum ContractError {
 
     #[error("Thrown when all subnets are in the immunity period")]
     AllNetworksInImmunity {},
+
+    #[error("Thrown when particle metadata size is invalid")]
+    MetadataSizeError {},
 }

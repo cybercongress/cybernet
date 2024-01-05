@@ -21,7 +21,7 @@ use crate::uids::{
 
 #[test]
 fn test_replace_neuron() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let netuid: u16 = 1;
     let tempo: u16 = 13;
@@ -94,12 +94,12 @@ fn test_replace_neuron() {
         &deps.storage,
         &Addr::unchecked(new_hotkey_account_id),
     ));
-    assert_eq!(curr_hotkey, new_hotkey_account_id.clone());
+    assert_eq!(curr_hotkey, new_hotkey_account_id);
 }
 
 #[test]
 fn test_replace_neuron_multiple_subnets() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let block_number: u64 = 0;
     let netuid: u16 = 1;
@@ -125,7 +125,7 @@ fn test_replace_neuron_multiple_subnets() {
         netuid1,
         block_number,
         111111 * 5,
-        &hotkey_account_id.clone(),
+        &hotkey_account_id,
     );
 
     let coldkey_account_id = "addr1234";
@@ -208,7 +208,7 @@ fn test_replace_neuron_multiple_subnets() {
 
 #[test]
 fn test_replace_neuron_multiple_subnets_unstake_all() {
-    let (mut deps, mut env) = instantiate_contract();
+    let (mut deps, env) = instantiate_contract();
 
     let block_number: u64 = 0;
     let netuid: u16 = 1;
@@ -235,7 +235,7 @@ fn test_replace_neuron_multiple_subnets_unstake_all() {
         netuid1,
         block_number,
         111111 * 5,
-        &hotkey_account_id.clone(),
+        &hotkey_account_id,
     );
 
     let coldkey_account_id = "1234";

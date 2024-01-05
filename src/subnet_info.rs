@@ -5,9 +5,9 @@ use crate::root::if_subnet_exist;
 use crate::state::{
     ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
     DIFFICULTY, EMISSION_VALUES, IMMUNITY_PERIOD, KAPPA, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS,
-    MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, MIN_ALLOWED_WEIGHTS,
-    MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_MODALITY, NETWORK_REGISTRATION_ALLOWED, RHO,
-    SCALING_LAW_POWER, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO,
+    MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA,
+    MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_MODALITY,
+    NETWORK_REGISTRATION_ALLOWED, RHO, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO,
     WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 use crate::uids::get_subnetwork_n;
@@ -22,16 +22,15 @@ pub struct SubnetInfo {
     pub max_allowed_validators: u16,
     pub min_allowed_weights: u16,
     pub max_weights_limit: u16,
-    pub scaling_law_power: u16,
     pub subnetwork_n: u16,
     pub max_allowed_uids: u16,
     pub blocks_since_last_step: u64,
     pub tempo: u16,
     pub network_modality: u16,
-    pub network_connect: Vec<[u16; 2]>,
     pub emission_values: u64,
     pub burn: u64,
     pub owner: Addr,
+    pub metadata: String,
 }
 
 #[cw_serde]
@@ -68,7 +67,6 @@ pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>>
     let max_allowed_validators = MAX_ALLOWED_VALIDATORS.load(deps.storage, netuid)?;
     let min_allowed_weights = MIN_ALLOWED_WEIGHTS.load(deps.storage, netuid)?;
     let max_weights_limit = MAX_WEIGHTS_LIMIT.load(deps.storage, netuid)?;
-    let scaling_law_power = SCALING_LAW_POWER.load(deps.storage, netuid)?;
     let subnetwork_n = get_subnetwork_n(deps.storage, netuid);
     let max_allowed_uids = MAX_ALLOWED_UIDS.load(deps.storage, netuid)?;
     let blocks_since_last_step = BLOCKS_SINCE_LAST_STEP.load(deps.storage, netuid)?;
@@ -77,14 +75,7 @@ pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>>
     let emission_values = EMISSION_VALUES.load(deps.storage, netuid)?;
     let burn = BURN.load(deps.storage, netuid)?;
     let owner = SUBNET_OWNER.load(deps.storage, netuid)?;
-    // TODO update
-    // let owner = SUBNET_OWNER.load(deps.storage, netuid).map_err(|_| return Ok(None))?;
-
-    // DEPRECATED
-    let network_connect: Vec<[u16; 2]> = Vec::<[u16; 2]>::new();
-    // DEPRECATED for ( _netuid_, con_req) in < NetworkConnect<T> as IterableStorageDoubleMap<u16, u16, u16> >::iter_prefix(netuid) {
-    //     network_connect.push([_netuid_, con_req]);
-    // }
+    let metadata = METADATA.load(deps.storage, netuid)?;
 
     return Ok(Some(SubnetInfo {
         rho: rho.into(),
@@ -95,16 +86,15 @@ pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>>
         max_allowed_validators: max_allowed_validators.into(),
         min_allowed_weights: min_allowed_weights.into(),
         max_weights_limit: max_weights_limit.into(),
-        scaling_law_power: scaling_law_power.into(),
         subnetwork_n: subnetwork_n.into(),
         max_allowed_uids: max_allowed_uids.into(),
         blocks_since_last_step: blocks_since_last_step.into(),
         tempo: tempo.into(),
         network_modality: network_modality.into(),
-        network_connect,
         emission_values: emission_values.into(),
         burn,
         owner: owner.into(),
+        metadata: metadata.into(),
     }));
 }
 

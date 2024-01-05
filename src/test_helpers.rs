@@ -205,7 +205,7 @@ pub fn pow_register_ok_neuron(
     result
 }
 
-pub fn sudo_register_ok_neuron(deps: DepsMut, env: Env, netuid: u16, hotkey: &str, coldkey: &str) {
+pub fn sudo_register_ok_neuron(deps: DepsMut, _env: Env, netuid: u16, hotkey: &str, coldkey: &str) {
     let msg = ExecuteMsg::SudoRegister {
         netuid,
         hotkey: hotkey.to_string(),
@@ -311,7 +311,7 @@ pub fn add_network(store: &mut dyn Storage, netuid: u16, tempo: u16, _modality: 
 }
 
 // TODO revisit block increasing logic before or after step
-pub fn step_block(mut deps: DepsMut, mut env: &mut Env) -> Result<Response, ContractError> {
+pub fn step_block(mut deps: DepsMut, env: &mut Env) -> Result<Response, ContractError> {
     env.block.height += 1;
     let result = execute(
         deps.branch(),
@@ -336,7 +336,7 @@ pub fn step_block(mut deps: DepsMut, mut env: &mut Env) -> Result<Response, Cont
 // TODO revisit block increasing logic before or after step
 pub fn run_step_to_block(
     mut deps: DepsMut,
-    mut env: &mut Env,
+    env: &mut Env,
     block_number: u64,
 ) -> Result<Response, ContractError> {
     while env.block.height < block_number {
