@@ -24,10 +24,10 @@
         "get_delegate": {
           "type": "object",
           "required": [
-            "delegate_account"
+            "delegate"
           ],
           "properties": {
-            "delegate_account": {
+            "delegate": {
               "type": "string"
             }
           },
@@ -45,10 +45,10 @@
         "get_delegated": {
           "type": "object",
           "required": [
-            "delegatee_account"
+            "delegatee"
           ],
           "properties": {
-            "delegatee_account": {
+            "delegatee": {
               "type": "string"
             }
           },
@@ -229,10 +229,10 @@
         "get_stake_info_for_coldkey": {
           "type": "object",
           "required": [
-            "coldkey_account"
+            "coldkey"
           ],
           "properties": {
-            "coldkey_account": {
+            "coldkey": {
               "type": "string"
             }
           },
@@ -250,14 +250,397 @@
         "get_stake_info_for_coldkeys": {
           "type": "object",
           "required": [
-            "coldkey_accounts"
+            "coldkeys"
           ],
           "properties": {
-            "coldkey_accounts": {
+            "coldkeys": {
               "type": "array",
               "items": {
                 "type": "string"
               }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_total_stake_for_hotkey"
+      ],
+      "properties": {
+        "get_total_stake_for_hotkey": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_total_stake_for_coldkey"
+      ],
+      "properties": {
+        "get_total_stake_for_coldkey": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_stake_for_coldkey_and_hotkey"
+      ],
+      "properties": {
+        "get_stake_for_coldkey_and_hotkey": {
+          "type": "object",
+          "required": [
+            "coldkey",
+            "hotkey"
+          ],
+          "properties": {
+            "coldkey": {
+              "type": "string"
+            },
+            "hotkey": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_hotkey_owner"
+      ],
+      "properties": {
+        "get_hotkey_owner": {
+          "type": "object",
+          "required": [
+            "hotkey"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_uid_for_hotkey_on_subnet"
+      ],
+      "properties": {
+        "get_uid_for_hotkey_on_subnet": {
+          "type": "object",
+          "required": [
+            "hotkey",
+            "netuid"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_netuids_for_hotkey"
+      ],
+      "properties": {
+        "get_netuids_for_hotkey": {
+          "type": "object",
+          "required": [
+            "hotkey"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_hotkey_exist"
+      ],
+      "properties": {
+        "get_hotkey_exist": {
+          "type": "object",
+          "required": [
+            "hotkey"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_stake"
+      ],
+      "properties": {
+        "get_stake": {
+          "type": "object",
+          "required": [
+            "hotkey"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_delegate_take"
+      ],
+      "properties": {
+        "get_delegate_take": {
+          "type": "object",
+          "required": [
+            "hotkey"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_subnet_exist"
+      ],
+      "properties": {
+        "get_subnet_exist": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_subnet_owner"
+      ],
+      "properties": {
+        "get_subnet_owner": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_max_weight_limit"
+      ],
+      "properties": {
+        "get_max_weight_limit": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_min_allowed_weights"
+      ],
+      "properties": {
+        "get_min_allowed_weights": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_burn"
+      ],
+      "properties": {
+        "get_burn": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_difficulty"
+      ],
+      "properties": {
+        "get_difficulty": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_tempo"
+      ],
+      "properties": {
+        "get_tempo": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_emission_value_by_subnet"
+      ],
+      "properties": {
+        "get_emission_value_by_subnet": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
             }
           },
           "additionalProperties": false
@@ -281,10 +664,165 @@
     {
       "type": "object",
       "required": [
+        "get_total_networks"
+      ],
+      "properties": {
+        "get_total_networks": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_networks_added"
+      ],
+      "properties": {
+        "get_networks_added": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_all_subnet_netuids"
+      ],
+      "properties": {
+        "get_all_subnet_netuids": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_total_issuance"
+      ],
+      "properties": {
+        "get_total_issuance": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_total_stake"
+      ],
+      "properties": {
+        "get_total_stake": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_tx_rate_limit"
+      ],
+      "properties": {
+        "get_tx_rate_limit": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_axon_info"
+      ],
+      "properties": {
+        "get_axon_info": {
+          "type": "object",
+          "required": [
+            "hotkey",
+            "netuid"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_prometheus_info"
+      ],
+      "properties": {
+        "get_prometheus_info": {
+          "type": "object",
+          "required": [
+            "hotkey",
+            "netuid"
+          ],
+          "properties": {
+            "hotkey": {
+              "type": "string"
+            },
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "get_weights"
       ],
       "properties": {
         "get_weights": {
+          "type": "object",
+          "required": [
+            "netuid"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_weights_sparse"
+      ],
+      "properties": {
+        "get_weights_sparse": {
           "type": "object",
           "required": [
             "netuid"

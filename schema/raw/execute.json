@@ -5,6 +5,32 @@
     {
       "type": "object",
       "required": [
+        "activate"
+      ],
+      "properties": {
+        "activate": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "deactivate"
+      ],
+      "properties": {
+        "deactivate": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "block_step"
       ],
       "properties": {
@@ -71,17 +97,11 @@
         "become_delegate": {
           "type": "object",
           "required": [
-            "hotkey",
-            "take"
+            "hotkey"
           ],
           "properties": {
             "hotkey": {
               "type": "string"
-            },
-            "take": {
-              "type": "integer",
-              "format": "uint16",
-              "minimum": 0.0
             }
           },
           "additionalProperties": false
@@ -98,15 +118,9 @@
         "add_stake": {
           "type": "object",
           "required": [
-            "amount_staked",
             "hotkey"
           ],
           "properties": {
-            "amount_staked": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
-            },
             "hotkey": {
               "type": "string"
             }
@@ -125,11 +139,11 @@
         "remove_stake": {
           "type": "object",
           "required": [
-            "amount_unstaked",
+            "amount",
             "hotkey"
           ],
           "properties": {
-            "amount_unstaked": {
+            "amount": {
               "type": "integer",
               "format": "uint64",
               "minimum": 0.0
@@ -400,18 +414,11 @@
         "sudo_register": {
           "type": "object",
           "required": [
-            "balance",
             "coldkey",
             "hotkey",
-            "netuid",
-            "stake"
+            "netuid"
           ],
           "properties": {
-            "balance": {
-              "type": "integer",
-              "format": "uint64",
-              "minimum": 0.0
-            },
             "coldkey": {
               "type": "string"
             },
@@ -421,11 +428,6 @@
             "netuid": {
               "type": "integer",
               "format": "uint16",
-              "minimum": 0.0
-            },
-            "stake": {
-              "type": "integer",
-              "format": "uint64",
               "minimum": 0.0
             }
           },
@@ -1005,35 +1007,6 @@
     {
       "type": "object",
       "required": [
-        "sudo_set_scaling_law_power"
-      ],
-      "properties": {
-        "sudo_set_scaling_law_power": {
-          "type": "object",
-          "required": [
-            "netuid",
-            "scaling_law_power"
-          ],
-          "properties": {
-            "netuid": {
-              "type": "integer",
-              "format": "uint16",
-              "minimum": 0.0
-            },
-            "scaling_law_power": {
-              "type": "integer",
-              "format": "uint16",
-              "minimum": 0.0
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
         "sudo_set_immunity_period"
       ],
       "properties": {
@@ -1442,6 +1415,33 @@
               "type": "integer",
               "format": "uint64",
               "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "sudo_set_subnet_metadata"
+      ],
+      "properties": {
+        "sudo_set_subnet_metadata": {
+          "type": "object",
+          "required": [
+            "netuid",
+            "particle"
+          ],
+          "properties": {
+            "netuid": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "particle": {
+              "type": "string"
             }
           },
           "additionalProperties": false

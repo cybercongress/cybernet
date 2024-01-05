@@ -1,6 +1,6 @@
 {
   "contract_name": "cybernet",
-  "contract_version": "0.1.0",
+  "contract_version": "0.2.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -12,6 +12,32 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "ExecuteMsg",
     "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "activate"
+        ],
+        "properties": {
+          "activate": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "deactivate"
+        ],
+        "properties": {
+          "deactivate": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
       {
         "type": "object",
         "required": [
@@ -81,17 +107,11 @@
           "become_delegate": {
             "type": "object",
             "required": [
-              "hotkey",
-              "take"
+              "hotkey"
             ],
             "properties": {
               "hotkey": {
                 "type": "string"
-              },
-              "take": {
-                "type": "integer",
-                "format": "uint16",
-                "minimum": 0.0
               }
             },
             "additionalProperties": false
@@ -108,15 +128,9 @@
           "add_stake": {
             "type": "object",
             "required": [
-              "amount_staked",
               "hotkey"
             ],
             "properties": {
-              "amount_staked": {
-                "type": "integer",
-                "format": "uint64",
-                "minimum": 0.0
-              },
               "hotkey": {
                 "type": "string"
               }
@@ -135,11 +149,11 @@
           "remove_stake": {
             "type": "object",
             "required": [
-              "amount_unstaked",
+              "amount",
               "hotkey"
             ],
             "properties": {
-              "amount_unstaked": {
+              "amount": {
                 "type": "integer",
                 "format": "uint64",
                 "minimum": 0.0
@@ -410,18 +424,11 @@
           "sudo_register": {
             "type": "object",
             "required": [
-              "balance",
               "coldkey",
               "hotkey",
-              "netuid",
-              "stake"
+              "netuid"
             ],
             "properties": {
-              "balance": {
-                "type": "integer",
-                "format": "uint64",
-                "minimum": 0.0
-              },
               "coldkey": {
                 "type": "string"
               },
@@ -431,11 +438,6 @@
               "netuid": {
                 "type": "integer",
                 "format": "uint16",
-                "minimum": 0.0
-              },
-              "stake": {
-                "type": "integer",
-                "format": "uint64",
                 "minimum": 0.0
               }
             },
@@ -1015,35 +1017,6 @@
       {
         "type": "object",
         "required": [
-          "sudo_set_scaling_law_power"
-        ],
-        "properties": {
-          "sudo_set_scaling_law_power": {
-            "type": "object",
-            "required": [
-              "netuid",
-              "scaling_law_power"
-            ],
-            "properties": {
-              "netuid": {
-                "type": "integer",
-                "format": "uint16",
-                "minimum": 0.0
-              },
-              "scaling_law_power": {
-                "type": "integer",
-                "format": "uint16",
-                "minimum": 0.0
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      {
-        "type": "object",
-        "required": [
           "sudo_set_immunity_period"
         ],
         "properties": {
@@ -1458,6 +1431,33 @@
           }
         },
         "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "sudo_set_subnet_metadata"
+        ],
+        "properties": {
+          "sudo_set_subnet_metadata": {
+            "type": "object",
+            "required": [
+              "netuid",
+              "particle"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              },
+              "particle": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       }
     ]
   },
@@ -1487,10 +1487,10 @@
           "get_delegate": {
             "type": "object",
             "required": [
-              "delegate_account"
+              "delegate"
             ],
             "properties": {
-              "delegate_account": {
+              "delegate": {
                 "type": "string"
               }
             },
@@ -1508,10 +1508,10 @@
           "get_delegated": {
             "type": "object",
             "required": [
-              "delegatee_account"
+              "delegatee"
             ],
             "properties": {
-              "delegatee_account": {
+              "delegatee": {
                 "type": "string"
               }
             },
@@ -1692,10 +1692,10 @@
           "get_stake_info_for_coldkey": {
             "type": "object",
             "required": [
-              "coldkey_account"
+              "coldkey"
             ],
             "properties": {
-              "coldkey_account": {
+              "coldkey": {
                 "type": "string"
               }
             },
@@ -1713,14 +1713,397 @@
           "get_stake_info_for_coldkeys": {
             "type": "object",
             "required": [
-              "coldkey_accounts"
+              "coldkeys"
             ],
             "properties": {
-              "coldkey_accounts": {
+              "coldkeys": {
                 "type": "array",
                 "items": {
                   "type": "string"
                 }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_total_stake_for_hotkey"
+        ],
+        "properties": {
+          "get_total_stake_for_hotkey": {
+            "type": "object",
+            "required": [
+              "address"
+            ],
+            "properties": {
+              "address": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_total_stake_for_coldkey"
+        ],
+        "properties": {
+          "get_total_stake_for_coldkey": {
+            "type": "object",
+            "required": [
+              "address"
+            ],
+            "properties": {
+              "address": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_stake_for_coldkey_and_hotkey"
+        ],
+        "properties": {
+          "get_stake_for_coldkey_and_hotkey": {
+            "type": "object",
+            "required": [
+              "coldkey",
+              "hotkey"
+            ],
+            "properties": {
+              "coldkey": {
+                "type": "string"
+              },
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_hotkey_owner"
+        ],
+        "properties": {
+          "get_hotkey_owner": {
+            "type": "object",
+            "required": [
+              "hotkey"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_uid_for_hotkey_on_subnet"
+        ],
+        "properties": {
+          "get_uid_for_hotkey_on_subnet": {
+            "type": "object",
+            "required": [
+              "hotkey",
+              "netuid"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_netuids_for_hotkey"
+        ],
+        "properties": {
+          "get_netuids_for_hotkey": {
+            "type": "object",
+            "required": [
+              "hotkey"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_hotkey_exist"
+        ],
+        "properties": {
+          "get_hotkey_exist": {
+            "type": "object",
+            "required": [
+              "hotkey"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_stake"
+        ],
+        "properties": {
+          "get_stake": {
+            "type": "object",
+            "required": [
+              "hotkey"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_delegate_take"
+        ],
+        "properties": {
+          "get_delegate_take": {
+            "type": "object",
+            "required": [
+              "hotkey"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_subnet_exist"
+        ],
+        "properties": {
+          "get_subnet_exist": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_subnet_owner"
+        ],
+        "properties": {
+          "get_subnet_owner": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_max_weight_limit"
+        ],
+        "properties": {
+          "get_max_weight_limit": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_min_allowed_weights"
+        ],
+        "properties": {
+          "get_min_allowed_weights": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_burn"
+        ],
+        "properties": {
+          "get_burn": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_difficulty"
+        ],
+        "properties": {
+          "get_difficulty": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_tempo"
+        ],
+        "properties": {
+          "get_tempo": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_emission_value_by_subnet"
+        ],
+        "properties": {
+          "get_emission_value_by_subnet": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
               }
             },
             "additionalProperties": false
@@ -1744,10 +2127,165 @@
       {
         "type": "object",
         "required": [
+          "get_total_networks"
+        ],
+        "properties": {
+          "get_total_networks": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_networks_added"
+        ],
+        "properties": {
+          "get_networks_added": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_all_subnet_netuids"
+        ],
+        "properties": {
+          "get_all_subnet_netuids": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_total_issuance"
+        ],
+        "properties": {
+          "get_total_issuance": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_total_stake"
+        ],
+        "properties": {
+          "get_total_stake": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_tx_rate_limit"
+        ],
+        "properties": {
+          "get_tx_rate_limit": {
+            "type": "object",
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_axon_info"
+        ],
+        "properties": {
+          "get_axon_info": {
+            "type": "object",
+            "required": [
+              "hotkey",
+              "netuid"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_prometheus_info"
+        ],
+        "properties": {
+          "get_prometheus_info": {
+            "type": "object",
+            "required": [
+              "hotkey",
+              "netuid"
+            ],
+            "properties": {
+              "hotkey": {
+                "type": "string"
+              },
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
           "get_weights"
         ],
         "properties": {
           "get_weights": {
+            "type": "object",
+            "required": [
+              "netuid"
+            ],
+            "properties": {
+              "netuid": {
+                "type": "integer",
+                "format": "uint16",
+                "minimum": 0.0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "get_weights_sparse"
+        ],
+        "properties": {
+          "get_weights_sparse": {
             "type": "object",
             "required": [
               "netuid"
@@ -1782,6 +2320,95 @@
   "migrate": null,
   "sudo": null,
   "responses": {
+    "get_all_subnet_netuids": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_uint16",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint16",
+        "minimum": 0.0
+      }
+    },
+    "get_axon_info": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_AxonInfo",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AxonInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "definitions": {
+        "AxonInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "placeholder1",
+            "placeholder2",
+            "port",
+            "protocol",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder1": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "placeholder2": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "protocol": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "get_burn": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint64",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
     "get_delegate": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Nullable_DelegateInfo",
@@ -1801,9 +2428,9 @@
         "DelegateInfo": {
           "type": "object",
           "required": [
-            "delegate_ss58",
+            "delegate",
             "nominators",
-            "owner_ss58",
+            "owner",
             "registrations",
             "return_per_1000",
             "take",
@@ -1811,7 +2438,7 @@
             "validator_permits"
           ],
           "properties": {
-            "delegate_ss58": {
+            "delegate": {
               "$ref": "#/definitions/Addr"
             },
             "nominators": {
@@ -1832,7 +2459,7 @@
                 "minItems": 2
               }
             },
-            "owner_ss58": {
+            "owner": {
               "$ref": "#/definitions/Addr"
             },
             "registrations": {
@@ -1871,6 +2498,16 @@
         }
       }
     },
+    "get_delegate_take": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint16",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint16",
+      "minimum": 0.0
+    },
     "get_delegated": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Array_of_Tuple_of_DelegateInfo_and_uint64",
@@ -1898,9 +2535,9 @@
         "DelegateInfo": {
           "type": "object",
           "required": [
-            "delegate_ss58",
+            "delegate",
             "nominators",
-            "owner_ss58",
+            "owner",
             "registrations",
             "return_per_1000",
             "take",
@@ -1908,7 +2545,7 @@
             "validator_permits"
           ],
           "properties": {
-            "delegate_ss58": {
+            "delegate": {
               "$ref": "#/definitions/Addr"
             },
             "nominators": {
@@ -1929,7 +2566,7 @@
                 "minItems": 2
               }
             },
-            "owner_ss58": {
+            "owner": {
               "$ref": "#/definitions/Addr"
             },
             "registrations": {
@@ -1983,9 +2620,9 @@
         "DelegateInfo": {
           "type": "object",
           "required": [
-            "delegate_ss58",
+            "delegate",
             "nominators",
-            "owner_ss58",
+            "owner",
             "registrations",
             "return_per_1000",
             "take",
@@ -1993,7 +2630,7 @@
             "validator_permits"
           ],
           "properties": {
-            "delegate_ss58": {
+            "delegate": {
               "$ref": "#/definitions/Addr"
             },
             "nominators": {
@@ -2014,7 +2651,7 @@
                 "minItems": 2
               }
             },
-            "owner_ss58": {
+            "owner": {
               "$ref": "#/definitions/Addr"
             },
             "registrations": {
@@ -2053,12 +2690,85 @@
         }
       }
     },
+    "get_difficulty": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint64",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_emission_value_by_subnet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_hotkey_exist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Boolean",
+      "type": "boolean"
+    },
+    "get_hotkey_owner": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_String",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "get_max_weight_limit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint16",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "get_min_allowed_weights": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint16",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "get_netuids_for_hotkey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_Array_of_uint16",
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "integer",
+        "format": "uint16",
+        "minimum": 0.0
+      }
+    },
     "get_network_registration_cost": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "uint64",
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0
+    },
+    "get_networks_added": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_uint16",
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint16",
+        "minimum": 0.0
+      }
     },
     "get_neuron": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -3044,6 +3754,87 @@
         }
       }
     },
+    "get_prometheus_info": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_PrometheusInfo",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PrometheusInfo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "definitions": {
+        "PrometheusInfo": {
+          "type": "object",
+          "required": [
+            "block",
+            "ip",
+            "ip_type",
+            "port",
+            "version"
+          ],
+          "properties": {
+            "block": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "ip": {
+              "type": "integer",
+              "format": "uint128",
+              "minimum": 0.0
+            },
+            "ip_type": {
+              "type": "integer",
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "port": {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            "version": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
+    },
+    "get_stake": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Tuple_of_String_and_uint64",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        ],
+        "maxItems": 2,
+        "minItems": 2
+      }
+    },
+    "get_stake_for_coldkey_and_hotkey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint64",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
     "get_stake_info_for_coldkey": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "StakeInfo",
@@ -3160,7 +3951,6 @@
         "network_last_lock_cost",
         "network_last_registered",
         "network_lock_reduction_interval",
-        "network_min_allowed_uids",
         "network_min_lock_cost",
         "network_modality",
         "network_rate_limit",
@@ -3178,7 +3968,6 @@
         "registrations_this_interval",
         "rho",
         "root",
-        "scaling_law_power",
         "serving_rate_limit",
         "staked_hotkey_coldkey",
         "subnet_limit",
@@ -4091,11 +4880,6 @@
           "format": "uint64",
           "minimum": 0.0
         },
-        "network_min_allowed_uids": {
-          "type": "integer",
-          "format": "uint16",
-          "minimum": 0.0
-        },
         "network_min_lock_cost": {
           "type": "integer",
           "format": "uint64",
@@ -4398,26 +5182,6 @@
         },
         "root": {
           "$ref": "#/definitions/Addr"
-        },
-        "scaling_law_power": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "items": [
-              {
-                "type": "integer",
-                "format": "uint16",
-                "minimum": 0.0
-              },
-              {
-                "type": "integer",
-                "format": "uint16",
-                "minimum": 0.0
-              }
-            ],
-            "maxItems": 2,
-            "minItems": 2
-          }
         },
         "serving_rate_limit": {
           "type": "array",
@@ -4936,6 +5700,11 @@
         }
       }
     },
+    "get_subnet_exist": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Boolean",
+      "type": "boolean"
+    },
     "get_subnet_hyperparams": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "SubnetHyperparams",
@@ -5066,13 +5835,12 @@
         "max_allowed_uids",
         "max_allowed_validators",
         "max_weights_limit",
+        "metadata",
         "min_allowed_weights",
         "netuid",
-        "network_connect",
         "network_modality",
         "owner",
         "rho",
-        "scaling_law_power",
         "subnetwork_n",
         "tempo"
       ],
@@ -5122,6 +5890,9 @@
           "format": "uint16",
           "minimum": 0.0
         },
+        "metadata": {
+          "type": "string"
+        },
         "min_allowed_weights": {
           "type": "integer",
           "format": "uint16",
@@ -5132,19 +5903,6 @@
           "format": "uint16",
           "minimum": 0.0
         },
-        "network_connect": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "uint16",
-              "minimum": 0.0
-            },
-            "maxItems": 2,
-            "minItems": 2
-          }
-        },
         "network_modality": {
           "type": "integer",
           "format": "uint16",
@@ -5154,11 +5912,6 @@
           "$ref": "#/definitions/Addr"
         },
         "rho": {
-          "type": "integer",
-          "format": "uint16",
-          "minimum": 0.0
-        },
-        "scaling_law_power": {
           "type": "integer",
           "format": "uint16",
           "minimum": 0.0
@@ -5181,6 +5934,14 @@
           "type": "string"
         }
       }
+    },
+    "get_subnet_owner": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_String",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "get_subnets_info": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -5206,13 +5967,12 @@
             "max_allowed_uids",
             "max_allowed_validators",
             "max_weights_limit",
+            "metadata",
             "min_allowed_weights",
             "netuid",
-            "network_connect",
             "network_modality",
             "owner",
             "rho",
-            "scaling_law_power",
             "subnetwork_n",
             "tempo"
           ],
@@ -5262,6 +6022,9 @@
               "format": "uint16",
               "minimum": 0.0
             },
+            "metadata": {
+              "type": "string"
+            },
             "min_allowed_weights": {
               "type": "integer",
               "format": "uint16",
@@ -5272,19 +6035,6 @@
               "format": "uint16",
               "minimum": 0.0
             },
-            "network_connect": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "uint16",
-                  "minimum": 0.0
-                },
-                "maxItems": 2,
-                "minItems": 2
-              }
-            },
             "network_modality": {
               "type": "integer",
               "format": "uint16",
@@ -5294,11 +6044,6 @@
               "$ref": "#/definitions/Addr"
             },
             "rho": {
-              "type": "integer",
-              "format": "uint16",
-              "minimum": 0.0
-            },
-            "scaling_law_power": {
               "type": "integer",
               "format": "uint16",
               "minimum": 0.0
@@ -5318,6 +6063,74 @@
         }
       }
     },
+    "get_tempo": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint16",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "get_total_issuance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_total_networks": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint16",
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "get_total_stake": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_total_stake_for_coldkey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint64",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_total_stake_for_hotkey": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint64",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_tx_rate_limit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "uint64",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "get_uid_for_hotkey_on_subnet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Nullable_uint16",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint16",
+      "minimum": 0.0
+    },
     "get_weights": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Array_of_Array_of_uint16",
@@ -5328,6 +6141,31 @@
           "type": "integer",
           "format": "uint16",
           "minimum": 0.0
+        }
+      }
+    },
+    "get_weights_sparse": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Array_of_Tuple_of_uint16_and_uint16",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": [
+            {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            },
+            {
+              "type": "integer",
+              "format": "uint16",
+              "minimum": 0.0
+            }
+          ],
+          "maxItems": 2,
+          "minItems": 2
         }
       }
     }
