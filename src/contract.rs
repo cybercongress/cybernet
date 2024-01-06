@@ -193,7 +193,7 @@ pub fn instantiate(
     NETWORK_REGISTRATION_ALLOWED.save(deps.storage, netuid, &true)?;
     METADATA.save(
         deps.storage,
-        root_netuid,
+        netuid,
         &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
     )?;
 
