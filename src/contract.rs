@@ -217,7 +217,8 @@ pub fn instantiate(
     Ok(Response::default().add_attribute("action", "instantiate"))
 }
 
-pub fn activate(_deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+    let denom = DENOM.load(deps.storage)?;
     let res = Response::new()
         .add_message(create_creat_thought_msg(
             env.contract.address.to_string(),
@@ -229,7 +230,7 @@ pub fn activate(_deps: DepsMut, env: Env) -> Result<Response, ContractError> {
                 // {"block_step":{}}
                 input: "eyJibG9ja19zdGVwIjp7fX0=".to_string(),
                 gas_price: Coin {
-                    denom: "boot".to_string(),
+                    denom: denom.to_string(),
                     amount: Uint128::from(10u128),
                 },
             },
