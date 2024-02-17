@@ -1,4 +1,4 @@
-use cosmwasm_std::{ensure, Addr, DepsMut, Env, MessageInfo, Storage};
+use cosmwasm_std::{ensure, Addr, DepsMut, Env, MessageInfo, Storage, Uint128};
 
 use crate::state::{AxonInfo, AxonInfoOf, PrometheusInfo, PrometheusInfoOf, AXONS, PROMETHEUS};
 use crate::uids::is_hotkey_registered_on_any_network;
@@ -62,7 +62,7 @@ pub fn do_serve_axon(
     info: MessageInfo,
     netuid: u16,
     version: u32,
-    ip: u128,
+    ip: Uint128,
     port: u16,
     ip_type: u8,
     protocol: u8,
@@ -81,7 +81,7 @@ pub fn do_serve_axon(
     // --- 3. Check the ip signature validity.
     ensure!(is_valid_ip_type(ip_type), ContractError::InvalidIpType {});
     ensure!(
-        is_valid_ip_address(ip_type, ip),
+        is_valid_ip_address(ip_type, ip.u128()),
         ContractError::InvalidIpAddress {}
     );
 
@@ -173,7 +173,7 @@ pub fn do_serve_prometheus(
     info: MessageInfo,
     netuid: u16,
     version: u32,
-    ip: u128,
+    ip: Uint128,
     port: u16,
     ip_type: u8,
 ) -> Result<Response, ContractError> {
@@ -189,7 +189,7 @@ pub fn do_serve_prometheus(
     // --- 3. Check the ip signature validity.
     ensure!(is_valid_ip_type(ip_type), ContractError::InvalidIpType {});
     ensure!(
-        is_valid_ip_address(ip_type, ip),
+        is_valid_ip_address(ip_type, ip.u128()),
         ContractError::InvalidIpAddress {}
     );
 
@@ -268,7 +268,7 @@ pub fn get_axon_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> AxonInf
         AxonInfo {
             block: 0,
             version: 0,
-            ip: 0,
+            ip: Uint128::zero(),
             port: 0,
             ip_type: 0,
             protocol: 0,
@@ -289,7 +289,7 @@ pub fn get_prometheus_info(store: &dyn Storage, netuid: u16, hotkey: &Addr) -> P
         PrometheusInfo {
             block: 0,
             version: 0,
-            ip: 0,
+            ip: Uint128::zero(),
             port: 0,
             ip_type: 0,
         }

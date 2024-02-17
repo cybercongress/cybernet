@@ -1,4 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Uint128;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -30,7 +31,7 @@ pub enum ExecuteMsg {
     ServeAxon {
         netuid: u16,
         version: u32,
-        ip: u128,
+        ip: Uint128,
         port: u16,
         ip_type: u8,
         protocol: u8,
@@ -40,7 +41,7 @@ pub enum ExecuteMsg {
     ServePrometheus {
         netuid: u16,
         version: u32,
-        ip: u128,
+        ip: Uint128,
         port: u16,
         ip_type: u8,
     },
