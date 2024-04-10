@@ -1,4 +1,4 @@
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Uint128};
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -129,7 +129,7 @@ pub type AxonInfoOf = AxonInfo;
 pub struct AxonInfo {
     pub block: u64,       // --- Axon serving block.
     pub version: u32,     // --- Axon version
-    pub ip: u128,         // --- Axon u128 encoded ip address of type v6 or v4.
+    pub ip: Uint128,         // --- Axon u128 encoded ip address of type v6 or v4.
     pub port: u16,        // --- Axon u16 encoded port.
     pub ip_type: u8,      // --- Axon ip type, 4 for ipv4 and 6 for ipv6.
     pub protocol: u8,     // --- Axon protocol. TCP, UDP, other.
@@ -143,7 +143,7 @@ pub type PrometheusInfoOf = PrometheusInfo;
 pub struct PrometheusInfo {
     pub block: u64,   // --- Prometheus serving block.
     pub version: u32, // --- Prometheus version.
-    pub ip: u128,     // --- Prometheus u128 encoded ip address of type v6 or v4.
+    pub ip: Uint128,  // --- Prometheus u128 encoded ip address of type v6 or v4.
     pub port: u16,    // --- Prometheus u16 encoded port.
     pub ip_type: u8,  // --- Prometheus ip type, 4 for ipv4 and 6 for ipv6.
 }
