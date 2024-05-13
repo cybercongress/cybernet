@@ -635,6 +635,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetWeightsSparse { netuid } => {
             to_json_binary(&get_network_weights_sparse(deps.storage, netuid)?)
         }
+        QueryMsg::GetBlockRewards {} => {
+            to_json_binary(&get_block_rewards(deps.storage)?)
+        }
     }
 }
 
@@ -863,6 +866,14 @@ pub fn query_get_stake(store: &dyn Storage, hotkey: &Addr) -> StdResult<Vec<(Str
         })
         .collect::<Vec<(String, u64)>>();
     Ok(stakes)
+}
+
+pub fn get_block_rewards(
+    store: &dyn Storage,
+) -> StdResult<Coin> {
+    let block_rewards = BLOCK_EMISSION.load(store)?;
+    let denom = DENOM.load(store)?;
+    Ok(Coin::new(u128::from(block_rewards), denom))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

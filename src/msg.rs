@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Uint128, Coin};
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -314,6 +314,9 @@ pub enum QueryMsg {
 
     #[returns(crate::state_info::StateInfo)]
     GetState {},
+
+    #[returns(Coin)]
+    GetBlockRewards {},
 }
 
 #[cw_serde]
