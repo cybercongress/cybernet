@@ -1,5 +1,6 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Uint128, Coin};
+use crate::state::Metadata;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -210,7 +211,7 @@ pub enum ExecuteMsg {
     },
     SudoSetSubnetMetadata {
         netuid: u16,
-        particle: String,
+        metadata: Metadata,
     },
     SudoSetSubnetOwner {
         netuid: u16,

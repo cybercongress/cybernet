@@ -11,7 +11,7 @@ use crate::staking::{
     create_account_if_non_existent, delegate_hotkey, get_total_stake_for_hotkey, hotkey_is_delegate,
 };
 use crate::state::{
-    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS,
+    Metadata, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS,
     BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DENOM, DIFFICULTY,
     DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS,
     LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN,
@@ -824,7 +824,12 @@ pub fn init_new_network(
     METADATA.save(
         store,
         netuid,
-        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+        &Metadata {
+            name: "empty".to_string(),
+            particle: "".to_string(),
+            description: "".to_string(),
+            logo: "".to_string(),
+        }
     )?;
 
     Ok(())

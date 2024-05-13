@@ -16,7 +16,7 @@ use crate::serving::{do_serve_axon, do_serve_prometheus};
 use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys};
 use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake};
 use crate::state::{
-    AxonInfo, PrometheusInfo, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
+    AxonInfo, PrometheusInfo, Metadata, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
     ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
     BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY,
     DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
@@ -50,7 +50,7 @@ use crate::utils::{
     do_sudo_set_target_registrations_per_interval, do_sudo_set_tempo, do_sudo_set_total_issuance,
     do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid,
     do_sudo_set_validator_prune_len, do_sudo_set_weights_set_rate_limit,
-    do_sudo_set_weights_version_key,
+    do_sudo_set_weights_version_key, do_sudo_set_root, do_sudo_set_subnet_owner,
 };
 use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
@@ -142,7 +142,12 @@ pub fn instantiate(
     METADATA.save(
         deps.storage,
         root_netuid,
-        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+        &Metadata {
+            name: "root".to_string(),
+            particle: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            description: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            logo: "".to_string(),
+        }
     )?;
 
     // -- Subnetwork 1 initialization --
@@ -194,7 +199,12 @@ pub fn instantiate(
     METADATA.save(
         deps.storage,
         netuid,
-        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+        &Metadata {
+            name: "x".to_string(),
+            particle: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            description: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            logo: "".to_string(),
+        }
     )?;
 
     RANK.save(deps.storage, netuid, &vec![])?;
@@ -485,8 +495,8 @@ pub fn execute(
         ExecuteMsg::SudoSetBlockEmission { emission } => {
             do_sudo_set_block_emission(deps, env, info, emission)
         }
-        ExecuteMsg::SudoSetSubnetMetadata { netuid, particle } => {
-            do_sudo_set_subnet_metadata(deps, env, info, netuid, particle)
+        ExecuteMsg::SudoSetSubnetMetadata { netuid, metadata } => {
+            do_sudo_set_subnet_metadata(deps, env, info, netuid, metadata)
         }
         ExecuteMsg::SudoSetSubnetOwner { netuid, new_owner } => {
             do_sudo_set_subnet_owner(deps, env, info, netuid, new_owner)

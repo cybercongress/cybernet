@@ -4,7 +4,7 @@ use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Storage};
 
 use crate::root::if_subnet_exist;
 use crate::state::{
-    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP,
+    Metadata, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP,
     BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
     BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DIFFICULTY, DIVIDENDS, EMISSION,
     EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
@@ -1599,17 +1599,22 @@ pub fn do_sudo_set_subnet_metadata(
     _env: Env,
     info: MessageInfo,
     netuid: u16,
-    particle: String,
+    metadata: Metadata,
 ) -> Result<Response, ContractError> {
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
-    ensure!(particle.len() == 46, ContractError::MetadataSizeError {});
 
-    METADATA.save(deps.storage, netuid, &particle)?;
+    ensure!(metadata.name.len() <= 16, ContractError::MetadataError {});
+    ensure!(metadata.particle.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.description.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.logo.len() == 46, ContractError::MetadataError {});
+
+    METADATA.save(deps.storage, netuid, &metadata)?;
 
     Ok(Response::default()
         .add_attribute("action", "metadata_set")
         .add_attribute("netuid", format!("{}", netuid))
-        .add_attribute("metadata", format!("{}", particle)))
+        .add_attribute("name", format!("{}", metadata.name))
+        .add_attribute("particle", format!("{}", metadata.particle)))
 }
 
 pub fn do_sudo_set_subnet_owner(

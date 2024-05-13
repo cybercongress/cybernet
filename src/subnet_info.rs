@@ -3,7 +3,7 @@ use cosmwasm_std::{Addr, Deps, Order, StdResult};
 
 use crate::root::if_subnet_exist;
 use crate::state::{
-    ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
+    Metadata, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
     DIFFICULTY, EMISSION_VALUES, IMMUNITY_PERIOD, KAPPA, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS,
     MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA,
     MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_MODALITY,
@@ -30,7 +30,7 @@ pub struct SubnetInfo {
     pub emission_values: u64,
     pub burn: u64,
     pub owner: Addr,
-    pub metadata: String,
+    pub metadata: Metadata,
 }
 
 #[cw_serde]

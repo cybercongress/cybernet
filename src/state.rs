@@ -116,7 +116,15 @@ pub const SUBNET_OWNER: Map<u16, Addr> = Map::new("subnet_owner");
 // --- MAP (netuid ) --> subnet_locked
 pub const SUBNET_LOCKED: Map<u16, u64> = Map::new("subnet_locked");
 // --- MAP (netuid ) --> metadata
-pub const METADATA: Map<u16, String> = Map::new("metadata");
+pub const METADATA: Map<u16, Metadata> = Map::new("metadata");
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Metadata {
+    pub name: String,
+    pub particle: String, // particle
+    pub description: String, // particle
+    pub logo: String, // particle
+}
 
 // =================================
 // ==== Axon / Promo Endpoints =====
