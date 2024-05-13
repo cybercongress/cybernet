@@ -488,6 +488,9 @@ pub fn execute(
         ExecuteMsg::SudoSetSubnetMetadata { netuid, particle } => {
             do_sudo_set_subnet_metadata(deps, env, info, netuid, particle)
         }
+        ExecuteMsg::SudoSetSubnetOwner { netuid, new_owner } => {
+            do_sudo_set_subnet_owner(deps, env, info, netuid, new_owner)
+        }
     }
 }
 

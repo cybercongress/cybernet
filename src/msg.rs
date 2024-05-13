@@ -212,6 +212,10 @@ pub enum ExecuteMsg {
         netuid: u16,
         particle: String,
     },
+    SudoSetSubnetOwner {
+        netuid: u16,
+        new_owner: String,
+    },
 }
 
 #[cw_serde]

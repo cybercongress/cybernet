@@ -1611,3 +1611,23 @@ pub fn do_sudo_set_subnet_metadata(
         .add_attribute("netuid", format!("{}", netuid))
         .add_attribute("metadata", format!("{}", particle)))
 }
+
+pub fn do_sudo_set_subnet_owner(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    netuid: u16,
+    new_owner: String,
+) -> Result<Response, ContractError> {
+    // TODO change to subnet_owner auth only
+    ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
+
+    let owner = deps.api.addr_validate(&new_owner)?;
+
+    SUBNET_OWNER.save(deps.storage, netuid, &owner)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "subnet_owner_set")
+        .add_attribute("netuid", format!("{}", netuid))
+        .add_attribute("owner", format!("{}", owner)))
+}
