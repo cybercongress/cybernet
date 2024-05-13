@@ -851,6 +851,19 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_block_rewards"
+      ],
+      "properties": {
+        "get_block_rewards": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ]
 }
