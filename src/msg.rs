@@ -216,6 +216,9 @@ pub enum ExecuteMsg {
         netuid: u16,
         new_owner: String,
     },
+    SudoSetRoot {
+        new_root: String,
+    },
 }
 
 #[cw_serde]

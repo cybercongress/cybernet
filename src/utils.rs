@@ -1631,3 +1631,20 @@ pub fn do_sudo_set_subnet_owner(
         .add_attribute("netuid", format!("{}", netuid))
         .add_attribute("owner", format!("{}", owner)))
 }
+
+pub fn do_sudo_set_root(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    new_root: String,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    let root = deps.api.addr_validate(&new_root)?;
+
+    ROOT.save(deps.storage, &root)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "root_set")
+        .add_attribute("root", format!("{}", root)))
+}

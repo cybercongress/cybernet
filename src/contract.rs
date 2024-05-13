@@ -491,6 +491,9 @@ pub fn execute(
         ExecuteMsg::SudoSetSubnetOwner { netuid, new_owner } => {
             do_sudo_set_subnet_owner(deps, env, info, netuid, new_owner)
         }
+        ExecuteMsg::SudoSetRoot { new_root, } => {
+            do_sudo_set_root(deps, env, info, new_root)
+        },
     }
 }
 
