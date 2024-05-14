@@ -1,9 +1,7 @@
-use std::ops::Deref;
+use std::ops::{Deref, Mul};
+use std::str::FromStr;
 
-use cosmwasm_std::{
-    coins, ensure, Addr, BankMsg, CosmosMsg, DepsMut, Env, MessageInfo, Order, StdResult, Storage,
-    Uint128,
-};
+use cosmwasm_std::{coins, ensure, Addr, BankMsg, CosmosMsg, DepsMut, Env, MessageInfo, Order, StdResult, Storage, Uint128, Decimal};
 use cw_utils::must_pay;
 
 use crate::state::{
@@ -308,6 +306,72 @@ pub fn do_remove_stake(
         .add_attribute("action", "stake_removed")
         .add_attribute("hotkey", hotkey.clone())
         .add_attribute("stake_to_be_removed", format!("{}", stake_to_be_removed)))
+}
+
+pub fn do_set_delegate_commission(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    hotkey_address: String,
+    new_commission: String,
+) -> Result<Response, ContractError> {
+    let commission = Decimal::from_str(&new_commission).map_err(|_| ContractError::InvalidCommission {})?;
+    ensure!(
+        commission > Decimal::zero() && commission <= Decimal::one(),
+        ContractError::InvalidCommission {}
+    );
+
+    // --- 1. We check the coldkey signuture.
+    let coldkey = info.sender;
+    let hotkey = deps.api.addr_validate(&hotkey_address)?;
+
+    deps.api.debug(&format!(
+        "🌐 do_set_deletate_commission ( coldkey:{:?} hotkey:{:?}, commission:{:?} )",
+        coldkey, hotkey, new_commission
+    ));
+
+    // --- 2. Ensure we are delegating an known key.
+    ensure!(
+        hotkey_account_exists(deps.storage, &hotkey),
+        ContractError::NotRegistered {}
+    );
+
+    // --- 3. Ensure that the coldkey is the owner.
+    ensure!(
+        coldkey_owns_hotkey(deps.storage, &coldkey, &hotkey),
+        ContractError::NonAssociatedColdKey {}
+    );
+
+    // --- 5. Ensure we don't exceed tx rate limit
+    ensure!(
+        !exceeds_tx_rate_limit(
+            deps.storage,
+            get_last_tx_block(deps.storage, &coldkey),
+            env.block.height
+        ),
+        ContractError::TxRateLimitExceeded {}
+    );
+
+    // --- 6. Delegate the key.
+    let take = Decimal::new(Uint128::new(65536u128)).mul(commission).to_uint_floor().u128();
+    delegate_hotkey(deps.storage, &hotkey, take as u16);
+
+    // Set last block for rate limiting
+    set_last_tx_block(deps.storage, &coldkey, env.block.height);
+
+    // --- 7. Emit the staking event.
+    deps.api.debug(&format!(
+        "🌐 SetDelegateCommission( coldkey:{:?}, hotkey:{:?}, commission:{:?} )",
+        coldkey,
+        hotkey,
+        commission
+    ));
+
+    // --- 8. Ok and return.
+    Ok(Response::default()
+        .add_attribute("action", "set_delegate_commission")
+        .add_attribute("hotkey", hotkey)
+        .add_attribute("commission", format!("{}", commission)))
 }
 
 // Returns true if the passed hotkey allow delegative staking.

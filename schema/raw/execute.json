@@ -160,6 +160,31 @@
     {
       "type": "object",
       "required": [
+        "set_delegate_commission"
+      ],
+      "properties": {
+        "set_delegate_commission": {
+          "type": "object",
+          "required": [
+            "commission",
+            "hotkey"
+          ],
+          "properties": {
+            "commission": {
+              "type": "string"
+            },
+            "hotkey": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "serve_axon"
       ],
       "properties": {

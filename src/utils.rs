@@ -1604,6 +1604,7 @@ pub fn do_sudo_set_subnet_metadata(
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
     ensure!(metadata.name.len() <= 16, ContractError::MetadataError {});
+    ensure!(metadata.name.ne(&"root".to_string()), ContractError::MetadataError {});
     ensure!(metadata.particle.len() == 46, ContractError::MetadataError {});
     ensure!(metadata.description.len() == 46, ContractError::MetadataError {});
     ensure!(metadata.logo.len() == 46, ContractError::MetadataError {});

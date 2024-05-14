@@ -1,6 +1,6 @@
 {
   "contract_name": "cybernet",
-  "contract_version": "0.2.0",
+  "contract_version": "0.3.0",
   "idl_version": "1.0.0",
   "instantiate": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -157,6 +157,31 @@
                 "type": "integer",
                 "format": "uint64",
                 "minimum": 0.0
+              },
+              "hotkey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "set_delegate_commission"
+        ],
+        "properties": {
+          "set_delegate_commission": {
+            "type": "object",
+            "required": [
+              "commission",
+              "hotkey"
+            ],
+            "properties": {
+              "commission": {
+                "type": "string"
               },
               "hotkey": {
                 "type": "string"

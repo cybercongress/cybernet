@@ -166,4 +166,10 @@ pub enum ContractError {
 
     #[error("Thrown when contract denom is not set based on instantiate message token")]
     DenomSetError {},
+
+    #[error("Thrown when contract have issue during migration")]
+    MigrationError {},
+
+    #[error("Thrown when delegate attempt to set invalid commission")]
+    InvalidCommission {},
 }

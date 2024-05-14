@@ -14,7 +14,7 @@ use crate::registration::{do_burned_registration, do_registration, do_sudo_regis
 use crate::root::{do_root_register, get_network_lock_cost, user_add_network, user_remove_network};
 use crate::serving::{do_serve_axon, do_serve_prometheus};
 use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys};
-use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake};
+use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake, do_set_delegate_commission};
 use crate::state::{
     AxonInfo, PrometheusInfo, Metadata, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
     ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
@@ -89,8 +89,8 @@ pub fn instantiate(
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
 
-    // 6.25% (2^12/2^16)
-    DEFAULT_TAKE.save(deps.storage, &4096)?;
+    // 6.9% (4522/2^16)
+    DEFAULT_TAKE.save(deps.storage, &4522)?;
     TX_RATE_LIMIT.save(deps.storage, &0)?;
 
     NETWORK_LAST_LOCK_COST.save(deps.storage, &10_000_000_000)?;
@@ -293,6 +293,9 @@ pub fn execute(
         ExecuteMsg::AddStake { hotkey } => do_add_stake(deps, env, info, hotkey),
         ExecuteMsg::RemoveStake { hotkey, amount } => {
             do_remove_stake(deps, env, info, hotkey, amount)
+        }
+        ExecuteMsg::SetDelegateCommission { hotkey, commission } => {
+            do_set_delegate_commission(deps, env, info, hotkey, commission)
         }
         ExecuteMsg::ServeAxon {
             netuid,

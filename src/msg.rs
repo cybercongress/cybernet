@@ -28,6 +28,10 @@ pub enum ExecuteMsg {
         hotkey: String,
         amount: u64,
     },
+    SetDelegateCommission {
+        hotkey: String,
+        commission: String,
+    },
     ServeAxon {
         netuid: u16,
         version: u32,
