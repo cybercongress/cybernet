@@ -1,9 +1,10 @@
 #[cfg(test)]
 use std::fs::File;
 use std::io::Write;
+use std::ops::Deref;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockQuerier};
-use cosmwasm_std::{coin, Addr, Coin, DepsMut, Empty, Env, OwnedDeps, Storage};
+use cosmwasm_std::{coin, Addr, Coin, DepsMut, Empty, Env, OwnedDeps, Storage, Uint128, CustomQuery, Api, QuerierWrapper};
 use cw_multi_test::{Contract, ContractWrapper, Executor};
 use cw_storage_gas_meter::MemoryStorageWithGas;
 use cyber_std::CyberMsgWrapper;
@@ -59,6 +60,14 @@ fn mock_app(contract_balance: &[Coin]) -> CyberApp {
                 contract_balance.to_vec(),
             )
             .unwrap();
+        router
+            .bank
+            .init_balance(
+                storage,
+                &Addr::unchecked(ROOT),
+                contract_balance.to_vec(),
+            )
+            .unwrap();
     });
     app
 }
@@ -89,7 +98,7 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
     let mut env = mock_env();
     env.block.height = 1;
 
-    let info = mock_info(ROOT, &[]);
+    let info = mock_info(ROOT, &[coin(1u128, "boot".to_string())]);
     let res = instantiate(deps.as_mut(), env.clone(), info, msg).unwrap();
     // root_register(deps.as_mut(), env.clone(), ROOT, ROOT);
     assert_eq!(res.messages.len(), 0);
@@ -98,7 +107,7 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
         execute(
             deps.as_mut(),
             env.clone(),
-            mock_info("ROOT", &[]),
+            mock_info(ROOT, &[]),
             ExecuteMsg::BlockStep {},
         )
         .is_ok(),
@@ -108,47 +117,48 @@ pub fn instantiate_contract() -> (TestDeps, Env) {
     (deps, env)
 }
 
-// pub fn instantiate_contract_app(app: &mut CyberApp) -> Addr {
-//     // TODO fix this
-//     let cn_id = app.store_code(cn_contract());
-//     let msg = crate::msg::InstantiateMsg {};
-//
-//     app.instantiate_contract(
-//         cn_id,
-//         Addr::unchecked(ROOT.to_string()),
-//         &msg,
-//         &[],
-//         "cybernet",
-//         None,
-//     )
-//     .unwrap()
-// }
+pub fn instantiate_contract_app(app: &mut CyberApp) -> Addr {
+    // TODO fix this
+    let cn_id = app.store_code(cn_contract());
+    let msg = crate::msg::InstantiateMsg {};
 
-// pub fn register_ok_neuron_app(
-//     app: &mut CyberApp,
-//     netuid: u16,
-//     hotkey: &str,
-//     coldkey: String,
-//     nonce: u64,
-// ) {
-//     let msg = ExecuteMsg::Register {
-//         netuid,
-//         block_number: app.block_info().height,
-//         nonce,
-//         work: vec![],
-//         hotkey: hotkey.to_string(),
-//         coldkey,
-//     };
-//
-//     let res = app.execute_contract(
-//         Addr::unchecked(hotkey),
-//         Addr::unchecked(CT_ADDR.to_string()),
-//         &msg,
-//         &[],
-//     );
-//     // app.update_block(|block| block.height += 100);
-//     assert_eq!(res.is_ok(), true);
-// }
+    app.instantiate_contract(
+        cn_id,
+        Addr::unchecked(ROOT.to_string()),
+        &msg,
+        &[coin(1u128, "boot".to_string())],
+        "cybernet",
+        None,
+    )
+    .unwrap()
+}
+
+pub fn register_ok_neuron_app(
+    app: &mut CyberApp,
+    netuid: u16,
+    hotkey: &str,
+    coldkey: String,
+    nonce: u64,
+) {
+    let msg = ExecuteMsg::Register {
+        netuid,
+        block_number: app.block_info().height,
+        nonce,
+        work: vec![0u8; 32],
+        hotkey: hotkey.to_string(),
+        coldkey,
+    };
+
+    let res = app.execute_contract(
+        Addr::unchecked(hotkey),
+        Addr::unchecked(CT_ADDR.to_string()),
+        &msg,
+        &[],
+    );
+    println!("{:?}", res);
+    // app.update_block(|block| block.height += 100);
+    assert_eq!(res.is_ok(), true);
+}
 
 pub fn register_ok_neuron(
     deps: DepsMut,
@@ -316,7 +326,7 @@ pub fn step_block(mut deps: DepsMut, env: &mut Env) -> Result<Response, Contract
     let result = execute(
         deps.branch(),
         env.clone(),
-        mock_info("ROOT", &[]),
+        mock_info(ROOT, &[]),
         ExecuteMsg::BlockStep {},
     );
 
@@ -344,7 +354,7 @@ pub fn run_step_to_block(
         let result = execute(
             deps.branch(),
             env.clone(),
-            mock_info("ROOT", &[]),
+            mock_info(ROOT, &[]),
             ExecuteMsg::BlockStep {},
         );
         assert!(result.is_ok());
@@ -395,7 +405,7 @@ pub fn serve_axon(
         ExecuteMsg::ServeAxon {
             netuid,
             version,
-            ip,
+            ip: Uint128::from(ip),
             port,
             ip_type,
             protocol,
@@ -423,7 +433,7 @@ pub fn serve_prometheus(
         ExecuteMsg::ServePrometheus {
             netuid,
             version,
-            ip,
+            ip: Uint128::from(ip),
             port,
             ip_type,
         },
@@ -452,13 +462,18 @@ pub fn print_state(app: &mut CyberApp, cn_addr: &Addr) {
     file.write(data.as_bytes()).unwrap();
 }
 
-// #[test]
-// fn test_instantiate() {
-//     let mut app = mock_app(&[]);
-//
-//     let cn_addr = instantiate_contract_app(&mut app);
-//     assert_eq!(cn_addr, Addr::unchecked("contract0"));
-// }
+#[test]
+fn test_instantiate() {
+    let mut app = mock_app(&[coin(42000000000 as u128, "boot".to_string())]);
+
+    let cn_addr = instantiate_contract_app(&mut app);
+    assert_eq!(cn_addr, Addr::unchecked("contract0"));
+
+    let users = 16;
+    for n in 0..users {
+        register_ok_neuron_app(&mut app, 1, (1000 + n).to_string().as_str(), (9000 + n).to_string(), 32);
+    }
+}
 
 #[test]
 fn test_deps() {
