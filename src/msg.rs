@@ -9,9 +9,8 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     Activate {},
     Deactivate {},
-    // TODO remove later, use for manual block_step
+    // TODO remove later, use for debug block_step and tests, production - sudo call only
     BlockStep {},
-
     SetWeights {
         netuid: u16,
         dests: Vec<u16>,

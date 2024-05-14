@@ -12,18 +12,20 @@ use crate::state::{
     TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE,
     TOTAL_ISSUANCE, TOTAL_STAKE,
 };
-use crate::utils::get_blocks_since_last_step;
+use crate::utils::{ensure_root, get_blocks_since_last_step};
 use crate::ContractError;
-use cosmwasm_std::{
-    coins, Addr, Api, BankMsg, CosmosMsg, DepsMut, Env, Order, StdResult, Storage, Uint128,
-};
+use cosmwasm_std::{coins, Addr, Api, BankMsg, CosmosMsg, DepsMut, Env, Order, StdResult, Storage, Uint128, ensure};
 use cyber_std::Response;
 use substrate_fixed::types::I110F18;
 use substrate_fixed::types::I64F64;
 use substrate_fixed::types::I96F32;
 
 /// Executes the necessary operations for each block.
-pub fn block_step(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn block_step(deps: DepsMut, env: Env, caller: Option<Addr>) -> Result<Response, ContractError> {
+    if caller.is_some() {
+        ensure_root(deps.storage, &caller.unwrap())?;
+    }
+
     let block_number: u64 = env.block.height;
     deps.api
         .debug(&format!("🕛 block_step for block: {:?} ", block_number));

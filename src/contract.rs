@@ -281,8 +281,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Activate {} => activate(deps, env),
         ExecuteMsg::Deactivate {} => deactivate(deps, env),
-        ExecuteMsg::BlockStep {} => block_step(deps, env),
-
+        ExecuteMsg::BlockStep {} => block_step(deps, env, Some(info.sender)),
         ExecuteMsg::SetWeights {
             netuid,
             dests,
@@ -514,7 +513,7 @@ pub fn execute(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
-        SudoMsg::BlockStep {} => block_step(deps, env),
+        SudoMsg::BlockStep {} => block_step(deps, env, None),
     }
 }
 
