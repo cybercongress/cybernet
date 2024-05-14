@@ -220,6 +220,9 @@ pub enum ExecuteMsg {
     SudoSetRoot {
         new_root: String,
     },
+    SudoSetVerseType {
+        verse_type: String,
+    }
 }
 
 #[cw_serde]
@@ -320,11 +323,13 @@ pub enum QueryMsg {
     #[returns(Vec<Vec<(u16, u16)>>)]
     GetWeightsSparse { netuid: u16 },
 
-    #[returns(crate::state_info::StateInfo)]
-    GetState {},
-
     #[returns(Coin)]
     GetBlockRewards {},
+    #[returns(String)]
+    GetVerseType {},
+
+    #[returns(crate::state_info::StateInfo)]
+    GetState {},
 }
 
 #[cw_serde]

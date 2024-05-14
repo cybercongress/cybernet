@@ -30,7 +30,7 @@ use crate::state::{
     ROOT, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER,
     SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
     TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS,
-    VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, VERSE_TYPE,
 };
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
@@ -51,6 +51,7 @@ use crate::utils::{
     do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid,
     do_sudo_set_validator_prune_len, do_sudo_set_weights_set_rate_limit,
     do_sudo_set_weights_version_key, do_sudo_set_root, do_sudo_set_subnet_owner,
+    do_sudo_set_verse_type,
 };
 use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
@@ -504,6 +505,9 @@ pub fn execute(
         ExecuteMsg::SudoSetRoot { new_root, } => {
             do_sudo_set_root(deps, env, info, new_root)
         },
+        ExecuteMsg::SudoSetVerseType { verse_type } => {
+            do_sudo_set_verse_type(deps, env, info, verse_type)
+        }
     }
 }
 
@@ -654,6 +658,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetBlockRewards {} => {
             to_json_binary(&get_block_rewards(deps.storage)?)
         }
+        QueryMsg::GetVerseType {} => to_json_binary(&get_verse_type(deps.storage)?),
     }
 }
 
@@ -890,6 +895,13 @@ pub fn get_block_rewards(
     let block_rewards = BLOCK_EMISSION.load(store)?;
     let denom = DENOM.load(store)?;
     Ok(Coin::new(u128::from(block_rewards), denom))
+}
+
+pub fn get_verse_type(
+    store: &dyn Storage,
+) -> StdResult<String> {
+    let verse_type = VERSE_TYPE.load(store)?;
+    Ok(verse_type)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

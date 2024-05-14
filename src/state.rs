@@ -7,6 +7,8 @@ pub const ROOT: Item<Addr> = Item::new("root");
 
 pub const DENOM: Item<String> = Item::new("denom");
 
+pub const VERSE_TYPE: Item<String> = Item::new("verse_type");
+
 // --- ITEM ( percentage ) // TODO change to decimal
 // pub const SENATE_REQUIRED_STAKE_PERCENTAGE: Item<u64> = Item::new("senate_required_stake_percentage");
 

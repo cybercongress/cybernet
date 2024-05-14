@@ -1492,6 +1492,27 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "sudo_set_verse_type"
+      ],
+      "properties": {
+        "sudo_set_verse_type": {
+          "type": "object",
+          "required": [
+            "verse_type"
+          ],
+          "properties": {
+            "verse_type": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

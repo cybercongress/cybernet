@@ -17,7 +17,7 @@ use crate::state::{
     REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT,
     SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL,
     TEMPO, TOTAL_ISSUANCE, TRUST, TX_RATE_LIMIT, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN,
-    VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, VERSE_TYPE,
 };
 use crate::uids::get_subnetwork_n;
 use crate::ContractError;
@@ -1652,4 +1652,21 @@ pub fn do_sudo_set_root(
     Ok(Response::default()
         .add_attribute("action", "root_set")
         .add_attribute("root", format!("{}", root)))
+}
+
+pub fn do_sudo_set_verse_type(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    verse_type: String,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    ensure!(verse_type.len() <= 16, ContractError::MetadataError {});
+
+    VERSE_TYPE.save(deps.storage, &verse_type)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "verse_type_set")
+        .add_attribute("verse_type", format!("{}", verse_type)))
 }
