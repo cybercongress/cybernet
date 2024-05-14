@@ -163,4 +163,7 @@ pub enum ContractError {
 
     #[error("Thrown when metadata is invalid")]
     MetadataError {},
+
+    #[error("Thrown when contract denom is not set based on instantiate message token")]
+    DenomSetError {},
 }

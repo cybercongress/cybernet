@@ -1,6 +1,6 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage, Uint128, CosmosMsg, BankMsg, coins};
+use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage, Uint128, CosmosMsg, BankMsg, coins, ensure};
 use cw2::{get_contract_version, set_contract_version, ContractVersion};
 use cyber_std::Response;
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
@@ -70,11 +70,12 @@ pub fn instantiate(
     ROOT.save(deps.storage, &info.sender)?;
     ALLOW_FAUCET.save(deps.storage, &false)?;
 
-    if info.funds.len() > 0 {
-        DENOM.save(deps.storage, &info.funds[0].denom)?;
-    } else {
-        DENOM.save(deps.storage, &"boot".to_string())?;
-    }
+    // denom which sent during instantiate is general denom for contract
+    ensure!(
+        info.funds.len() == 1,
+        ContractError::DenomSetError {}
+    );
+    DENOM.save(deps.storage, &info.funds[0].denom)?;
 
     TOTAL_ISSUANCE.save(deps.storage, &0)?;
     TOTAL_STAKE.save(deps.storage, &0)?;
