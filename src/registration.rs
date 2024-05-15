@@ -426,6 +426,7 @@ pub fn do_registration(
 
     // --- 7. Check Work is the product of the nonce, the block number, and hotkey. Add this as used work.
     let seal: H256 = create_seal_hash(block_number, nonce, hotkey.as_str());
+    // TODO revisit PoW cross testing
     ensure!(seal == work_hash, ContractError::InvalidSeal {});
     USED_WORK.save(deps.storage, work.clone(), &current_block_number)?;
 

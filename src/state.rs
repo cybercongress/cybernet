@@ -20,8 +20,10 @@ pub const VERSE_TYPE: Item<String> = Item::new("verse_type");
 pub const TOTAL_STAKE: Item<u64> = Item::new("total_stake");
 // --- ITEM ( default_take )
 pub const DEFAULT_TAKE: Item<u16> = Item::new("default_take");
+// TODO think about to rename to block_reward
 // --- ITEM ( global_block_emission )
 pub const BLOCK_EMISSION: Item<u64> = Item::new("global_block_emission");
+// TODo revisit total issuance and stake
 // --- ITEM ( total_issuance )
 pub const TOTAL_ISSUANCE: Item<u64> = Item::new("total_issuance");
 // --- MAP ( hot ) --> stake | Returns the total amount of stake under a hotkey.
@@ -30,7 +32,8 @@ pub const TOTAL_HOTKEY_STAKE: Map<&Addr, u64> = Map::new("total_hotkey_stake");
 pub const TOTAL_COLDKEY_STAKE: Map<&Addr, u64> = Map::new("total_coldkey_stake");
 // --- MAP ( hot ) --> cold | Returns the controlling coldkey for a hotkey.
 pub const OWNER: Map<&Addr, Addr> = Map::new("hotkey_coldkey");
-// --- MAP ( hot ) --> stake | Returns the hotkey delegation stake. And signals that this key is open for delegation.
+// --- MAP ( hot ) --> stake take | Returns the hotkey delegation stake take(commission). And signals that this key is open for delegation.
+// TODO rename storage name
 pub const DELEGATES: Map<&Addr, u16> = Map::new("hotkey_stake");
 // --- DMAP ( hot, cold ) --> stake | Returns the stake under a coldkey prefixed by hotkey.
 pub const STAKE: Map<(&Addr, &Addr), u64> = Map::new("staked_hotkey_coldkey");

@@ -145,12 +145,12 @@ pub fn generate_emission(
         let subnet_has_owner = SUBNET_OWNER.has(store, netuid);
         let mut remaining = I96F32::from_num(new_queued_emission);
         if subnet_has_owner {
-            let subnet_owner_cut = SUBNET_OWNER_CUT.load(store)?;
-            let cut = remaining
-                .saturating_mul(I96F32::from_num(subnet_owner_cut))
-                .saturating_div(I96F32::from_num(u16::MAX));
-
-            remaining = remaining.saturating_sub(cut);
+            // let subnet_owner_cut = SUBNET_OWNER_CUT.load(store)?;
+            // let cut = remaining
+            //     .saturating_mul(I96F32::from_num(subnet_owner_cut))
+            //     .saturating_div(I96F32::from_num(u16::MAX));
+            //
+            // remaining = remaining.saturating_sub(cut);
 
             // TODO back to this, by default subnet owner cut is zero
             // let subnet_owner = SUBNET_OWNER.load(store, netuid)?;
@@ -161,9 +161,9 @@ pub fn generate_emission(
             //     amount: coins(Uint128::from(cut.to_num::<u64>()).u128(), denom),
             // }));
 
-            TOTAL_ISSUANCE.update(store, |a| -> StdResult<_> {
-                Ok(a.saturating_add(cut.to_num::<u64>()))
-            })?;
+            // TOTAL_ISSUANCE.update(store, |a| -> StdResult<_> {
+            //     Ok(a.saturating_add(cut.to_num::<u64>()))
+            // })?;
         }
         // --- 5. Add remaining amount to the network's pending emission.
         PENDING_EMISSION.update(store, netuid, |queued| -> StdResult<_> {

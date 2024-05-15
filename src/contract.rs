@@ -1,8 +1,10 @@
+use std::ops::Sub;
+
+use cosmwasm_std::{Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, ensure, Env, MessageInfo, Order, StdResult, Storage, to_json_binary, Uint128};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage, Uint128, CosmosMsg, BankMsg, coins, ensure};
-use cw2::{get_contract_version, set_contract_version, ContractVersion};
-use cyber_std::Response;
+use cw2::{ContractVersion, get_contract_version, set_contract_version};
+use cyber_std::{create_forget_thought_msg, Response};
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
 use crate::block_step::block_step;
@@ -16,43 +18,35 @@ use crate::serving::{do_serve_axon, do_serve_prometheus};
 use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys};
 use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake, do_set_delegate_commission};
 use crate::state::{
-    AxonInfo, PrometheusInfo, Metadata, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
-    ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
-    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY,
-    DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
-    LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY,
-    MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN,
-    MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
-    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
-    NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
-    OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
+    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ADJUSTMENTS_ALPHA, ALLOW_FAUCET, AxonInfo, AXONS,
+    BLOCK_EMISSION, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS,
+    DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY, DIVIDENDS, EMISSION,
+    EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
+    MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT,
+    Metadata, METADATA, METADATA2, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
+    NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL,
+    NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT,
+    NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, NETWORKS_ADDED, OWNER,
+    PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PrometheusInfo, PRUNING_SCORES, RANK,
     RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
-    ROOT, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER,
-    SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
+    ROOT, SERVING_RATE_LIMIT, STAKE, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT,
+    SUBNETWORK_N, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
     TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS,
-    VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, VERSE_TYPE,
+    VALIDATOR_PERMIT, VALIDATOR_TRUST, VERSE_TYPE, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
 };
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
 use crate::uids::get_registered_networks_for_hotkey;
-use crate::utils::{
-    do_sudo_set_activity_cutoff, do_sudo_set_adjustment_alpha, do_sudo_set_adjustment_interval,
-    do_sudo_set_block_emission, do_sudo_set_bonds_moving_average, do_sudo_set_default_take,
-    do_sudo_set_difficulty, do_sudo_set_immunity_period, do_sudo_set_kappa,
-    do_sudo_set_lock_reduction_interval, do_sudo_set_max_allowed_uids,
-    do_sudo_set_max_allowed_validators, do_sudo_set_max_burn, do_sudo_set_max_difficulty,
-    do_sudo_set_max_registrations_per_block, do_sudo_set_max_weight_limit,
-    do_sudo_set_min_allowed_weights, do_sudo_set_min_burn, do_sudo_set_min_difficulty,
-    do_sudo_set_network_immunity_period, do_sudo_set_network_min_lock_cost,
-    do_sudo_set_network_rate_limit, do_sudo_set_network_registration_allowed,
-    do_sudo_set_rao_recycled, do_sudo_set_rho, do_sudo_set_serving_rate_limit,
-    do_sudo_set_subnet_limit, do_sudo_set_subnet_metadata, do_sudo_set_subnet_owner_cut,
-    do_sudo_set_target_registrations_per_interval, do_sudo_set_tempo, do_sudo_set_total_issuance,
-    do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid,
-    do_sudo_set_validator_prune_len, do_sudo_set_weights_set_rate_limit,
-    do_sudo_set_weights_version_key, do_sudo_set_root, do_sudo_set_subnet_owner,
-    do_sudo_set_verse_type,
-};
+use crate::utils::{do_sudo_set_activity_cutoff, do_sudo_set_adjustment_alpha, do_sudo_set_adjustment_interval,
+    do_sudo_set_block_emission, do_sudo_set_bonds_moving_average, do_sudo_set_default_take, do_sudo_set_difficulty, do_sudo_set_immunity_period,
+    do_sudo_set_kappa, do_sudo_set_lock_reduction_interval, do_sudo_set_max_allowed_uids, do_sudo_set_max_allowed_validators,
+    do_sudo_set_max_burn, do_sudo_set_max_difficulty, do_sudo_set_max_registrations_per_block, do_sudo_set_max_weight_limit,
+    do_sudo_set_min_allowed_weights, do_sudo_set_min_burn, do_sudo_set_min_difficulty, do_sudo_set_network_immunity_period,
+    do_sudo_set_network_min_lock_cost, do_sudo_set_network_rate_limit, do_sudo_set_network_registration_allowed, do_sudo_set_rao_recycled,
+    do_sudo_set_rho, do_sudo_set_root, do_sudo_set_serving_rate_limit, do_sudo_set_subnet_limit, do_sudo_set_subnet_metadata,
+    do_sudo_set_subnet_owner, do_sudo_set_subnet_owner_cut, do_sudo_set_target_registrations_per_interval, do_sudo_set_tempo,
+    do_sudo_set_total_issuance, do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid, do_sudo_set_validator_prune_len,
+    do_sudo_set_verse_type, do_sudo_set_weights_set_rate_limit, do_sudo_set_weights_version_key, ensure_root, do_sudo_unstake_all};
 use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
 const CONTRACT_NAME: &str = "cybernet";
@@ -229,7 +223,13 @@ pub fn instantiate(
     Ok(Response::default().add_attribute("action", "instantiate"))
 }
 
-pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn activate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
     let denom = DENOM.load(deps.storage)?;
     let res = Response::new()
         .add_message(create_creat_thought_msg(
@@ -246,6 +246,7 @@ pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
                     amount: Uint128::from(10u128),
                 },
             },
+            // TODO replace dmn thought name later
             env.contract.address.as_str()[0..32].to_string(),
             "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
         ))
@@ -254,19 +255,37 @@ pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
     Ok(res)
 }
 
-pub fn deactivate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn deactivate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
     let denom = DENOM.load(deps.storage)?;
     let root = ROOT.load(deps.storage)?;
 
-    let coin = deps.querier.query_balance(env.contract.address, denom).unwrap();
+    let contract_balance = deps.querier.query_balance(env.clone().contract.address, denom.clone()).unwrap();
+    let total_stake = TOTAL_STAKE.load(deps.storage)?;
 
-    let msg = CosmosMsg::Bank(BankMsg::Send {
+    let return_rewards_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: root.to_string(),
-        amount: vec![coin],
+        amount: vec![
+            Coin {
+                denom,
+                amount: contract_balance.amount.sub(Uint128::from(total_stake)),
+            },
+        ],
     });
 
+    let disable_dmn = create_forget_thought_msg(
+        env.contract.address.to_string(),
+        env.contract.address.as_str()[0..32].to_string()
+    );
+
     let res = Response::new()
-        .add_message(msg)
+        .add_message(return_rewards_msg)
+        .add_message(disable_dmn)
         .add_attribute("action", "deactivate");
 
     Ok(res)
@@ -280,8 +299,8 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Activate {} => activate(deps, env),
-        ExecuteMsg::Deactivate {} => deactivate(deps, env),
+        ExecuteMsg::Activate {} => activate(deps, env, info),
+        ExecuteMsg::Deactivate {} => deactivate(deps, env, info),
         ExecuteMsg::BlockStep {} => block_step(deps, env, Some(info.sender)),
         ExecuteMsg::SetWeights {
             netuid,
