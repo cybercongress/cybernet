@@ -87,7 +87,7 @@ pub fn instantiate(
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
 
     // 20% (113108/2^16)
-    DEFAULT_TAKE.save(deps.storage, &13108)?;
+    DEFAULT_TAKE.save(deps.storage, &13107)?;
     TX_RATE_LIMIT.save(deps.storage, &0)?;
 
     NETWORK_LAST_LOCK_COST.save(deps.storage, &10_000_000_000)?;
@@ -168,7 +168,7 @@ pub fn instantiate(
     POW_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     BURN_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     MAX_ALLOWED_VALIDATORS.save(deps.storage, netuid, &64)?;
-    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &1024)?;
+    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &256)?;
     WEIGHTS_VERSION_KEY.save(deps.storage, netuid, &0)?;
     WEIGHTS_SET_RATE_LIMIT.save(deps.storage, netuid, &100)?;
 
