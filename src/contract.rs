@@ -1,6 +1,6 @@
-use std::ops::Sub;
+use std::ops::{Div, Mul, Sub};
 
-use cosmwasm_std::{Addr, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, ensure, Env, MessageInfo, Order, StdResult, Storage, to_json_binary, Uint128};
+use cosmwasm_std::{Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, ensure, Env, MessageInfo, Order, StdResult, Storage, to_json_binary, Uint128};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cw2::{ContractVersion, get_contract_version, set_contract_version};
@@ -10,7 +10,7 @@ use cyber_std::{create_creat_thought_msg, Load, Trigger};
 use crate::block_step::block_step;
 use crate::delegate_info::{get_delegate, get_delegated, get_delegates};
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
+use crate::msg::{EconomyData, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 use crate::neuron_info::{get_neuron, get_neuron_lite, get_neurons, get_neurons_lite};
 use crate::registration::{do_burned_registration, do_registration, do_sudo_registration};
 use crate::root::{do_root_register, get_network_lock_cost, user_add_network, user_remove_network};
@@ -690,6 +690,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             to_json_binary(&get_block_rewards(deps.storage)?)
         }
         QueryMsg::GetVerseType {} => to_json_binary(&get_verse_type(deps.storage)?),
+        QueryMsg::GetEconomy {} => to_json_binary(&get_economy(deps.storage)?),
     }
 }
 
@@ -933,6 +934,42 @@ pub fn get_verse_type(
 ) -> StdResult<String> {
     let verse_type = VERSE_TYPE.load(store)?;
     Ok(verse_type)
+}
+
+pub fn get_economy(
+    store: &dyn Storage,
+) -> StdResult<EconomyData> {
+    let block_rewards = BLOCK_EMISSION.load(store)?;
+    let denom = DENOM.load(store)?;
+    let total_stake = TOTAL_STAKE.load(store)?;
+    let default_take = DEFAULT_TAKE.load(store)?;
+    let default_commission = Decimal::from_ratio(default_take, u16::MAX)
+        .mul(Decimal::from_atomics(Uint128::from(100u64),0).unwrap());
+    let commission_change = COMMISSION_CHANGE.load(store)?;
+    let blocks_per_year = 5256000u64;
+    let total_issuance = TOTAL_ISSUANCE.load(store)?;
+
+    let validator_apr = Decimal::new(Uint128::from(block_rewards).mul(Uint128::from(blocks_per_year)))
+        .div(Decimal::new(Uint128::from(total_stake)))
+        .mul(Decimal::from_atomics(Uint128::from(100u64),0).unwrap());
+
+    let staker_apr  = Decimal::new(Uint128::from(block_rewards).mul(Uint128::from(blocks_per_year)))
+        .div(Decimal::new(Uint128::from(total_stake)))
+        .mul(Decimal::one().sub(Decimal::from_ratio(default_take, u16::MAX)))
+        .mul(Decimal::from_atomics(Uint128::from(100u64),0).unwrap());
+
+
+    let economy_data = EconomyData{
+        validator_apr,
+        staker_apr,
+        block_rewards: Coin::new(u128::from(block_rewards), denom.clone()),
+        total_stake: Coin::new(u128::from(total_stake), denom.clone()),
+        default_commission,
+        commission_change,
+        total_issuance: Coin::new(u128::from(total_issuance), denom),
+    };
+
+    Ok(economy_data)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

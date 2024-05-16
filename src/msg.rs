@@ -1,5 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Uint128, Coin};
+use cosmwasm_std::{Uint128, Coin, Decimal};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use crate::state::Metadata;
 
 #[cw_serde]
@@ -336,9 +338,22 @@ pub enum QueryMsg {
     GetBlockRewards {},
     #[returns(String)]
     GetVerseType {},
+    #[returns(EconomyData)]
+    GetEconomy {},
 
     #[returns(crate::state_info::StateInfo)]
     GetState {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct EconomyData {
+    pub validator_apr: Decimal,
+    pub staker_apr: Decimal,
+    pub block_rewards: Coin,
+    pub total_stake: Coin,
+    pub default_commission: Decimal,
+    pub commission_change: bool,
+    pub total_issuance: Coin,
 }
 
 #[cw_serde]
