@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 pub const ROOT: Item<Addr> = Item::new("root");
 
+pub const COMMISSION_CHANGE: Item<bool> = Item::new("commission_switch");
+
 pub const DENOM: Item<String> = Item::new("denom");
 
 pub const VERSE_TYPE: Item<String> = Item::new("verse_type");
@@ -121,7 +123,9 @@ pub const SUBNET_OWNER: Map<u16, Addr> = Map::new("subnet_owner");
 // --- MAP (netuid ) --> subnet_locked
 pub const SUBNET_LOCKED: Map<u16, u64> = Map::new("subnet_locked");
 // --- MAP (netuid ) --> metadata
-pub const METADATA: Map<u16, Metadata> = Map::new("metadata");
+// TODO need to write migration
+pub const METADATA: Map<u16, String> = Map::new("metadata");
+pub const METADATA2: Map<u16, Metadata> = Map::new("metadata2");
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Metadata {

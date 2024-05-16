@@ -32,7 +32,7 @@ use crate::state::{
     ROOT, SERVING_RATE_LIMIT, STAKE, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT,
     SUBNETWORK_N, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
     TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS,
-    VALIDATOR_PERMIT, VALIDATOR_TRUST, VERSE_TYPE, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    VALIDATOR_PERMIT, VALIDATOR_TRUST, VERSE_TYPE, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, COMMISSION_CHANGE
 };
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
@@ -46,7 +46,9 @@ use crate::utils::{do_sudo_set_activity_cutoff, do_sudo_set_adjustment_alpha, do
     do_sudo_set_rho, do_sudo_set_root, do_sudo_set_serving_rate_limit, do_sudo_set_subnet_limit, do_sudo_set_subnet_metadata,
     do_sudo_set_subnet_owner, do_sudo_set_subnet_owner_cut, do_sudo_set_target_registrations_per_interval, do_sudo_set_tempo,
     do_sudo_set_total_issuance, do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid, do_sudo_set_validator_prune_len,
-    do_sudo_set_verse_type, do_sudo_set_weights_set_rate_limit, do_sudo_set_weights_version_key, ensure_root, do_sudo_unstake_all};
+    do_sudo_set_verse_type, do_sudo_set_weights_set_rate_limit, do_sudo_set_weights_version_key, ensure_root, do_sudo_unstake_all,
+    do_sudo_set_commission_change
+};
 use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
 const CONTRACT_NAME: &str = "cybernet";
@@ -70,6 +72,7 @@ pub fn instantiate(
         ContractError::DenomSetError {}
     );
     DENOM.save(deps.storage, &info.funds[0].denom)?;
+    COMMISSION_CHANGE.save(deps.storage, &false)?;
 
     TOTAL_ISSUANCE.save(deps.storage, &0)?;
     TOTAL_STAKE.save(deps.storage, &0)?;
@@ -83,8 +86,8 @@ pub fn instantiate(
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
 
-    // 6.9% (4522/2^16)
-    DEFAULT_TAKE.save(deps.storage, &4522)?;
+    // 20% (113108/2^16)
+    DEFAULT_TAKE.save(deps.storage, &13108)?;
     TX_RATE_LIMIT.save(deps.storage, &0)?;
 
     NETWORK_LAST_LOCK_COST.save(deps.storage, &10_000_000_000)?;
@@ -135,7 +138,7 @@ pub fn instantiate(
     EMISSION_VALUES.save(deps.storage, root_netuid, &0)?;
     NETWORK_LAST_REGISTERED.save(deps.storage, &0)?;
     TOTAL_NETWORKS.save(deps.storage, &1)?;
-    METADATA.save(
+    METADATA2.save(
         deps.storage,
         root_netuid,
         &Metadata {
@@ -192,7 +195,7 @@ pub fn instantiate(
     SUBNET_LOCKED.save(deps.storage, netuid, &0)?;
     TARGET_REGISTRATIONS_PER_INTERVAL.save(deps.storage, netuid, &1)?;
     NETWORK_REGISTRATION_ALLOWED.save(deps.storage, netuid, &true)?;
-    METADATA.save(
+    METADATA2.save(
         deps.storage,
         netuid,
         &Metadata {
@@ -529,7 +532,13 @@ pub fn execute(
         },
         ExecuteMsg::SudoSetVerseType { verse_type } => {
             do_sudo_set_verse_type(deps, env, info, verse_type)
-        }
+        },
+        ExecuteMsg::SudoUnstakeAll { limit } => {
+            do_sudo_unstake_all(deps, env, info, limit)
+        },
+        ExecuteMsg::SudoSetCommissionChange { change } => {
+            do_sudo_set_commission_change(deps, env, info, change)
+        },
     }
 }
 
@@ -934,6 +943,27 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     if storage_version.version.as_str() < CONTRACT_VERSION {
         // Set contract to version to latest
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    } else {
+        return Err(ContractError::MigrationError {})
+    }
+
+    let metadata_old = METADATA
+        .range(deps.storage, None, None, Order::Ascending)
+        .map(|item| {
+            let i = item.unwrap();
+            (i.0, i.1)
+        })
+        .collect::<Vec<(u16, String)>>();
+
+    for item in metadata_old {
+        // let (uid, particle) = item.unwrap();
+        let metadata = Metadata {
+            name: "empty".to_string(),
+            particle: item.1.to_string(),
+            description: "".to_string(),
+            logo: "".to_string(),
+        };
+        METADATA2.save(deps.storage, item.0, &metadata)?;
     }
 
     Ok(Response::new().add_attribute("action", "migrate"))

@@ -6,7 +6,7 @@ use cw_utils::must_pay;
 
 use crate::state::{
     DELEGATES, DENOM, OWNER, STAKE, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE,
-    TOTAL_STAKE,
+    TOTAL_STAKE, COMMISSION_CHANGE,
 };
 use crate::utils::{exceeds_tx_rate_limit, get_default_take, get_last_tx_block, set_last_tx_block};
 use crate::ContractError;
@@ -315,6 +315,12 @@ pub fn do_set_delegate_commission(
     hotkey_address: String,
     new_commission: String,
 ) -> Result<Response, ContractError> {
+    let commission_change = COMMISSION_CHANGE.load(deps.storage)?;
+    ensure!(
+        commission_change,
+        ContractError::CommissionChangeDisabled {}
+    );
+
     let commission = Decimal::from_str(&new_commission).map_err(|_| ContractError::InvalidCommission {})?;
     ensure!(
         commission > Decimal::zero() && commission <= Decimal::one(),

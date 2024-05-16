@@ -1,27 +1,30 @@
 use std::ops::Deref;
 
-use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Storage};
+use cosmwasm_std::{Addr, Api, BankMsg, coins, CosmosMsg, DepsMut, ensure, Env, MessageInfo, Order, StdResult, Storage, Uint128};
+use cyber_std::Response;
 
+use crate::ContractError;
 use crate::root::if_subnet_exist;
+use crate::stake_info::StakeInfo;
+use crate::staking::decrease_stake_on_coldkey_hotkey_account;
 use crate::state::{
-    Metadata, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP,
-    BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
-    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DIFFICULTY, DIVIDENDS, EMISSION,
+    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ADJUSTMENTS_ALPHA, BLOCK_AT_REGISTRATION, BLOCK_EMISSION,
+    BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL,
+    CONSENSUS, DEFAULT_TAKE, DENOM, DIFFICULTY, DIVIDENDS, EMISSION,
     EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
     LAST_MECHANISM_STEP_BLOCK, LAST_TX_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
     MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK,
-    MAX_WEIGHTS_LIMIT, METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
-    NETWORK_IMMUNITY_PERIOD, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
-    NETWORK_RATE_LIMIT, NETWORK_REGISTRATION_ALLOWED, PENDING_EMISSION,
-    POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION,
-    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT,
-    SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL,
-    TEMPO, TOTAL_ISSUANCE, TRUST, TX_RATE_LIMIT, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN,
-    VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, VERSE_TYPE,
+    MAX_WEIGHTS_LIMIT, Metadata, METADATA2, MIN_ALLOWED_WEIGHTS, MIN_BURN,
+    MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD, NETWORK_LOCK_REDUCTION_INTERVAL,
+    NETWORK_MIN_LOCK_COST, NETWORK_RATE_LIMIT, NETWORK_REGISTRATION_ALLOWED,
+    PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK,
+    RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT,
+    SERVING_RATE_LIMIT, STAKE, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER,
+    SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_ISSUANCE, TRUST, TX_RATE_LIMIT,
+    VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST, VERSE_TYPE, WEIGHTS_SET_RATE_LIMIT,
+    WEIGHTS_VERSION_KEY, COMMISSION_CHANGE,
 };
 use crate::uids::get_subnetwork_n;
-use crate::ContractError;
-use cyber_std::Response;
 
 pub fn ensure_subnet_owner_or_root(
     store: &dyn Storage,
@@ -1609,7 +1612,7 @@ pub fn do_sudo_set_subnet_metadata(
     ensure!(metadata.description.len() == 46, ContractError::MetadataError {});
     ensure!(metadata.logo.len() == 46, ContractError::MetadataError {});
 
-    METADATA.save(deps.storage, netuid, &metadata)?;
+    METADATA2.save(deps.storage, netuid, &metadata)?;
 
     Ok(Response::default()
         .add_attribute("action", "metadata_set")
@@ -1670,4 +1673,100 @@ pub fn do_sudo_set_verse_type(
     Ok(Response::default()
         .add_attribute("action", "verse_type_set")
         .add_attribute("verse_type", format!("{}", verse_type)))
+}
+
+pub fn do_sudo_set_commission_change(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    change: bool,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    COMMISSION_CHANGE.save(deps.storage, &change)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "set_commission_change")
+        .add_attribute("commission_change", format!("{}", change)))
+}
+
+pub fn do_sudo_unstake_all(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    limit: Option<u32>,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    let take_limit = limit.unwrap_or(20) as usize;
+
+    let stakes = STAKE.range(deps.storage, None, None, Order::Ascending)
+        .filter(
+            |item| {
+                if let Ok((_, stake)) = item {
+                    stake > &0
+                } else {
+                    false
+                }
+            },
+        )
+        .take(take_limit)
+        .map(|item| {
+            item.map(|((hotkey, coldkey), stake)| StakeInfo {
+                hotkey,
+                coldkey,
+                stake,
+            })
+        })
+        .collect::<StdResult<Vec<_>>>()?;
+
+    let mut msgs = vec![];
+    for stake_info in stakes {
+        let (coldkey, hotkey, stake) = (stake_info.coldkey, stake_info.hotkey, stake_info.stake);
+        decrease_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake)?;
+
+        let denom = DENOM.load(deps.storage)?;
+        let msg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: coldkey.to_string(),
+            amount: coins(Uint128::from(stake).u128(), denom),
+        });
+        msgs.push(msg);
+    }
+
+    Ok(Response::default()
+        .add_messages(msgs)
+        .add_attribute("action", "sudo_unstake_all"))
+}
+
+#[cfg(test)]
+pub fn unstake_all(
+    store: &mut dyn Storage,
+    limit: Option<u32>,
+) {
+    let take_limit = limit.unwrap_or(20) as usize;
+
+    let stakes = STAKE.range(store, None, None, Order::Ascending)
+        .filter(
+            |item| {
+                if let Ok((_, stake)) = item {
+                    stake > &0
+                } else {
+                    false
+                }
+            },
+        )
+        .take(take_limit)
+        .map(|item| {
+            item.map(|((hotkey, coldkey), stake)| StakeInfo {
+                hotkey,
+                coldkey,
+                stake,
+            })
+        })
+        .collect::<StdResult<Vec<StakeInfo>>>().unwrap();
+
+    for stake_info in stakes {
+        let (coldkey, hotkey, stake) = (stake_info.coldkey, stake_info.hotkey, stake_info.stake);
+        decrease_stake_on_coldkey_hotkey_account(store, &coldkey, &hotkey, stake).unwrap();
+    }
 }

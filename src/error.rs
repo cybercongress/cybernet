@@ -172,4 +172,7 @@ pub enum ContractError {
 
     #[error("Thrown when delegate attempt to set invalid commission")]
     InvalidCommission {},
+
+    #[error("Thrown when commission change disabled for this verse")]
+    CommissionChangeDisabled {},
 }

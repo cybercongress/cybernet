@@ -225,7 +225,13 @@ pub enum ExecuteMsg {
     },
     SudoSetVerseType {
         verse_type: String,
-    }
+    },
+    SudoUnstakeAll{
+        limit: Option<u32>
+    },
+    SudoSetCommissionChange {
+        change: bool,
+    },
 }
 
 #[cw_serde]
