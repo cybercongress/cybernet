@@ -81,7 +81,7 @@ pub fn instantiate(
     // -- Cybertensor parameters initialization --
 
     SUBNET_LIMIT.save(deps.storage, &16)?;
-    NETWORK_IMMUNITY_PERIOD.save(deps.storage, &7200)?;
+    NETWORK_IMMUNITY_PERIOD.save(deps.storage, &14400)?;
     BLOCK_EMISSION.save(deps.storage, &4_200_000)?;
 
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
@@ -93,7 +93,7 @@ pub fn instantiate(
 
     NETWORK_LAST_LOCK_COST.save(deps.storage, &10_000_000_000)?;
     NETWORK_MIN_LOCK_COST.save(deps.storage, &10_000_000_000)?;
-    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &(7 * 7200))?;
+    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &(7 * 14400))?;
 
     // -- Root network initialization --
     let root_netuid: u16 = 0;
@@ -127,10 +127,10 @@ pub fn instantiate(
     KAPPA.save(deps.storage, root_netuid, &32_767)?;
     RHO.save(deps.storage, root_netuid, &30)?;
     RAO_RECYCLED_FOR_REGISTRATION.save(deps.storage, root_netuid, &0)?;
-    ACTIVITY_CUTOFF.save(deps.storage, root_netuid, &5000)?;
+    ACTIVITY_CUTOFF.save(deps.storage, root_netuid, &14400)?;
     SERVING_RATE_LIMIT.save(deps.storage, root_netuid, &50)?;
     DIFFICULTY.save(deps.storage, root_netuid, &10_000_000)?;
-    IMMUNITY_PERIOD.save(deps.storage, root_netuid, &7200)?;
+    IMMUNITY_PERIOD.save(deps.storage, root_netuid, &14400)?;
     POW_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, root_netuid, &0)?;
     BURN_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, root_netuid, &0)?;
     ADJUSTMENTS_ALPHA.save(deps.storage, root_netuid, &0)?;
@@ -162,8 +162,8 @@ pub fn instantiate(
     TEMPO.save(deps.storage, netuid, &10)?;
     KAPPA.save(deps.storage, netuid, &0)?;
     DIFFICULTY.save(deps.storage, netuid, &10_000_000)?;
-    IMMUNITY_PERIOD.save(deps.storage, netuid, &7200)?;
-    ACTIVITY_CUTOFF.save(deps.storage, netuid, &5000)?;
+    IMMUNITY_PERIOD.save(deps.storage, netuid, &14400)?;
+    ACTIVITY_CUTOFF.save(deps.storage, netuid, &14400)?;
     EMISSION_VALUES.save(deps.storage, netuid, &0)?;
     MAX_WEIGHTS_LIMIT.save(deps.storage, netuid, &u16::MAX)?;
     MIN_ALLOWED_WEIGHTS.save(deps.storage, netuid, &0)?;

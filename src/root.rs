@@ -783,7 +783,7 @@ pub fn init_new_network(
     ADJUSTMENT_INTERVAL.save(store, netuid, &360)?;
     TARGET_REGISTRATIONS_PER_INTERVAL.save(store, netuid, &1)?;
     ADJUSTMENTS_ALPHA.save(store, netuid, &58000)?;
-    IMMUNITY_PERIOD.save(store, netuid, &7200)?;
+    IMMUNITY_PERIOD.save(store, netuid, &14400)?;
 
     DIFFICULTY.save(store, netuid, &10_000_000)?;
     MIN_DIFFICULTY.save(store, netuid, &10_000_000)?;
@@ -791,7 +791,7 @@ pub fn init_new_network(
 
     // Make network parameters explicit.
     KAPPA.save(store, netuid, &32_767)?; // 0.5 = 65535/2
-    ACTIVITY_CUTOFF.save(store, netuid, &5000)?;
+    ACTIVITY_CUTOFF.save(store, netuid, &14400)?;
     EMISSION_VALUES.save(store, netuid, &0)?;
 
     REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;

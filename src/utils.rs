@@ -840,7 +840,7 @@ pub fn do_sudo_set_immunity_period(
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
     ensure!(
-        immunity_period <= 7200,
+        immunity_period <= 14400,
         ContractError::StorageValueOutOfRange {}
     );
 
