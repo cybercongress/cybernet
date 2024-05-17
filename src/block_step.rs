@@ -20,6 +20,9 @@ use substrate_fixed::types::I110F18;
 use substrate_fixed::types::I64F64;
 use substrate_fixed::types::I96F32;
 
+#[cfg(test)]
+use crate::state::{TOTAL_COLDKEY_STAKE, TOTAL_STAKE};
+
 /// Executes the necessary operations for each block.
 pub fn block_step(deps: DepsMut, env: Env, caller: Option<Addr>) -> Result<Response, ContractError> {
     if caller.is_some() {

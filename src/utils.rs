@@ -24,6 +24,11 @@ use crate::state::{
 };
 use crate::uids::get_subnetwork_n;
 
+#[cfg(test)]
+use crate::state::{LAST_ADJUSTMENT_BLOCK, POW_REGISTRATIONS_THIS_INTERVAL, BURN_REGISTRATIONS_THIS_INTERVAL,
+    LAST_MECHANISM_STEP_BLOCK, PENDING_EMISSION,
+};
+
 pub fn ensure_subnet_owner_or_root(
     store: &dyn Storage,
     coldkey: &Addr,

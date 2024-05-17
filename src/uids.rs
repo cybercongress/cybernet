@@ -9,6 +9,9 @@ use crate::state::{
 use crate::utils::set_active_for_uid;
 use crate::ContractError;
 
+#[cfg(test)]
+use crate::state::TOTAL_HOTKEY_STAKE;
+
 pub fn get_subnetwork_n(store: &dyn Storage, netuid: u16) -> u16 {
     SUBNETWORK_N.load(store, netuid.clone()).unwrap()
 }

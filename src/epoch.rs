@@ -23,6 +23,8 @@ use crate::utils::{
 
 #[cfg(test)]
 use crate::uids::get_stake_for_uid_and_subnetwork;
+#[cfg(test)]
+use crate::utils::get_rho;
 
 // Calculates reward consensus values, then updates rank, trust, consensus, incentive, dividend, pruning_score, emission and bonds, and
 // returns the emissions for uids/hotkeys in a given `netuid`.
