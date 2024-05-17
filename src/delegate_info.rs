@@ -1,11 +1,11 @@
 use crate::staking::{
     get_owning_coldkey_for_hotkey, get_stake_for_coldkey_and_hotkey, get_total_stake_for_hotkey,
 };
-use crate::state::{DELEGATES, STAKE};
+use crate::state::{DEFAULT_TAKE, DELEGATES, DENOM, STAKE};
 use crate::uids::{get_registered_networks_for_hotkey, get_uid_for_net_and_hotkey};
 use crate::utils::{get_emission_for_uid, get_tempo, get_validator_permit_for_uid};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Deps, Order, StdResult, Storage};
+use cosmwasm_std::{Addr, Coin, Decimal, Deps, Order, StdResult, Storage, Uint128};
 use substrate_fixed::types::U64F64;
 extern crate alloc;
 use alloc::vec::Vec;
@@ -21,9 +21,9 @@ pub struct DelegateInfo {
     // Vec of netuid this delegate is registered on
     validator_permits: Vec<u16>,
     // Vec of netuid this delegate has validator permit on
-    return_per_1000: u64,
-    // Delegators current daily return per 1000 TAO staked minus take fee
-    total_daily_return: u64, // Delegators current daily return
+    return_per_giga: Coin,
+    // Delegators current daily return per X tokens staked minus take fee
+    total_daily_return: Coin, // Delegators current daily return
 }
 
 pub fn get_delegate_by_existing_account(store: &dyn Storage, delegate: &Addr) -> DelegateInfo {
@@ -58,7 +58,7 @@ pub fn get_delegate_by_existing_account(store: &dyn Storage, delegate: &Addr) ->
 
             let emission = U64F64::from_num(get_emission_for_uid(store, *netuid, uid));
             let tempo = U64F64::from_num(get_tempo(store, *netuid));
-            let epochs_per_day = U64F64::from_num(7200) / tempo;
+            let epochs_per_day = U64F64::from_num(14400) / tempo;
             emissions_per_day += emission * epochs_per_day;
         }
     }
@@ -68,12 +68,15 @@ pub fn get_delegate_by_existing_account(store: &dyn Storage, delegate: &Addr) ->
 
     let total_stake = U64F64::from_num(get_total_stake_for_hotkey(store, &delegate));
 
-    let mut return_per_1000 = U64F64::from_num(0);
+    let mut return_per_giga = U64F64::from_num(0);
 
     if total_stake > U64F64::from_num(0) {
-        return_per_1000 =
-            (emissions_per_day * U64F64::from_num(0.82)) / (total_stake / U64F64::from_num(1000));
+        // TODO rewrite this to Decimal and load take from store
+        return_per_giga =
+            (emissions_per_day * U64F64::from_num(0.8)) / (total_stake / U64F64::from_num(1000000000));
     }
+
+    let denom = DENOM.load(store).unwrap();
 
     return DelegateInfo {
         delegate: delegate.clone(),
@@ -82,8 +85,8 @@ pub fn get_delegate_by_existing_account(store: &dyn Storage, delegate: &Addr) ->
         owner: owner.clone(),
         registrations: registrations.iter().map(|x| *x).collect(),
         validator_permits,
-        return_per_1000: U64F64::to_num::<u64>(return_per_1000).into(),
-        total_daily_return: U64F64::to_num::<u64>(emissions_per_day).into(),
+        return_per_giga: Coin::new(U64F64::to_num::<u128>(return_per_giga), denom.clone()),
+        total_daily_return: Coin::new(U64F64::to_num::<u128>(emissions_per_day), denom),
     };
 }
 
