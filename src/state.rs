@@ -3,16 +3,13 @@ use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+// ============================
+// ====   Verse Settings   ====
+// ============================
 pub const ROOT: Item<Addr> = Item::new("root");
-
 pub const COMMISSION_CHANGE: Item<bool> = Item::new("commission_switch");
-
 pub const DENOM: Item<String> = Item::new("denom");
-
-pub const VERSE_TYPE: Item<String> = Item::new("verse_type");
-
-// --- ITEM ( percentage ) // TODO change to decimal
-// pub const SENATE_REQUIRED_STAKE_PERCENTAGE: Item<u64> = Item::new("senate_required_stake_percentage");
+pub const VERSE_METADATA: Item<Metadata> = Item::new("verse_metadata");
 
 // ============================
 // ==== Staking + Accounts ====
@@ -125,7 +122,7 @@ pub const SUBNET_LOCKED: Map<u16, u64> = Map::new("subnet_locked");
 // --- MAP (netuid ) --> metadata
 // TODO need to write migration
 pub const METADATA: Map<u16, String> = Map::new("metadata");
-pub const METADATA2: Map<u16, Metadata> = Map::new("metadata2");
+pub const NETWORKS_METADATA: Map<u16, Metadata> = Map::new("networks_metadata");
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Metadata {
@@ -133,6 +130,8 @@ pub struct Metadata {
     pub particle: String, // particle
     pub description: String, // particle
     pub logo: String, // particle
+    pub types: String,
+    pub extra: String,
 }
 
 // =================================

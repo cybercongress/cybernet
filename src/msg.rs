@@ -225,8 +225,8 @@ pub enum ExecuteMsg {
     SudoSetRoot {
         new_root: String,
     },
-    SudoSetVerseType {
-        verse_type: String,
+    SudoSetVerseMetadata {
+        metadata: Metadata,
     },
     SudoUnstakeAll{
         limit: Option<u32>

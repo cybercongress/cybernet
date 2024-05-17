@@ -15,7 +15,7 @@ use crate::state::{
     BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DENOM, DIFFICULTY,
     DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS,
     LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN,
-    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA2, MIN_ALLOWED_WEIGHTS,
+    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, NETWORKS_METADATA, MIN_ALLOWED_WEIGHTS,
     MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
     NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
     NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
@@ -791,7 +791,6 @@ pub fn init_new_network(
 
     // Make network parameters explicit.
     KAPPA.save(store, netuid, &32_767)?; // 0.5 = 65535/2
-                                         // IMMUNITY_PERIOD.save(store, netuid, &0)?;
     ACTIVITY_CUTOFF.save(store, netuid, &5000)?;
     EMISSION_VALUES.save(store, netuid, &0)?;
 
@@ -814,14 +813,13 @@ pub fn init_new_network(
     MAX_BURN.save(store, netuid, &100_000_000_000)?;
 
     REGISTRATIONS_THIS_BLOCK.save(store, netuid, &0)?;
-    // MAX_REGISTRATION_PER_BLOCK.save(store, netuid, &3)?;
     KAPPA.save(store, netuid, &32_767)?;
     RHO.save(store, netuid, &30)?;
     RAO_RECYCLED_FOR_REGISTRATION.save(store, netuid, &0)?;
     SERVING_RATE_LIMIT.save(store, netuid, &50)?;
     ADJUSTMENTS_ALPHA.save(store, netuid, &0)?;
     LAST_UPDATE.save(store, netuid, &vec![])?;
-    METADATA2.save(
+    NETWORKS_METADATA.save(
         store,
         netuid,
         &Metadata {
@@ -829,6 +827,8 @@ pub fn init_new_network(
             particle: "".to_string(),
             description: "".to_string(),
             logo: "".to_string(),
+            types: "".to_string(),
+            extra: "".to_string(),
         }
     )?;
 
@@ -934,7 +934,7 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     ADJUSTMENTS_ALPHA.remove(store, netuid);
     NETWORK_REGISTRATION_ALLOWED.remove(store, netuid);
     TARGET_REGISTRATIONS_PER_INTERVAL.remove(store, netuid);
-    METADATA2.remove(store, netuid);
+    NETWORKS_METADATA.remove(store, netuid);
 
     Ok(())
 }

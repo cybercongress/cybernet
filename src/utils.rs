@@ -14,14 +14,14 @@ use crate::state::{
     EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
     LAST_MECHANISM_STEP_BLOCK, LAST_TX_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
     MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK,
-    MAX_WEIGHTS_LIMIT, Metadata, METADATA2, MIN_ALLOWED_WEIGHTS, MIN_BURN,
+    MAX_WEIGHTS_LIMIT, Metadata, NETWORKS_METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN,
     MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD, NETWORK_LOCK_REDUCTION_INTERVAL,
     NETWORK_MIN_LOCK_COST, NETWORK_RATE_LIMIT, NETWORK_REGISTRATION_ALLOWED,
     PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK,
     RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT,
     SERVING_RATE_LIMIT, STAKE, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER,
     SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_ISSUANCE, TRUST, TX_RATE_LIMIT,
-    VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST, VERSE_TYPE, WEIGHTS_SET_RATE_LIMIT,
+    VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST, VERSE_METADATA, WEIGHTS_SET_RATE_LIMIT,
     WEIGHTS_VERSION_KEY, COMMISSION_CHANGE,
 };
 use crate::uids::get_subnetwork_n;
@@ -1607,15 +1607,19 @@ pub fn do_sudo_set_subnet_metadata(
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
     ensure!(metadata.name.len() <= 16, ContractError::MetadataError {});
-    ensure!(metadata.name.ne(&"root".to_string()), ContractError::MetadataError {});
+    if netuid.ne(&0u16) {
+        ensure!(metadata.name.ne(&"root".to_string()), ContractError::MetadataError {});
+    }
     ensure!(metadata.particle.len() == 46, ContractError::MetadataError {});
     ensure!(metadata.description.len() == 46, ContractError::MetadataError {});
     ensure!(metadata.logo.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.types.len() <= 256, ContractError::MetadataError {});
+    ensure!(metadata.extra.len() <= 256, ContractError::MetadataError {});
 
-    METADATA2.save(deps.storage, netuid, &metadata)?;
+    NETWORKS_METADATA.save(deps.storage, netuid, &metadata)?;
 
     Ok(Response::default()
-        .add_attribute("action", "metadata_set")
+        .add_attribute("action", "subnet_metadata_set")
         .add_attribute("netuid", format!("{}", netuid))
         .add_attribute("name", format!("{}", metadata.name))
         .add_attribute("particle", format!("{}", metadata.particle)))
@@ -1658,21 +1662,27 @@ pub fn do_sudo_set_root(
         .add_attribute("root", format!("{}", root)))
 }
 
-pub fn do_sudo_set_verse_type(
+pub fn do_sudo_set_verse_metadata(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    verse_type: String,
+    metadata: Metadata,
 ) -> Result<Response, ContractError> {
     ensure_root(deps.storage, &info.sender)?;
 
-    ensure!(verse_type.len() <= 16, ContractError::MetadataError {});
+    ensure!(metadata.name.len() <= 16, ContractError::MetadataError {});
+    ensure!(metadata.particle.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.description.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.logo.len() == 46, ContractError::MetadataError {});
 
-    VERSE_TYPE.save(deps.storage, &verse_type)?;
+    ensure!(metadata.types.len() <= 256, ContractError::MetadataError {});
+    ensure!(metadata.extra.len() <= 256, ContractError::MetadataError {});
+
+    VERSE_METADATA.save(deps.storage, &metadata)?;
 
     Ok(Response::default()
-        .add_attribute("action", "verse_type_set")
-        .add_attribute("verse_type", format!("{}", verse_type)))
+        .add_attribute("action", "verse_metadata_set")
+        .add_attribute("verse_name", format!("{}", metadata.name)))
 }
 
 pub fn do_sudo_set_commission_change(
