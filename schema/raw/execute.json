@@ -1521,17 +1521,61 @@
     {
       "type": "object",
       "required": [
-        "sudo_set_verse_type"
+        "sudo_set_verse_metadata"
       ],
       "properties": {
-        "sudo_set_verse_type": {
+        "sudo_set_verse_metadata": {
           "type": "object",
           "required": [
-            "verse_type"
+            "metadata"
           ],
           "properties": {
-            "verse_type": {
-              "type": "string"
+            "metadata": {
+              "$ref": "#/definitions/Metadata"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "sudo_unstake_all"
+      ],
+      "properties": {
+        "sudo_unstake_all": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "sudo_set_commission_change"
+      ],
+      "properties": {
+        "sudo_set_commission_change": {
+          "type": "object",
+          "required": [
+            "change"
+          ],
+          "properties": {
+            "change": {
+              "type": "boolean"
             }
           },
           "additionalProperties": false
@@ -1545,12 +1589,17 @@
       "type": "object",
       "required": [
         "description",
+        "extra",
         "logo",
         "name",
-        "particle"
+        "particle",
+        "types"
       ],
       "properties": {
         "description": {
+          "type": "string"
+        },
+        "extra": {
           "type": "string"
         },
         "logo": {
@@ -1560,6 +1609,9 @@
           "type": "string"
         },
         "particle": {
+          "type": "string"
+        },
+        "types": {
           "type": "string"
         }
       }

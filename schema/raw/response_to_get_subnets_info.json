@@ -14,12 +14,17 @@
       "type": "object",
       "required": [
         "description",
+        "extra",
         "logo",
         "name",
-        "particle"
+        "particle",
+        "types"
       ],
       "properties": {
         "description": {
+          "type": "string"
+        },
+        "extra": {
           "type": "string"
         },
         "logo": {
@@ -29,6 +34,9 @@
           "type": "string"
         },
         "particle": {
+          "type": "string"
+        },
+        "types": {
           "type": "string"
         }
       }

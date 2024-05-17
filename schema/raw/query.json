@@ -868,6 +868,19 @@
     {
       "type": "object",
       "required": [
+        "get_economy"
+      ],
+      "properties": {
+        "get_economy": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
         "get_state"
       ],
       "properties": {
