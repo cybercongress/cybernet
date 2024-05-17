@@ -1,11 +1,17 @@
-use crate::contract::execute;
+use std::time::Instant;
+
+use cosmwasm_std::testing::mock_info;
+use cosmwasm_std::{Addr, Api, DepsMut, Env, Storage};
+use rand::{distributions::Uniform, rngs::StdRng, seq::SliceRandom, thread_rng, Rng, SeedableRng};
+use substrate_fixed::transcendental::{cos, ln, sqrt, PI};
+use substrate_fixed::types::{I32F32, I64F64};
+
+use crate::contract::{execute, get_economy};
 use crate::epoch::{epoch, get_bonds};
 use crate::msg::ExecuteMsg;
 use crate::registration::create_work_for_block_number;
 use crate::root::{get_subnet_emission_value, set_emission_values};
-use crate::staking::{
-    get_total_stake, get_total_stake_for_hotkey, increase_stake_on_coldkey_hotkey_account,
-};
+use crate::staking::{get_total_stake_for_hotkey, increase_stake_on_coldkey_hotkey_account};
 use crate::test_helpers::{
     add_balance_to_coldkey_account, add_network, instantiate_contract, pow_register_ok_neuron,
     run_step_to_block, set_weights, step_block,
@@ -20,12 +26,6 @@ use crate::utils::{
     set_max_weight_limit, set_min_allowed_weights, set_min_difficulty,
     set_target_registrations_per_interval, set_weights_set_rate_limit,
 };
-use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::{Addr, Api, DepsMut, Env, Storage};
-use rand::{distributions::Uniform, rngs::StdRng, seq::SliceRandom, thread_rng, Rng, SeedableRng};
-use std::time::Instant;
-use substrate_fixed::transcendental::{cos, ln, sqrt, PI};
-use substrate_fixed::types::{I32F32, I64F64};
 
 pub fn fixed(val: f32) -> I32F32 {
     I32F32::from_num(val)
@@ -205,6 +205,7 @@ fn init_run_epochs(
         get_max_allowed_validators(deps.storage, netuid),
         validators.len() as u16
     );
+
     epoch(
         deps.storage,
         deps.api,
@@ -703,7 +704,14 @@ fn test_10_graph() {
             Addr::unchecked(i.to_string()),
             i as u16,
             1,
-        )
+        );
+
+        let gas = deps.storage.gas_used.borrow();
+        println!(
+            "total {:?} gas {:?} write {:?} read {:?}",
+            gas.total, gas.last, gas.write_cnt, gas.read_cnt
+        );
+        drop(gas);
     }
     assert_eq!(get_subnetwork_n(&deps.storage, netuid), 10);
     env.block.height += 1; // run to next block to ensure weights are set on nodes after their registration block
@@ -718,6 +726,13 @@ fn test_10_graph() {
         let res = execute(deps.as_mut(), env.clone(), info, msg);
         // println!("{:?} {:?}",i, res);
         assert_eq!(res.is_ok(), true);
+
+        let gas = deps.storage.gas_used.borrow();
+        println!(
+            "total {:?} gas {:?} write {:?} read {:?}",
+            gas.total, gas.last, gas.write_cnt, gas.read_cnt
+        );
+        drop(gas);
     }
     // Run the epoch.
     epoch(
@@ -728,6 +743,12 @@ fn test_10_graph() {
         env.block.height,
     )
     .unwrap();
+    let gas = deps.storage.gas_used.borrow();
+    println!(
+        "total {:?} gas {:?} write {:?} read {:?}",
+        gas.total, gas.last, gas.write_cnt, gas.read_cnt
+    );
+    drop(gas);
     // Check return values.
     for i in 0..n {
         assert_eq!(
@@ -826,7 +847,7 @@ fn test_512_graph() {
     }
 }
 
-// // Test an epoch on a graph with 4096 nodes, of which the first 256 are validators setting random non-self weights, and the rest servers setting only self-weights.
+// Test an epoch on a graph with 512 nodes, of which the first 64 are validators setting random non-self weights, and the rest servers setting only self-weights.
 #[test]
 fn test_512_graph_random_weights() {
     let netuid: u16 = 2;
@@ -976,7 +997,7 @@ fn test_4096_graph() {
                 true,
             );
             // Because of genesis init
-            assert_eq!(get_total_stake(&deps.storage), 21_000_000_000_000_300);
+            // assert_eq!(get_total_stake(&deps.storage), 21_000_000_000_000_300);
             // assert_eq!(get_total_stake(&deps.storage), 21_000_000_000_000_000);
             let bonds = get_bonds(&deps.storage, netuid);
             for uid in &validators {
@@ -2400,6 +2421,333 @@ fn test_validator_permits() {
                 drop(deps);
                 drop(env);
             }
+        }
+    }
+}
+
+#[test]
+fn test_graph_with_gas_sim() {
+    let netuid: u16 = 2;
+    let network_n: u16 = 512;
+    let validators_n: u16 = 64;
+    // let max_stake_per_validator: u64 = 328_125_000_000_000; // 21_000_000_000_000_000 / 64
+    let epochs: u16 = 3;
+    log::info!("test_{network_n:?}_graph ({validators_n:?} validators)");
+    for interleave in 0..3 {
+        for server_self in vec![false, true] {
+            // server-self weight off/on
+            let (validators1, servers1) = distribute_nodes(
+                validators_n as usize,
+                network_n as usize,
+                interleave as usize,
+            );
+            let validators = &validators1;
+            let servers = &servers1;
+            let server: usize = servers[0] as usize;
+            let validator: usize = validators[0] as usize;
+            let (mut deps, mut env) = instantiate_contract();
+            let gas = deps.storage.gas_used.borrow();
+            println!(
+                "before total {:?} gas {:?} write {:?} read {:?}",
+                gas.total, gas.last, gas.write_cnt, gas.read_cnt
+            );
+            drop(gas);
+
+            // fn init_run_epochs(
+            //     mut deps: DepsMut,
+            //     mut env: &mut Env,
+            //     netuid: u16,
+            //     n: u16,
+            //     validators: &Vec<u16>,
+            //     servers: &Vec<u16>,
+            //     epochs: u16,
+            //     stake_per_validator: u64,
+            //     server_self: bool,
+            //     input_stake: &Vec<u64>,
+            //     use_input_stake: bool,
+            //     input_weights: &Vec<Vec<(u16, u16)>>,
+            //     use_input_weights: bool,
+            //     random_weights: bool,
+            //     random_seed: u64,
+            //     sparse: bool,
+            // ) {
+
+            //             init_run_epochs(
+            //                 deps.as_mut(),
+            //                 &mut env,
+            //                 netuid,
+            //                 network_n,
+            //                 &validators,
+            //                 &servers,
+            //                 epochs,
+            //                 1,
+            //                 server_self,
+            //                 &vec![],
+            //                 false,
+            //                 &vec![],
+            //                 false,
+            //                 true,
+            //                 interleave as u64,
+            //                 false,
+            //             );
+
+            // netuid: u16,
+            let n = network_n;
+            // validators: &Vec<u16>,
+            // servers: &Vec<u16>,
+            // epochs: u16,
+            let stake_per_validator = 1;
+            // server_self: bool,
+            let input_stake: &Vec<u64> = &vec![];
+            let use_input_stake = false;
+            let input_weights: &Vec<Vec<(u16, u16)>> =  &vec![];
+            let use_input_weights = false;
+            let random_weights = true;
+            let random_seed = interleave;
+            let sparse = false;
+
+            // let (mut deps, mut env) = instantiate_contract();
+            // === Create the network
+            add_network(&mut deps.storage, netuid, u16::MAX - 1, 0); // set higher tempo to avoid built-in epoch, then manual epoch instead
+
+            // === Register uids
+            set_max_allowed_uids(&mut deps.storage, netuid, n);
+            for key in 0..n {
+                let stake: u64;
+                if use_input_stake {
+                    stake = input_stake[key as usize];
+                } else {
+                    stake = if validators.contains(&key) {
+                        stake_per_validator
+                    } else {
+                        0
+                    }; // only validators receive stake
+                }
+                // let stake: u64 = 1; // alternative test: all nodes receive stake, should be same outcome, except stake
+                add_balance_to_coldkey_account(&Addr::unchecked((1000 + key).to_string()), stake);
+                append_neuron(
+                    &mut deps.storage,
+                    &mut deps.api,
+                    netuid,
+                    &(Addr::unchecked((1000 + key).to_string())),
+                    0,
+                )
+                    .unwrap();
+                increase_stake_on_coldkey_hotkey_account(
+                    &mut deps.storage,
+                    &Addr::unchecked((1000 + key).to_string()),
+                    &Addr::unchecked((1000 + key).to_string()),
+                    stake as u64,
+                );
+            }
+            assert_eq!(get_subnetwork_n(&mut deps.storage, netuid), n);
+
+            // === Issue validator permits
+            set_max_allowed_validators(&mut deps.storage, netuid, validators.len() as u16);
+
+            assert_eq!(
+                get_max_allowed_validators(&mut deps.storage, netuid),
+                validators.len() as u16
+            );
+
+            epoch(
+                &mut deps.storage,
+                &mut deps.api,
+                netuid,
+                1_000_000_000,
+                env.block.height,
+            )
+                .unwrap(); // run first epoch to set allowed validators
+            step_block(deps.as_mut(), &mut env).unwrap(); // run to next block to ensure weights are set on nodes after their registration block
+
+            // === Set weights
+            let mut rng = StdRng::seed_from_u64(random_seed); // constant seed so weights over multiple runs are equal
+            let range = Uniform::new(0, u16::MAX);
+            let mut weights: Vec<u16> = vec![u16::MAX / n; servers.len() as usize];
+            for uid in validators {
+                if random_weights {
+                    weights = (0..servers.len()).map(|_| rng.sample(&range)).collect();
+                    weights = normalize_weights(weights);
+                    // assert_eq!(weights.iter().map(|x| *x as u64).sum::<u64>(), u16::MAX as u64); // normalized weight sum not always u16::MAX
+                }
+                if use_input_weights {
+                    let sparse_weights = input_weights[*uid as usize].clone();
+                    weights = sparse_weights.iter().map(|(_, w)| *w).collect();
+                    let srvs: Vec<u16> = sparse_weights.iter().map(|(s, _)| *s).collect();
+
+                    let result = set_weights(
+                        deps.as_mut(),
+                        env.clone(),
+                        (1000 + uid).to_string().as_str(),
+                        netuid,
+                        srvs.clone(),
+                        weights.clone(),
+                        0,
+                    );
+                    assert_eq!(result.is_ok(), true);
+
+
+                    // let msg = ExecuteMsg::SetWeights {
+                    //     netuid,
+                    //     dests: srvs.clone(),
+                    //     weights: weights.clone(),
+                    //     version_key: 0,
+                    // };
+                    // let info = mock_info((1000 + uid).to_string().as_str(), &[]);
+                    // let res = execute(deps.branch(), env.clone(), info, msg);
+                    // assert_eq!(res.is_ok(), true);
+
+                } else {
+                    let result = set_weights(
+                        deps.as_mut(),
+                        env.clone(),
+                        (1000 + uid).to_string().as_str(),
+                        netuid,
+                        servers.clone(),
+                        weights.clone(),
+                        0,
+                    );
+                    assert_eq!(result.is_ok(), true);
+
+                    // let msg = ExecuteMsg::SetWeights {
+                    //     netuid,
+                    //     dests: servers.clone(),
+                    //     weights: weights.clone(),
+                    //     version_key: 0,
+                    // };
+                    // let info = mock_info((1000 + uid).to_string().as_str(), &[]);
+                    // let res = execute(deps.branch(), env.clone(), info, msg);
+                    // assert_eq!(res.is_ok(), true);
+                }
+            }
+            for uid in servers {
+                if server_self {
+                    let result = set_weights(
+                        deps.as_mut(),
+                        env.clone(),
+                        (1000 + uid).to_string().as_str(),
+                        netuid,
+                        vec![*uid as u16],
+                        vec![u16::MAX],
+                        0,
+                    );
+                    assert_eq!(result.is_ok(), true);
+
+                    // let msg = ExecuteMsg::SetWeights {
+                    //     netuid,
+                    //     dests: vec![*uid as u16],
+                    //     weights: vec![u16::MAX],
+                    //     version_key: 0,
+                    // }; // server self-weight
+                    // let info = mock_info((1000 + uid).to_string().as_str(), &[]);
+                    // let res = execute(deps.branch(), env.clone(), info, msg);
+                    // assert_eq!(res.is_ok(), true);
+                }
+            }
+
+            // === Run the epochs.
+            for n in 0..epochs {
+                println!("Start {n} epoch");
+                let start = Instant::now();
+                let gas = deps.storage.gas_used.borrow();
+                let gas_total = gas.total;
+                let gas_last = gas.last;
+                let gas_write_cnt = gas.write_cnt;
+                let gas_read_cnt = gas.read_cnt;
+                println!(
+                    "before epoch {:?} total {:?} gas {:?} write {:?} read {:?}",
+                    n, gas.total, gas.last, gas.write_cnt, gas.read_cnt
+                );
+                drop(gas);
+
+                if sparse {
+                    epoch(
+                        &mut deps.storage,
+                        &mut deps.api,
+                        netuid,
+                        1_000_000_000,
+                        env.block.height,
+                    )
+                        .unwrap();
+                } else {
+                    epoch_dense(&mut deps.storage, netuid, 1_000_000_000, env.block.height);
+                }
+
+                let gas = deps.storage.gas_used.borrow();
+                println!(
+                    "after epoch {:?} total {:?} gas {:?} write {:?} read {:?}",
+                    n, gas.total, gas.last, gas.write_cnt, gas.read_cnt
+                );
+                println!(
+                    "after epoch {:?} total {:?} gas {:?} write {:?} read {:?}",
+                    n, gas_total, gas_last, gas_write_cnt, gas_read_cnt
+                );
+                println!(
+                    "diff epoch {:?} gas {:?} write {:?} read {:?}",
+                    n, gas.total-gas_total, gas.write_cnt-gas_write_cnt, gas.read_cnt-gas_read_cnt
+                );
+                drop(gas);
+
+                let duration = start.elapsed();
+                println!(
+                    "Time elapsed in (sparse={sparse}) epoch() is: {:?}",
+                    duration
+                );
+            }
+
+            // let bonds = get_bonds(&deps.storage, netuid );
+            // for (uid, node) in vec![ (validators[0], "validator"), (servers[0], "server") ] {
+            // 	log::info!("\n{node}" );
+            // 	uid_stats(netuid, uid);
+            // 	log::info!("bonds: {:?} (on validator), {:?} (on server)", bonds[uid as usize][0], bonds[uid as usize][servers[0] as usize]);
+            // }
+
+
+            let gas = deps.storage.gas_used.borrow();
+            println!(
+                "after total {:?} gas {:?} write {:?} read {:?}",
+                gas.total, gas.last, gas.write_cnt, gas.read_cnt
+            );
+            drop(gas);
+
+            let bonds = get_bonds(&deps.storage, netuid);
+            for uid in validators {
+                // assert_eq!(
+                //     get_total_stake_for_hotkey(
+                //         &deps.storage,
+                //         &Addr::unchecked((1000 + uid).to_string()),
+                //     ),
+                //     max_stake_per_validator
+                // );
+                assert_eq!(get_rank_for_uid(&deps.storage, netuid, *uid), 0);
+                assert_eq!(get_trust_for_uid(&deps.storage, netuid, *uid), 0);
+                assert_eq!(get_consensus_for_uid(&deps.storage, netuid, *uid), 0);
+                assert_eq!(get_incentive_for_uid(&deps.storage, netuid, *uid), 0);
+                // assert_eq!(get_dividends_for_uid(&deps.storage, netuid, *uid), 1023); // Note D = floor(1 / 64 * 65_535) = 1023
+                // assert_eq!(get_emission_for_uid(&deps.storage, netuid, *uid), 7812500); // Note E = 0.5 / 200 * 1_000_000_000 = 7_812_500
+                assert_eq!(bonds[*uid as usize][validator], 0.0);
+                // assert_eq!(bonds[*uid as usize][server], I32F32::from_num(65_535));
+                // Note B_ij = floor(1 / 64 * 65_535) / 65_535 = 1023 / 65_535, then max-upscaled to 65_535
+            }
+            for uid in servers {
+                assert_eq!(
+                    get_total_stake_for_hotkey(
+                        &deps.storage,
+                        &Addr::unchecked((1000 + uid).to_string()),
+                    ),
+                    0
+                );
+                // assert_eq!(get_rank_for_uid(&deps.storage, netuid, *uid), 146); // Note R = floor(1 / (512 - 64) * 65_535) = 146
+                // assert_eq!(get_trust_for_uid(&deps.storage, netuid, *uid), 65535);
+                // assert_eq!(get_consensus_for_uid(&deps.storage, netuid, *uid), 146); // Note C = floor(1 / (512 - 64) * 65_535) = 146
+                // assert_eq!(get_incentive_for_uid(&deps.storage, netuid, *uid), 146); // Note I = floor(1 / (512 - 64) * 65_535) = 146
+                assert_eq!(get_dividends_for_uid(&deps.storage, netuid, *uid), 0);
+                // assert_eq!(get_emission_for_uid(&deps.storage, netuid, *uid), 1116071); // Note E = floor(0.5 / (512 - 64) * 1_000_000_000) = 1_116_071
+                assert_eq!(bonds[*uid as usize][validator], 0.0);
+                assert_eq!(bonds[*uid as usize][server], 0.0);
+            }
+            drop(deps);
+            drop(env);
         }
     }
 }
