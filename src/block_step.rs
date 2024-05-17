@@ -8,13 +8,13 @@ use crate::state::{
     BURN_REGISTRATIONS_THIS_INTERVAL, DELEGATES, DIFFICULTY, EMISSION_VALUES,
     LAST_ADJUSTMENT_BLOCK, LAST_MECHANISM_STEP_BLOCK, LOADED_EMISSION, MAX_BURN, MAX_DIFFICULTY,
     MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
-    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, STAKE, SUBNET_OWNER, SUBNET_OWNER_CUT,
-    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE,
-    TOTAL_ISSUANCE, TOTAL_STAKE,
+    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, STAKE, SUBNET_OWNER,
+    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_HOTKEY_STAKE,
+    TOTAL_ISSUANCE,
 };
 use crate::utils::{ensure_root, get_blocks_since_last_step};
 use crate::ContractError;
-use cosmwasm_std::{coins, Addr, Api, BankMsg, CosmosMsg, DepsMut, Env, Order, StdResult, Storage, Uint128, ensure};
+use cosmwasm_std::{Addr, Api, CosmosMsg, DepsMut, Env, Order, StdResult, Storage};
 use cyber_std::Response;
 use substrate_fixed::types::I110F18;
 use substrate_fixed::types::I64F64;
@@ -143,7 +143,7 @@ pub fn generate_emission(
         ));
 
         let subnet_has_owner = SUBNET_OWNER.has(store, netuid);
-        let mut remaining = I96F32::from_num(new_queued_emission);
+        let remaining = I96F32::from_num(new_queued_emission);
         if subnet_has_owner {
             // let subnet_owner_cut = SUBNET_OWNER_CUT.load(store)?;
             // let cut = remaining
