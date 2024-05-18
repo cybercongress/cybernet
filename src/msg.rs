@@ -336,8 +336,15 @@ pub enum QueryMsg {
 
     #[returns(Coin)]
     GetBlockRewards {},
-    #[returns(String)]
-    GetVerseType {},
+    #[returns(Metadata)]
+    GetSubnetMetadata { netuid: u16 },
+    #[returns(Vec<(u16, Metadata)>)]
+    GetSubnetsMetadata {
+        start_after: Option<u16>,
+        limit: Option<u16>,
+    },
+    #[returns(Metadata)]
+    GetVerseMetadata {},
     #[returns(EconomyData)]
     GetEconomy {},
 

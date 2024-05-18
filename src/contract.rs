@@ -4,6 +4,7 @@ use cosmwasm_std::{Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMu
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cw2::{ContractVersion, get_contract_version, set_contract_version};
+use cw_storage_plus::Bound;
 use cyber_std::{create_forget_thought_msg, Response};
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
@@ -694,7 +695,13 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetBlockRewards {} => {
             to_json_binary(&get_block_rewards(deps.storage)?)
         }
-        QueryMsg::GetVerseType {} => to_json_binary(&get_verse_type(deps.storage)?),
+        QueryMsg::GetSubnetMetadata { netuid } => {
+            to_json_binary(&get_subnet_metadata(deps.storage, netuid)?)
+        }
+        QueryMsg::GetSubnetsMetadata { start_after, limit } => {
+            to_json_binary(&get_subnets_metadata(deps.storage, start_after, limit)?)
+        }
+        QueryMsg::GetVerseMetadata {} => to_json_binary(&get_verse_metadata(deps.storage)?),
         QueryMsg::GetEconomy {} => to_json_binary(&get_economy(deps.storage)?),
     }
 }
@@ -934,11 +941,39 @@ pub fn get_block_rewards(
     Ok(Coin::new(u128::from(block_rewards), denom))
 }
 
-pub fn get_verse_type(
+pub fn get_subnet_metadata(
+    store: &dyn Storage,
+    netuid: u16,
+) -> StdResult<Metadata> {
+    let subnet_meta = NETWORKS_METADATA.load(store, netuid)?;
+    Ok(subnet_meta)
+}
+
+pub fn get_subnets_metadata(
+    store: &dyn Storage,
+    start_after: Option<u16>,
+    limit: Option<u16>,
+) -> StdResult<Vec<(u16, Metadata)>> {
+    let start = start_after.map(Bound::exclusive);
+    let subnets_limit = limit.unwrap_or(32) as usize;
+
+    let subnets = NETWORKS_METADATA
+        .range(store, start, None, Order::Ascending)
+        .take(subnets_limit)
+        .map(|item| {
+            let (k, v) = item.unwrap();
+            (k, v)
+        })
+        .collect::<Vec<(u16, Metadata)>>();
+
+    Ok(subnets)
+}
+
+pub fn get_verse_metadata(
     store: &dyn Storage,
 ) -> StdResult<Metadata> {
-    let verse_type = VERSE_METADATA.load(store)?;
-    Ok(verse_type)
+    let verse_meta = VERSE_METADATA.load(store)?;
+    Ok(verse_meta)
 }
 
 pub fn get_economy(

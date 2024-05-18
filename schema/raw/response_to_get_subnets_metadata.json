@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Array_of_Tuple_of_uint16_and_Metadata",
+  "type": "array",
+  "items": {
+    "type": "array",
+    "items": [
+      {
+        "type": "integer",
+        "format": "uint16",
+        "minimum": 0.0
+      },
+      {
+        "$ref": "#/definitions/Metadata"
+      }
+    ],
+    "maxItems": 2,
+    "minItems": 2
+  },
+  "definitions": {
+    "Metadata": {
+      "type": "object",
+      "required": [
+        "description",
+        "extra",
+        "logo",
+        "name",
+        "particle",
+        "types"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "extra": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "particle": {
+          "type": "string"
+        },
+        "types": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
