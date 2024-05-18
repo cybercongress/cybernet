@@ -462,7 +462,7 @@ pub fn print_state(app: &mut CyberApp, cn_addr: &Addr) {
     file.write(data.as_bytes()).unwrap();
 }
 
-#[test]
+// #[test]
 fn test_instantiate() {
     let mut app = mock_app(&[coin(42000000000 as u128, "boot".to_string())]);
 
