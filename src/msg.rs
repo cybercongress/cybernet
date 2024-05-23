@@ -361,6 +361,7 @@ pub struct EconomyData {
     pub default_commission: Decimal,
     pub commission_change: bool,
     pub total_issuance: Coin,
+    pub total_rewards: Coin,
 }
 
 #[cw_serde]

@@ -23,7 +23,7 @@ use crate::state::{
     RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
     SERVING_RATE_LIMIT, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_OWNER,
     TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST, UIDS, VALIDATOR_PERMIT,
-    VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, TOTAL_REWARDS,
 };
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, replace_neuron};
 use crate::utils::{
@@ -309,7 +309,13 @@ pub fn root_epoch(
 
     // --- 4. Determines the total block emission across all the subnetworks. This is the
     // value which will be distributed based on the computation below.
-    let block_emission: I64F64 = I64F64::from_num(get_block_emission(store));
+    let block_emission_u64: u64 = get_block_emission(store);
+    let block_emission: I64F64 = I64F64::from_num(block_emission_u64);
+    TOTAL_REWARDS.update(store, |val| -> StdResult<_> {
+        let mut amount = val;
+        amount +=  block_emission_u64;
+        Ok(amount)
+    })?;
     api.debug(&format!("🔵 block_emission: {:?}", block_emission));
 
     // --- 5. A collection of all registered hotkeys on the root network. Hotkeys

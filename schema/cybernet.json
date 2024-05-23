@@ -3044,6 +3044,7 @@
         "default_commission",
         "staker_apr",
         "total_issuance",
+        "total_rewards",
         "total_stake",
         "validator_apr"
       ],
@@ -3061,6 +3062,9 @@
           "$ref": "#/definitions/Decimal"
         },
         "total_issuance": {
+          "$ref": "#/definitions/Coin"
+        },
+        "total_rewards": {
           "$ref": "#/definitions/Coin"
         },
         "total_stake": {

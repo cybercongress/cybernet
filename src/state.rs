@@ -10,6 +10,7 @@ pub const ROOT: Item<Addr> = Item::new("root");
 pub const COMMISSION_CHANGE: Item<bool> = Item::new("commission_switch");
 pub const DENOM: Item<String> = Item::new("denom");
 pub const VERSE_METADATA: Item<Metadata> = Item::new("verse_metadata");
+pub const TOTAL_REWARDS: Item<u64> = Item::new("total_rewards");
 
 // ============================
 // ==== Staking + Accounts ====
