@@ -582,7 +582,7 @@ pub fn do_root_register(
 
     // --- 13. Force all members on root to become a delegate.
     if !hotkey_is_delegate(deps.storage, &hotkey) {
-        delegate_hotkey(deps.storage, &hotkey, 11796);
+        delegate_hotkey(deps.storage, &hotkey, 13107);
     }
 
     // --- 14. Update the registration counters for both the block and interval.
@@ -782,8 +782,8 @@ pub fn init_new_network(
 
     // --- 6. Set all default values **explicitly**.
     NETWORK_REGISTRATION_ALLOWED.save(store, netuid, &true)?;
-    MAX_ALLOWED_UIDS.save(store, netuid, &256)?;
-    MAX_ALLOWED_VALIDATORS.save(store, netuid, &64)?;
+    MAX_ALLOWED_UIDS.save(store, netuid, &128)?;
+    MAX_ALLOWED_VALIDATORS.save(store, netuid, &32)?;
     MIN_ALLOWED_WEIGHTS.save(store, netuid, &1)?;
     MAX_WEIGHTS_LIMIT.save(store, netuid, &u16::MAX)?;
     ADJUSTMENT_INTERVAL.save(store, netuid, &360)?;

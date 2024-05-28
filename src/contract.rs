@@ -79,6 +79,7 @@ pub fn instantiate(
     NETWORK_LAST_LOCK_COST.save(deps.storage, &10_000_000_000)?;
     NETWORK_MIN_LOCK_COST.save(deps.storage, &10_000_000_000)?;
     NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &(7 * 14400))?;
+    TOTAL_REWARDS.save(deps.storage, &0)?;
 
     // -- Root network initialization --
     let root_netuid: u16 = 0;
@@ -155,8 +156,8 @@ pub fn instantiate(
     REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     POW_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     BURN_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
-    MAX_ALLOWED_VALIDATORS.save(deps.storage, netuid, &64)?;
-    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &256)?;
+    MAX_ALLOWED_VALIDATORS.save(deps.storage, netuid, &32)?;
+    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &128)?;
     WEIGHTS_VERSION_KEY.save(deps.storage, netuid, &0)?;
     WEIGHTS_SET_RATE_LIMIT.save(deps.storage, netuid, &100)?;
 
@@ -1010,27 +1011,6 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     } else {
         return Err(ContractError::MigrationError {})
-    }
-
-    let metadata_old = METADATA
-        .range(deps.storage, None, None, Order::Ascending)
-        .map(|item| {
-            let i = item.unwrap();
-            (i.0, i.1)
-        })
-        .collect::<Vec<(u16, String)>>();
-
-    for item in metadata_old {
-        // let (uid, particle) = item.unwrap();
-        let metadata = Metadata {
-            name: "empty".to_string(),
-            particle: item.1.to_string(),
-            description: "".to_string(),
-            logo: "".to_string(),
-            types: "".to_string(),
-            extra: "".to_string(),
-        };
-        NETWORKS_METADATA.save(deps.storage, item.0, &metadata)?;
     }
 
     Ok(Response::new().add_attribute("action", "migrate"))
