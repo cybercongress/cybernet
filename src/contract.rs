@@ -1,56 +1,39 @@
+use std::ops::{Div, Mul, Sub};
+
+use cosmwasm_std::{Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, ensure, Env, MessageInfo, Order, StdResult, Storage, to_json_binary, Uint128};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_json_binary, Addr, Binary, Coin, Deps, DepsMut, Env, MessageInfo, Order, StdResult, Storage, Uint128, CosmosMsg, BankMsg, coins};
-use cw2::{get_contract_version, set_contract_version, ContractVersion};
-use cyber_std::Response;
+use cw2::{ContractVersion, get_contract_version, set_contract_version};
+use cw_storage_plus::Bound;
+use cyber_std::{create_forget_thought_msg, Response};
 use cyber_std::{create_creat_thought_msg, Load, Trigger};
 
 use crate::block_step::block_step;
 use crate::delegate_info::{get_delegate, get_delegated, get_delegates};
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
+use crate::msg::{EconomyData, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 use crate::neuron_info::{get_neuron, get_neuron_lite, get_neurons, get_neurons_lite};
 use crate::registration::{do_burned_registration, do_registration, do_sudo_registration};
 use crate::root::{do_root_register, get_network_lock_cost, user_add_network, user_remove_network};
 use crate::serving::{do_serve_axon, do_serve_prometheus};
 use crate::stake_info::{get_stake_info_for_coldkey, get_stake_info_for_coldkeys};
-use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake};
-use crate::state::{
-    AxonInfo, PrometheusInfo, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL,
-    ALLOW_FAUCET, AXONS, BLOCKS_SINCE_LAST_STEP, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
-    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY,
-    DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
-    LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY,
-    MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN,
-    MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
-    NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
-    NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
-    OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PRUNING_SCORES, RANK,
-    RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
-    ROOT, SERVING_RATE_LIMIT, STAKE, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER,
-    SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE,
-    TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS,
-    VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
-};
+use crate::staking::{do_add_stake, do_become_delegate, do_remove_stake, do_set_delegate_commission};
+use crate::state::{ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ADJUSTMENTS_ALPHA, ALLOW_FAUCET, AxonInfo, AXONS, BLOCK_EMISSION, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, COMMISSION_CHANGE, CONSENSUS, DEFAULT_TAKE, DELEGATES, DENOM, DIFFICULTY, DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, Metadata, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST, NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST, NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED, NETWORKS_ADDED, NETWORKS_METADATA, OWNER, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL, PROMETHEUS, PrometheusInfo, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT, STAKE, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, SUBNETWORK_N, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE, TOTAL_ISSUANCE, TOTAL_NETWORKS, TOTAL_REWARDS, TOTAL_STAKE, TRUST, TX_RATE_LIMIT, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, VERSE_METADATA, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY};
 use crate::state_info::get_state_info;
 use crate::subnet_info::{get_subnet_hyperparams, get_subnet_info, get_subnets_info};
 use crate::uids::get_registered_networks_for_hotkey;
 use crate::utils::{
     do_sudo_set_activity_cutoff, do_sudo_set_adjustment_alpha, do_sudo_set_adjustment_interval,
-    do_sudo_set_block_emission, do_sudo_set_bonds_moving_average, do_sudo_set_default_take,
-    do_sudo_set_difficulty, do_sudo_set_immunity_period, do_sudo_set_kappa,
-    do_sudo_set_lock_reduction_interval, do_sudo_set_max_allowed_uids,
-    do_sudo_set_max_allowed_validators, do_sudo_set_max_burn, do_sudo_set_max_difficulty,
-    do_sudo_set_max_registrations_per_block, do_sudo_set_max_weight_limit,
-    do_sudo_set_min_allowed_weights, do_sudo_set_min_burn, do_sudo_set_min_difficulty,
-    do_sudo_set_network_immunity_period, do_sudo_set_network_min_lock_cost,
-    do_sudo_set_network_rate_limit, do_sudo_set_network_registration_allowed,
-    do_sudo_set_rao_recycled, do_sudo_set_rho, do_sudo_set_serving_rate_limit,
-    do_sudo_set_subnet_limit, do_sudo_set_subnet_metadata, do_sudo_set_subnet_owner_cut,
-    do_sudo_set_target_registrations_per_interval, do_sudo_set_tempo, do_sudo_set_total_issuance,
-    do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid,
-    do_sudo_set_validator_prune_len, do_sudo_set_weights_set_rate_limit,
-    do_sudo_set_weights_version_key,
+    do_sudo_set_block_emission, do_sudo_set_bonds_moving_average, do_sudo_set_commission_change, do_sudo_set_default_take, do_sudo_set_difficulty,
+    do_sudo_set_immunity_period, do_sudo_set_kappa, do_sudo_set_lock_reduction_interval, do_sudo_set_max_allowed_uids,
+    do_sudo_set_max_allowed_validators, do_sudo_set_max_burn, do_sudo_set_max_difficulty, do_sudo_set_max_registrations_per_block,
+    do_sudo_set_max_weight_limit, do_sudo_set_min_allowed_weights, do_sudo_set_min_burn, do_sudo_set_min_difficulty,
+    do_sudo_set_network_immunity_period, do_sudo_set_network_min_lock_cost, do_sudo_set_network_rate_limit, do_sudo_set_network_registration_allowed,
+    do_sudo_set_rao_recycled, do_sudo_set_rho, do_sudo_set_root, do_sudo_set_serving_rate_limit, do_sudo_set_subnet_limit,
+    do_sudo_set_subnet_metadata, do_sudo_set_subnet_owner, do_sudo_set_subnet_owner_cut, do_sudo_set_target_registrations_per_interval,
+    do_sudo_set_tempo, do_sudo_set_total_issuance, do_sudo_set_tx_rate_limit, do_sudo_set_validator_permit_for_uid,
+    do_sudo_set_validator_prune_len, do_sudo_set_verse_metadata, do_sudo_set_weights_set_rate_limit, do_sudo_set_weights_version_key, do_sudo_unstake_all,
+    ensure_root
 };
 use crate::weights::{do_set_weights, get_network_weights, get_network_weights_sparse};
 
@@ -69,11 +52,13 @@ pub fn instantiate(
     ROOT.save(deps.storage, &info.sender)?;
     ALLOW_FAUCET.save(deps.storage, &false)?;
 
-    if info.funds.len() > 0 {
-        DENOM.save(deps.storage, &info.funds[0].denom)?;
-    } else {
-        DENOM.save(deps.storage, &"boot".to_string())?;
-    }
+    // denom which sent during instantiate is general denom for contract
+    ensure!(
+        info.funds.len() == 1,
+        ContractError::DenomSetError {}
+    );
+    DENOM.save(deps.storage, &info.funds[0].denom)?;
+    COMMISSION_CHANGE.save(deps.storage, &false)?;
 
     TOTAL_ISSUANCE.save(deps.storage, &0)?;
     TOTAL_STAKE.save(deps.storage, &0)?;
@@ -81,19 +66,20 @@ pub fn instantiate(
     // -- Cybertensor parameters initialization --
 
     SUBNET_LIMIT.save(deps.storage, &16)?;
-    NETWORK_IMMUNITY_PERIOD.save(deps.storage, &7200)?;
+    NETWORK_IMMUNITY_PERIOD.save(deps.storage, &14400)?;
     BLOCK_EMISSION.save(deps.storage, &4_200_000)?;
 
     SUBNET_OWNER_CUT.save(deps.storage, &0)?;
     NETWORK_RATE_LIMIT.save(deps.storage, &0)?;
 
-    // 6.25% (2^12/2^16)
-    DEFAULT_TAKE.save(deps.storage, &4096)?;
+    // 20% (113108/2^16)
+    DEFAULT_TAKE.save(deps.storage, &13107)?;
     TX_RATE_LIMIT.save(deps.storage, &0)?;
 
     NETWORK_LAST_LOCK_COST.save(deps.storage, &10_000_000_000)?;
     NETWORK_MIN_LOCK_COST.save(deps.storage, &10_000_000_000)?;
-    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &(7 * 7200))?;
+    NETWORK_LOCK_REDUCTION_INTERVAL.save(deps.storage, &(7 * 14400))?;
+    TOTAL_REWARDS.save(deps.storage, &0)?;
 
     // -- Root network initialization --
     let root_netuid: u16 = 0;
@@ -127,10 +113,10 @@ pub fn instantiate(
     KAPPA.save(deps.storage, root_netuid, &32_767)?;
     RHO.save(deps.storage, root_netuid, &30)?;
     RAO_RECYCLED_FOR_REGISTRATION.save(deps.storage, root_netuid, &0)?;
-    ACTIVITY_CUTOFF.save(deps.storage, root_netuid, &5000)?;
+    ACTIVITY_CUTOFF.save(deps.storage, root_netuid, &14400)?;
     SERVING_RATE_LIMIT.save(deps.storage, root_netuid, &50)?;
     DIFFICULTY.save(deps.storage, root_netuid, &10_000_000)?;
-    IMMUNITY_PERIOD.save(deps.storage, root_netuid, &7200)?;
+    IMMUNITY_PERIOD.save(deps.storage, root_netuid, &14400)?;
     POW_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, root_netuid, &0)?;
     BURN_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, root_netuid, &0)?;
     ADJUSTMENTS_ALPHA.save(deps.storage, root_netuid, &0)?;
@@ -139,10 +125,17 @@ pub fn instantiate(
     EMISSION_VALUES.save(deps.storage, root_netuid, &0)?;
     NETWORK_LAST_REGISTERED.save(deps.storage, &0)?;
     TOTAL_NETWORKS.save(deps.storage, &1)?;
-    METADATA.save(
+    NETWORKS_METADATA.save(
         deps.storage,
         root_netuid,
-        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+        &Metadata {
+            name: "root".to_string(),
+            particle: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            description: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            logo: "".to_string(),
+            types: "".to_string(),
+            extra: "".to_string(),
+        }
     )?;
 
     // -- Subnetwork 1 initialization --
@@ -155,16 +148,16 @@ pub fn instantiate(
     TEMPO.save(deps.storage, netuid, &10)?;
     KAPPA.save(deps.storage, netuid, &0)?;
     DIFFICULTY.save(deps.storage, netuid, &10_000_000)?;
-    IMMUNITY_PERIOD.save(deps.storage, netuid, &7200)?;
-    ACTIVITY_CUTOFF.save(deps.storage, netuid, &5000)?;
+    IMMUNITY_PERIOD.save(deps.storage, netuid, &14400)?;
+    ACTIVITY_CUTOFF.save(deps.storage, netuid, &14400)?;
     EMISSION_VALUES.save(deps.storage, netuid, &0)?;
     MAX_WEIGHTS_LIMIT.save(deps.storage, netuid, &u16::MAX)?;
     MIN_ALLOWED_WEIGHTS.save(deps.storage, netuid, &0)?;
     REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     POW_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
     BURN_REGISTRATIONS_THIS_INTERVAL.save(deps.storage, netuid, &0)?;
-    MAX_ALLOWED_VALIDATORS.save(deps.storage, netuid, &64)?;
-    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &1024)?;
+    MAX_ALLOWED_VALIDATORS.save(deps.storage, netuid, &32)?;
+    MAX_ALLOWED_UIDS.save(deps.storage, netuid, &128)?;
     WEIGHTS_VERSION_KEY.save(deps.storage, netuid, &0)?;
     WEIGHTS_SET_RATE_LIMIT.save(deps.storage, netuid, &100)?;
 
@@ -191,10 +184,17 @@ pub fn instantiate(
     SUBNET_LOCKED.save(deps.storage, netuid, &0)?;
     TARGET_REGISTRATIONS_PER_INTERVAL.save(deps.storage, netuid, &1)?;
     NETWORK_REGISTRATION_ALLOWED.save(deps.storage, netuid, &true)?;
-    METADATA.save(
+    NETWORKS_METADATA.save(
         deps.storage,
         netuid,
-        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+        &Metadata {
+            name: "x".to_string(),
+            particle: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            description: "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+            logo: "".to_string(),
+            types: "".to_string(),
+            extra: "".to_string(),
+        }
     )?;
 
     RANK.save(deps.storage, netuid, &vec![])?;
@@ -217,7 +217,13 @@ pub fn instantiate(
     Ok(Response::default().add_attribute("action", "instantiate"))
 }
 
-pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn activate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
     let denom = DENOM.load(deps.storage)?;
     let res = Response::new()
         .add_message(create_creat_thought_msg(
@@ -234,6 +240,7 @@ pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
                     amount: Uint128::from(10u128),
                 },
             },
+            // TODO replace dmn thought name later
             env.contract.address.as_str()[0..32].to_string(),
             "Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
         ))
@@ -242,19 +249,37 @@ pub fn activate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
     Ok(res)
 }
 
-pub fn deactivate(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn deactivate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
     let denom = DENOM.load(deps.storage)?;
     let root = ROOT.load(deps.storage)?;
 
-    let coin = deps.querier.query_balance(env.contract.address, denom).unwrap();
+    let contract_balance = deps.querier.query_balance(env.clone().contract.address, denom.clone()).unwrap();
+    let total_stake = TOTAL_STAKE.load(deps.storage)?;
 
-    let msg = CosmosMsg::Bank(BankMsg::Send {
+    let return_rewards_msg = CosmosMsg::Bank(BankMsg::Send {
         to_address: root.to_string(),
-        amount: vec![coin],
+        amount: vec![
+            Coin {
+                denom,
+                amount: contract_balance.amount.sub(Uint128::from(total_stake)),
+            },
+        ],
     });
 
+    let disable_dmn = create_forget_thought_msg(
+        env.contract.address.to_string(),
+        env.contract.address.as_str()[0..32].to_string()
+    );
+
     let res = Response::new()
-        .add_message(msg)
+        .add_message(return_rewards_msg)
+        .add_message(disable_dmn)
         .add_attribute("action", "deactivate");
 
     Ok(res)
@@ -268,10 +293,9 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Activate {} => activate(deps, env),
-        ExecuteMsg::Deactivate {} => deactivate(deps, env),
-        ExecuteMsg::BlockStep {} => block_step(deps, env),
-
+        ExecuteMsg::Activate {} => activate(deps, env, info),
+        ExecuteMsg::Deactivate {} => deactivate(deps, env, info),
+        ExecuteMsg::BlockStep {} => block_step(deps, env, Some(info.sender)),
         ExecuteMsg::SetWeights {
             netuid,
             dests,
@@ -282,6 +306,9 @@ pub fn execute(
         ExecuteMsg::AddStake { hotkey } => do_add_stake(deps, env, info, hotkey),
         ExecuteMsg::RemoveStake { hotkey, amount } => {
             do_remove_stake(deps, env, info, hotkey, amount)
+        }
+        ExecuteMsg::SetDelegateCommission { hotkey, commission } => {
+            do_set_delegate_commission(deps, env, info, hotkey, commission)
         }
         ExecuteMsg::ServeAxon {
             netuid,
@@ -485,16 +512,31 @@ pub fn execute(
         ExecuteMsg::SudoSetBlockEmission { emission } => {
             do_sudo_set_block_emission(deps, env, info, emission)
         }
-        ExecuteMsg::SudoSetSubnetMetadata { netuid, particle } => {
-            do_sudo_set_subnet_metadata(deps, env, info, netuid, particle)
+        ExecuteMsg::SudoSetSubnetMetadata { netuid, metadata } => {
+            do_sudo_set_subnet_metadata(deps, env, info, netuid, metadata)
         }
+        ExecuteMsg::SudoSetSubnetOwner { netuid, new_owner } => {
+            do_sudo_set_subnet_owner(deps, env, info, netuid, new_owner)
+        }
+        ExecuteMsg::SudoSetRoot { new_root, } => {
+            do_sudo_set_root(deps, env, info, new_root)
+        },
+        ExecuteMsg::SudoSetVerseMetadata { metadata } => {
+            do_sudo_set_verse_metadata(deps, env, info, metadata)
+        },
+        ExecuteMsg::SudoUnstakeAll { limit } => {
+            do_sudo_unstake_all(deps, env, info, limit)
+        },
+        ExecuteMsg::SudoSetCommissionChange { change } => {
+            do_sudo_set_commission_change(deps, env, info, change)
+        },
     }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
     match msg {
-        SudoMsg::BlockStep {} => block_step(deps, env),
+        SudoMsg::BlockStep {} => block_step(deps, env, None),
     }
 }
 
@@ -635,6 +677,17 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetWeightsSparse { netuid } => {
             to_json_binary(&get_network_weights_sparse(deps.storage, netuid)?)
         }
+        QueryMsg::GetBlockRewards {} => {
+            to_json_binary(&get_block_rewards(deps.storage)?)
+        }
+        QueryMsg::GetSubnetMetadata { netuid } => {
+            to_json_binary(&get_subnet_metadata(deps.storage, netuid)?)
+        }
+        QueryMsg::GetSubnetsMetadata { start_after, limit } => {
+            to_json_binary(&get_subnets_metadata(deps.storage, start_after, limit)?)
+        }
+        QueryMsg::GetVerseMetadata {} => to_json_binary(&get_verse_metadata(deps.storage)?),
+        QueryMsg::GetEconomy {} => to_json_binary(&get_economy(deps.storage)?),
     }
 }
 
@@ -865,6 +918,89 @@ pub fn query_get_stake(store: &dyn Storage, hotkey: &Addr) -> StdResult<Vec<(Str
     Ok(stakes)
 }
 
+pub fn get_block_rewards(
+    store: &dyn Storage,
+) -> StdResult<Coin> {
+    let block_rewards = BLOCK_EMISSION.load(store)?;
+    let denom = DENOM.load(store)?;
+    Ok(Coin::new(u128::from(block_rewards), denom))
+}
+
+pub fn get_subnet_metadata(
+    store: &dyn Storage,
+    netuid: u16,
+) -> StdResult<Metadata> {
+    let subnet_meta = NETWORKS_METADATA.load(store, netuid)?;
+    Ok(subnet_meta)
+}
+
+pub fn get_subnets_metadata(
+    store: &dyn Storage,
+    start_after: Option<u16>,
+    limit: Option<u16>,
+) -> StdResult<Vec<(u16, Metadata)>> {
+    let start = start_after.map(Bound::exclusive);
+    let subnets_limit = limit.unwrap_or(32) as usize;
+
+    let subnets = NETWORKS_METADATA
+        .range(store, start, None, Order::Ascending)
+        .take(subnets_limit)
+        .map(|item| {
+            let (k, v) = item.unwrap();
+            (k, v)
+        })
+        .collect::<Vec<(u16, Metadata)>>();
+
+    Ok(subnets)
+}
+
+pub fn get_verse_metadata(
+    store: &dyn Storage,
+) -> StdResult<Metadata> {
+    let verse_meta = VERSE_METADATA.load(store)?;
+    Ok(verse_meta)
+}
+
+pub fn get_economy(
+    store: &dyn Storage,
+) -> StdResult<EconomyData> {
+    let block_rewards = BLOCK_EMISSION.load(store)?;
+    let denom = DENOM.load(store)?;
+    let total_stake = TOTAL_STAKE.load(store)?;
+    let default_take = DEFAULT_TAKE.load(store)?;
+    let default_commission = Decimal::from_ratio(default_take, u16::MAX)
+        .mul(Decimal::from_atomics(Uint128::from(100u64),0).unwrap());
+    let commission_change = COMMISSION_CHANGE.load(store)?;
+    let blocks_per_year = 5256000u64;
+    let total_issuance = TOTAL_ISSUANCE.load(store)?;
+    let total_rewards = TOTAL_REWARDS.load(store)?;
+
+    let validator_apr = Decimal::new(Uint128::from(block_rewards).mul(Uint128::from(blocks_per_year)))
+        .div(Decimal::new(Uint128::from(total_stake)))
+        .mul(Decimal::from_atomics(Uint128::from(100u64),0).unwrap());
+
+    let staker_apr  = Decimal::new(Uint128::from(block_rewards).mul(Uint128::from(blocks_per_year)))
+        .div(Decimal::new(Uint128::from(total_stake)))
+        .mul(Decimal::one().sub(Decimal::from_ratio(default_take, u16::MAX)))
+        .mul(Decimal::from_atomics(Uint128::from(100u64),0).unwrap());
+
+
+    let total_rewards = Coin::new(u128::from(total_rewards), denom.clone());
+
+    let economy_data = EconomyData{
+        validator_apr,
+        staker_apr,
+        block_rewards: Coin::new(u128::from(block_rewards), denom.clone()),
+        total_stake: Coin::new(u128::from(total_stake), denom.clone()),
+        default_commission,
+        commission_change,
+        total_issuance: Coin::new(u128::from(total_issuance), denom),
+        total_rewards
+    };
+
+    Ok(economy_data)
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let storage_version: ContractVersion = get_contract_version(deps.storage)?;
@@ -873,6 +1009,8 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     if storage_version.version.as_str() < CONTRACT_VERSION {
         // Set contract to version to latest
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    } else {
+        return Err(ContractError::MigrationError {})
     }
 
     Ok(Response::new().add_attribute("action", "migrate"))

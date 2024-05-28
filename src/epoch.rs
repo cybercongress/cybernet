@@ -18,11 +18,13 @@ use crate::state::{
 use crate::uids::get_subnetwork_n;
 use crate::utils::{
     get_activity_cutoff, get_bonds_moving_average, get_kappa, get_last_update,
-    get_max_allowed_validators, get_neuron_block_at_registration, get_rho, get_validator_permit,
+    get_max_allowed_validators, get_neuron_block_at_registration, get_validator_permit,
 };
 
 #[cfg(test)]
 use crate::uids::get_stake_for_uid_and_subnetwork;
+#[cfg(test)]
+use crate::utils::get_rho;
 
 // Calculates reward consensus values, then updates rank, trust, consensus, incentive, dividend, pruning_score, emission and bonds, and
 // returns the emissions for uids/hotkeys in a given `netuid`.
@@ -39,14 +41,14 @@ use crate::uids::get_stake_for_uid_and_subnetwork;
 //
 pub fn epoch(
     store: &mut dyn Storage,
-    api: &dyn Api,
+    _api: &dyn Api,
     netuid: u16,
     token_emission: u64,
     current_block: u64,
 ) -> Result<Vec<(Addr, u64, u64)>, ContractError> {
     // Get subnetwork size.
     let n: u16 = get_subnetwork_n(store, netuid);
-    api.debug(&format!("⚪️ subnet_n: {:?}", n));
+    // api.debug(&format!("⚪️ subnet_n: {:?}", n));
 
     // ======================
     // == Active & updated ==
@@ -54,32 +56,32 @@ pub fn epoch(
 
     // Get current block.
     // let current_block: u64 = get_current_block_as_u64();
-    api.debug(&format!("⚪️ current_block: {:?}", current_block));
+    // api.debug(&format!("⚪️ current_block: {:?}", current_block));
 
     // Get activity cutoff.
     let activity_cutoff: u64 = get_activity_cutoff(store, netuid) as u64;
-    api.debug(&format!("⚪️ activity_cutoff: {:?}", activity_cutoff));
+    // api.debug(&format!("⚪️ activity_cutoff: {:?}", activity_cutoff));
 
     // Last update vector.
     let last_update: Vec<u64> = get_last_update(store, netuid);
-    api.debug(&format!("⚪️ last_update: {:?}", &last_update));
+    // api.debug(&format!("⚪️ last_update: {:?}", &last_update));
 
     // Inactive mask.
     let inactive: Vec<bool> = last_update
         .iter()
         .map(|updated| *updated + activity_cutoff < current_block)
         .collect();
-    api.debug(&format!("⚪️ inactive: {:?}", inactive.clone()));
+    // api.debug(&format!("⚪️ inactive: {:?}", inactive.clone()));
 
     // Logical negation of inactive.
     let active: Vec<bool> = inactive.iter().map(|&b| !b).collect();
 
     // Block at registration vector (block when each neuron was most recently registered).
     let block_at_registration: Vec<u64> = get_block_at_registration(store, netuid);
-    api.debug(&format!(
-        "⚪️ block_at_registration: {:?}",
-        &block_at_registration
-    ));
+    // api.debug(&format!(
+    //     "⚪️ block_at_registration: {:?}",
+    //     &block_at_registration
+    // ));
 
     // ===========
     // == Stake ==
@@ -93,7 +95,7 @@ pub fn epoch(
         let (uid_i, hotkey) = item.unwrap();
         hotkeys.push((uid_i, hotkey));
     }
-    api.debug(&format!("⚪️ hotkeys: {:?}", &hotkeys));
+    // api.debug(&format!("⚪️ hotkeys: {:?}", &hotkeys));
 
     // Access network stake as normalized vector.
     let mut stake_64: Vec<I64F64> = vec![I64F64::from_num(0.0); n as usize];
@@ -103,7 +105,7 @@ pub fn epoch(
     inplace_normalize_64(&mut stake_64);
     let stake: Vec<I32F32> = vec_fixed64_to_fixed32(stake_64);
     // range: I32F32(0, 1)
-    api.debug(&format!("⚪️ stake: {:?}", &stake));
+    // api.debug(&format!("⚪️ stake: {:?}", &stake));
 
     // =======================
     // == Validator permits ==
@@ -111,24 +113,24 @@ pub fn epoch(
 
     // Get current validator permits.
     let validator_permits: Vec<bool> = get_validator_permit(store, netuid);
-    api.debug(&format!("⚪️ validator_permits: {:?}", validator_permits));
+    // api.debug(&format!("⚪️ validator_permits: {:?}", validator_permits));
 
     // Logical negation of validator_permits.
     let validator_forbids: Vec<bool> = validator_permits.iter().map(|&b| !b).collect();
 
     // Get max allowed validators.
     let max_allowed_validators: u16 = get_max_allowed_validators(store, netuid);
-    api.debug(&format!(
-        "⚪️ max_allowed_validators: {:?}",
-        max_allowed_validators
-    ));
+    // api.debug(&format!(
+    //     "⚪️ max_allowed_validators: {:?}",
+    //     max_allowed_validators
+    // ));
 
     // Get new validator permits.
     let new_validator_permits: Vec<bool> = is_topk(&stake, max_allowed_validators as usize);
-    api.debug(&format!(
-        "⚪️ new_validator_permits: {:?}",
-        new_validator_permits
-    ));
+    // api.debug(&format!(
+    //     "⚪️ new_validator_permits: {:?}",
+    //     new_validator_permits
+    // ));
 
     // ==================
     // == Active Stake ==
@@ -144,7 +146,7 @@ pub fn epoch(
 
     // Normalize active stake.
     inplace_normalize(&mut active_stake);
-    api.debug(&format!("⚪️ stake: {:?}", &active_stake));
+    // api.debug(&format!("⚪️ stake: {:?}", &active_stake));
 
     // =============
     // == Weights ==
@@ -186,13 +188,13 @@ pub fn epoch(
     // Clip weights at majority consensus
     let kappa: I32F32 = get_float_kappa(store, netuid); // consensus majority ratio, e.g. 51%.
     let consensus: Vec<I32F32> = weighted_median_col_sparse(&active_stake, &weights, n, kappa);
-    api.debug(&format!("⚪️ consensus: {:?}", &consensus));
+    // api.debug(&format!("⚪️ consensus: {:?}", &consensus));
 
     weights = col_clip_sparse(&weights, &consensus);
     // api.debug(&format!("W: {:?}", &weights));
 
     let validator_trust: Vec<I32F32> = row_sum_sparse(&weights);
-    api.debug(&format!("⚪️ validator_trust: {:?}", &validator_trust));
+    // api.debug(&format!("⚪️ validator_trust: {:?}", &validator_trust));
 
     // =============================
     // == Ranks, Trust, Incentive ==
@@ -205,11 +207,11 @@ pub fn epoch(
     // Compute server trust: ratio of rank after vs. rank before.
     let trust: Vec<I32F32> = vecdiv(&ranks, &preranks);
     // range: I32F32(0, 1)
-    api.debug(&format!("⚪️ trust: {:?}", &trust));
+    // api.debug(&format!("⚪️ trust: {:?}", &trust));
 
     inplace_normalize(&mut ranks); // range: I32F32(0, 1)
     let incentive: Vec<I32F32> = ranks.clone();
-    api.debug(&format!("⚪️ incentive: {:?}", &incentive));
+    // api.debug(&format!("⚪️ incentive: {:?}", &incentive));
 
     // =========================
     // == Bonds and Dividends ==
@@ -257,7 +259,7 @@ pub fn epoch(
     // range: I32F32(0, 1)
     let mut dividends: Vec<I32F32> = matmul_transpose_sparse(&ema_bonds, &incentive);
     inplace_normalize(&mut dividends);
-    api.debug(&format!("⚪️ dividends: {:?}", &dividends));
+    // api.debug(&format!("⚪️ dividends: {:?}", &dividends));
 
     // =================================
     // == Emission and Pruning scores ==
@@ -323,16 +325,16 @@ pub fn epoch(
         .map(|e: &I96F32| e.to_num::<u64>())
         .collect();
 
-    api.debug(&format!("⚪️ nSE: {:?}", &normalized_server_emission));
-    api.debug(&format!("⚪️ SE: {:?}", &server_emission));
-    api.debug(&format!("⚪️ nVE: {:?}", &normalized_validator_emission));
-    api.debug(&format!("⚪️ VE: {:?}", &validator_emission));
-    api.debug(&format!("⚪️ nCE: {:?}", &normalized_combined_emission));
-    api.debug(&format!("⚪️ CE: {:?}", &combined_emission));
+    // api.debug(&format!("⚪️ nSE: {:?}", &normalized_server_emission));
+    // api.debug(&format!("⚪️ SE: {:?}", &server_emission));
+    // api.debug(&format!("⚪️ nVE: {:?}", &normalized_validator_emission));
+    // api.debug(&format!("⚪️ VE: {:?}", &validator_emission));
+    // api.debug(&format!("⚪️ nCE: {:?}", &normalized_combined_emission));
+    // api.debug(&format!("⚪️ CE: {:?}", &combined_emission));
 
     // Set pruning scores using combined emission scores.
     let pruning_scores: Vec<I32F32> = normalized_combined_emission.clone();
-    api.debug(&format!("⚪️ Psc: {:?}", &pruning_scores));
+    // api.debug(&format!("⚪️ Psc: {:?}", &pruning_scores));
 
     // ===================
     // == Value storage ==

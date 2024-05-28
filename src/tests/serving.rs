@@ -1,4 +1,4 @@
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Uint128};
 
 use crate::serving::{get_axon_info, get_prometheus_info, is_valid_ip_address, is_valid_ip_type};
 use crate::test_helpers::{
@@ -66,7 +66,7 @@ fn test_serving_ok() {
     assert!(result.is_ok());
 
     let neuron = get_axon_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
-    assert_eq!(neuron.ip, ip);
+    assert_eq!(neuron.ip, Uint128::from(ip));
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
     assert_eq!(neuron.ip_type, ip_type);
@@ -119,7 +119,7 @@ fn test_serving_set_metadata_update() {
     assert!(result.is_ok());
 
     let neuron = get_axon_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
-    assert_eq!(neuron.ip, ip);
+    assert_eq!(neuron.ip, Uint128::from(ip));
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
     assert_eq!(neuron.ip_type, ip_type);
@@ -150,7 +150,7 @@ fn test_serving_set_metadata_update() {
     assert!(result.is_ok());
 
     let neuron = get_axon_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
-    assert_eq!(neuron.ip, ip2);
+    assert_eq!(neuron.ip, Uint128::from(ip2));
     assert_eq!(neuron.version, version2);
     assert_eq!(neuron.port, port2);
     assert_eq!(neuron.ip_type, ip_type2);
@@ -361,7 +361,7 @@ fn test_prometheus_serving_ok() {
     assert!(result.is_ok());
 
     let neuron = get_prometheus_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
-    assert_eq!(neuron.ip, ip);
+    assert_eq!(neuron.ip, Uint128::from(ip));
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
     assert_eq!(neuron.ip_type, ip_type);
@@ -409,7 +409,7 @@ fn test_prometheus_serving_set_metadata_update() {
     assert!(result.is_ok());
 
     let neuron = get_prometheus_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
-    assert_eq!(neuron.ip, ip);
+    assert_eq!(neuron.ip, Uint128::from(ip));
     assert_eq!(neuron.version, version);
     assert_eq!(neuron.port, port);
     assert_eq!(neuron.ip_type, ip_type);
@@ -432,7 +432,7 @@ fn test_prometheus_serving_set_metadata_update() {
     assert!(result.is_ok());
 
     let neuron = get_prometheus_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
-    assert_eq!(neuron.ip, ip2);
+    assert_eq!(neuron.ip, Uint128::from(ip2));
     assert_eq!(neuron.version, version2);
     assert_eq!(neuron.port, port2);
     assert_eq!(neuron.ip_type, ip_type2);

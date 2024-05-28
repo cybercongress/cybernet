@@ -1,6 +1,6 @@
 [package]
 name = "cybernet"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["C H <litvintech@gmail.com>"]
 edition = "2021"
 
@@ -65,7 +65,7 @@ scale-info = { version = "2.0.0", default-features = false }
 cyber-std = { version = "0.2.2"}
 
 [dev-dependencies]
-cw-multi-test = { version = "0.18.0", features = ["iterator"]}
+cw-multi-test = { version = "0.14.0", features = ["iterator"]}
 cyber-std = { version = "0.2.2"}
 cyber-std-test = { version = "0.2.1"}
 rand = { version = "0.8.4" }

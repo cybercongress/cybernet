@@ -1,13 +1,14 @@
 use cosmwasm_std::Addr;
 
 use crate::block_step::blocks_until_next_epoch;
+use crate::contract::get_economy;
 use crate::registration::create_work_for_block_number;
 use crate::root::{
     get_all_subnet_netuids, get_max_subnets, get_network_lock_cost, get_num_subnets,
     get_subnet_emission_value, if_subnet_exist, remove_network, root_epoch,
     set_lock_reduction_interval,
 };
-use crate::staking::hotkey_is_delegate;
+use crate::staking::{get_total_stake, hotkey_is_delegate};
 use crate::state_info::get_state_info;
 use crate::test_helpers::{
     add_balance_to_coldkey_account, add_network, add_stake, burned_register_ok_neuron,
@@ -15,12 +16,9 @@ use crate::test_helpers::{
     step_block,
 };
 use crate::uids::{get_subnetwork_n, get_uid_for_net_and_hotkey, is_hotkey_registered_on_network};
-use crate::utils::{
-    do_sudo_set_block_emission, get_pending_emission, get_total_issuance, set_block_emission,
-    set_burn, set_difficulty, set_max_allowed_uids, set_max_registrations_per_block,
-    set_target_registrations_per_interval, set_tempo, set_weights_set_rate_limit,
-};
+use crate::utils::{do_sudo_set_block_emission, get_pending_emission, get_total_issuance, set_block_emission, set_burn, set_difficulty, set_max_allowed_uids, set_max_registrations_per_block, set_target_registrations_per_interval, set_tempo, set_weights_set_rate_limit, unstake_all};
 use crate::ContractError;
+use crate::delegate_info::get_delegate_by_existing_account;
 
 #[test]
 fn test_root_register_network_exist() {
@@ -96,7 +94,7 @@ fn test_root_register_stake_based_pruning_works() {
     let root_netuid: u16 = 0;
     let other_netuid: u16 = 1;
     remove_network(&mut deps.storage, 1).unwrap(); // delete after contract creation network
-    add_network(&mut deps.storage, other_netuid, 0, 0);
+    add_network(&mut deps.storage, other_netuid, 10, 0);
 
     // Set params to allow all registrations to subnet.
     set_burn(&mut deps.storage, other_netuid, 0);
@@ -207,6 +205,15 @@ fn test_root_register_stake_based_pruning_works() {
         // Check that they are NOT senate members
         // assert!(!is_senate_member(&hot));
     }
+
+    println!("total stake: {:?}", get_total_stake(&deps.storage));
+    // unstake_all(&mut deps.storage, Some(128));
+    // println!("total stake: {:?}", get_total_stake(&deps.storage));
+    let economy = get_economy(&deps.storage);
+    println!("{:?}", economy);
+
+    let delegate_info = get_delegate_by_existing_account(&deps.storage, &Addr::unchecked("1100"));
+    println!("{:?}", delegate_info);
 }
 
 #[test]
@@ -297,10 +304,37 @@ fn test_root_set_weights() {
     // Run the root epoch
     println!("Running Root epoch");
     set_tempo(&mut deps.storage, root_netuid, 1);
+
+    {
+        let gas = deps.storage.gas_used.borrow();
+        // let gas_total = gas.total;
+        // let gas_last = gas.last;
+        // let gas_write_cnt = gas.write_cnt;
+        // let gas_read_cnt = gas.read_cnt;
+        println!(
+            "before total {:?} gas {:?} write {:?} read {:?}",
+            gas.total, gas.last, gas.write_cnt, gas.read_cnt
+        );
+    }
+    // drop(gas);
+
     assert_eq!(
         root_epoch(&mut deps.storage, &deps.api, 1_000_000_001).is_ok(),
         true
     );
+
+    {
+        let gas = deps.storage.gas_used.borrow();
+        println!(
+            "after epoch {:?} total {:?} gas {:?} write {:?} read {:?}",
+            n, gas.total, gas.last, gas.write_cnt, gas.read_cnt
+        );
+        // println!(
+        //     "diff epoch {:?} gas {:?} write {:?} read {:?}",
+        //     n, gas.total-gas_total, gas.write_cnt-gas_write_cnt, gas.read_cnt-gas_read_cnt
+        // );
+    }
+
     // Check that the emission values have been set.
     for netuid in 1..n {
         println!("check emission for netuid: {}", netuid);

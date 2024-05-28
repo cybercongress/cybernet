@@ -1,5 +1,8 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Uint128;
+use cosmwasm_std::{Uint128, Coin, Decimal};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use crate::state::Metadata;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -8,9 +11,8 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     Activate {},
     Deactivate {},
-    // TODO remove later, use for manual block_step
+    // TODO remove later, use for debug block_step and tests, production - sudo call only
     BlockStep {},
-
     SetWeights {
         netuid: u16,
         dests: Vec<u16>,
@@ -27,6 +29,10 @@ pub enum ExecuteMsg {
     RemoveStake {
         hotkey: String,
         amount: u64,
+    },
+    SetDelegateCommission {
+        hotkey: String,
+        commission: String,
     },
     ServeAxon {
         netuid: u16,
@@ -210,7 +216,23 @@ pub enum ExecuteMsg {
     },
     SudoSetSubnetMetadata {
         netuid: u16,
-        particle: String,
+        metadata: Metadata,
+    },
+    SudoSetSubnetOwner {
+        netuid: u16,
+        new_owner: String,
+    },
+    SudoSetRoot {
+        new_root: String,
+    },
+    SudoSetVerseMetadata {
+        metadata: Metadata,
+    },
+    SudoUnstakeAll{
+        limit: Option<u32>
+    },
+    SudoSetCommissionChange {
+        change: bool,
     },
 }
 
@@ -312,8 +334,34 @@ pub enum QueryMsg {
     #[returns(Vec<Vec<(u16, u16)>>)]
     GetWeightsSparse { netuid: u16 },
 
+    #[returns(Coin)]
+    GetBlockRewards {},
+    #[returns(Metadata)]
+    GetSubnetMetadata { netuid: u16 },
+    #[returns(Vec<(u16, Metadata)>)]
+    GetSubnetsMetadata {
+        start_after: Option<u16>,
+        limit: Option<u16>,
+    },
+    #[returns(Metadata)]
+    GetVerseMetadata {},
+    #[returns(EconomyData)]
+    GetEconomy {},
+
     #[returns(crate::state_info::StateInfo)]
     GetState {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct EconomyData {
+    pub validator_apr: Decimal,
+    pub staker_apr: Decimal,
+    pub block_rewards: Coin,
+    pub total_stake: Coin,
+    pub default_commission: Decimal,
+    pub commission_change: bool,
+    pub total_issuance: Coin,
+    pub total_rewards: Coin,
 }
 
 #[cw_serde]

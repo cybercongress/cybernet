@@ -3,9 +3,9 @@ use cosmwasm_std::{Addr, Deps, Order, StdResult};
 
 use crate::root::if_subnet_exist;
 use crate::state::{
-    ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
+    Metadata, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
     DIFFICULTY, EMISSION_VALUES, IMMUNITY_PERIOD, KAPPA, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS,
-    MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA,
+    MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, NETWORKS_METADATA,
     MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_MODALITY,
     NETWORK_REGISTRATION_ALLOWED, RHO, SUBNET_OWNER, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO,
     WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
@@ -30,7 +30,7 @@ pub struct SubnetInfo {
     pub emission_values: u64,
     pub burn: u64,
     pub owner: Addr,
-    pub metadata: String,
+    pub metadata: Metadata,
 }
 
 #[cw_serde]
@@ -75,7 +75,7 @@ pub fn get_subnet_info(deps: Deps, netuid: u16) -> StdResult<Option<SubnetInfo>>
     let emission_values = EMISSION_VALUES.load(deps.storage, netuid)?;
     let burn = BURN.load(deps.storage, netuid)?;
     let owner = SUBNET_OWNER.load(deps.storage, netuid)?;
-    let metadata = METADATA.load(deps.storage, netuid)?;
+    let metadata = NETWORKS_METADATA.load(deps.storage, netuid)?;
 
     return Ok(Some(SubnetInfo {
         rho: rho.into(),

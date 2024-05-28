@@ -85,10 +85,10 @@ pub fn do_set_weights(
 ) -> Result<Response, ContractError> {
     // --- 1. Check the caller's signature. This is the hotkey of a registered account.
     let hotkey = info.sender;
-    deps.api.debug(&format!(
-        "💡 do_set_weights ( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
-        hotkey, netuid, uids, values
-    ));
+    // deps.api.debug(&format!(
+    //     "💡 do_set_weights ( origin:{:?} netuid:{:?}, uids:{:?}, values:{:?})",
+    //     hotkey, netuid, uids, values
+    // ));
 
     // --- 2. Check that the length of uid list and value list are equal for this network.
     ensure!(
@@ -196,10 +196,10 @@ pub fn do_set_weights(
     set_last_update_for_uid(deps.storage, netuid, neuron_uid, current_block);
 
     // --- 18. Emit the tracking event.
-    deps.api.debug(&format!(
-        "💡 WeightsSet ( netuid:{:?}, neuron_uid:{:?} )",
-        netuid, neuron_uid
-    ));
+    // deps.api.debug(&format!(
+    //     "💡 WeightsSet ( netuid:{:?}, neuron_uid:{:?} )",
+    //     netuid, neuron_uid
+    // ));
 
     // --- 19. Return ok.
     Ok(Response::default()
@@ -216,16 +216,16 @@ pub fn do_set_weights(
 //
 pub fn check_version_key(
     store: &dyn Storage,
-    api: &dyn Api,
+    _api: &dyn Api,
     netuid: u16,
     version_key: u64,
 ) -> bool {
     let network_version_key: u64 = WEIGHTS_VERSION_KEY.load(store, netuid).unwrap();
-    api.debug(&format!(
-        "💡 check_version_key ( network_version_key:{:?}, version_key:{:?} )",
-        network_version_key.clone(),
-        version_key
-    ));
+    // api.debug(&format!(
+    //     "💡 check_version_key ( network_version_key:{:?}, version_key:{:?} )",
+    //     network_version_key.clone(),
+    //     version_key
+    // ));
     return network_version_key.clone() == 0 || version_key >= network_version_key;
 }
 

@@ -3,12 +3,14 @@ use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+// ============================
+// ====   Verse Settings   ====
+// ============================
 pub const ROOT: Item<Addr> = Item::new("root");
-
+pub const COMMISSION_CHANGE: Item<bool> = Item::new("commission_switch");
 pub const DENOM: Item<String> = Item::new("denom");
-
-// --- ITEM ( percentage ) // TODO change to decimal
-// pub const SENATE_REQUIRED_STAKE_PERCENTAGE: Item<u64> = Item::new("senate_required_stake_percentage");
+pub const VERSE_METADATA: Item<Metadata> = Item::new("verse_metadata");
+pub const TOTAL_REWARDS: Item<u64> = Item::new("total_rewards");
 
 // ============================
 // ==== Staking + Accounts ====
@@ -18,8 +20,10 @@ pub const DENOM: Item<String> = Item::new("denom");
 pub const TOTAL_STAKE: Item<u64> = Item::new("total_stake");
 // --- ITEM ( default_take )
 pub const DEFAULT_TAKE: Item<u16> = Item::new("default_take");
+// TODO think about to rename to block_reward
 // --- ITEM ( global_block_emission )
 pub const BLOCK_EMISSION: Item<u64> = Item::new("global_block_emission");
+// TODo revisit total issuance and stake
 // --- ITEM ( total_issuance )
 pub const TOTAL_ISSUANCE: Item<u64> = Item::new("total_issuance");
 // --- MAP ( hot ) --> stake | Returns the total amount of stake under a hotkey.
@@ -28,7 +32,8 @@ pub const TOTAL_HOTKEY_STAKE: Map<&Addr, u64> = Map::new("total_hotkey_stake");
 pub const TOTAL_COLDKEY_STAKE: Map<&Addr, u64> = Map::new("total_coldkey_stake");
 // --- MAP ( hot ) --> cold | Returns the controlling coldkey for a hotkey.
 pub const OWNER: Map<&Addr, Addr> = Map::new("hotkey_coldkey");
-// --- MAP ( hot ) --> stake | Returns the hotkey delegation stake. And signals that this key is open for delegation.
+// --- MAP ( hot ) --> stake take | Returns the hotkey delegation stake take(commission). And signals that this key is open for delegation.
+// TODO rename storage name
 pub const DELEGATES: Map<&Addr, u16> = Map::new("hotkey_stake");
 // --- DMAP ( hot, cold ) --> stake | Returns the stake under a coldkey prefixed by hotkey.
 pub const STAKE: Map<(&Addr, &Addr), u64> = Map::new("staked_hotkey_coldkey");
@@ -116,7 +121,19 @@ pub const SUBNET_OWNER: Map<u16, Addr> = Map::new("subnet_owner");
 // --- MAP (netuid ) --> subnet_locked
 pub const SUBNET_LOCKED: Map<u16, u64> = Map::new("subnet_locked");
 // --- MAP (netuid ) --> metadata
+// TODO need to write migration
 pub const METADATA: Map<u16, String> = Map::new("metadata");
+pub const NETWORKS_METADATA: Map<u16, Metadata> = Map::new("networks_metadata");
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Metadata {
+    pub name: String,
+    pub particle: String, // particle
+    pub description: String, // particle
+    pub logo: String, // particle
+    pub types: String,
+    pub extra: String,
+}
 
 // =================================
 // ==== Axon / Promo Endpoints =====

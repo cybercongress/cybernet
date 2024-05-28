@@ -5,9 +5,9 @@ use crate::state::STAKE;
 
 #[cw_serde]
 pub struct StakeInfo {
-    hotkey: Addr,
-    coldkey: Addr,
-    stake: u64,
+    pub hotkey: Addr,
+    pub coldkey: Addr,
+    pub stake: u64,
 }
 
 fn _get_stake_info_for_coldkeys(

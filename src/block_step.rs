@@ -8,22 +8,27 @@ use crate::state::{
     BURN_REGISTRATIONS_THIS_INTERVAL, DELEGATES, DIFFICULTY, EMISSION_VALUES,
     LAST_ADJUSTMENT_BLOCK, LAST_MECHANISM_STEP_BLOCK, LOADED_EMISSION, MAX_BURN, MAX_DIFFICULTY,
     MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, PENDING_EMISSION, POW_REGISTRATIONS_THIS_INTERVAL,
-    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, STAKE, SUBNET_OWNER, SUBNET_OWNER_CUT,
-    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_COLDKEY_STAKE, TOTAL_HOTKEY_STAKE,
-    TOTAL_ISSUANCE, TOTAL_STAKE,
+    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, STAKE, SUBNET_OWNER,
+    TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_HOTKEY_STAKE,
+    TOTAL_ISSUANCE,
 };
-use crate::utils::get_blocks_since_last_step;
+use crate::utils::{ensure_root, get_blocks_since_last_step};
 use crate::ContractError;
-use cosmwasm_std::{
-    coins, Addr, Api, BankMsg, CosmosMsg, DepsMut, Env, Order, StdResult, Storage, Uint128,
-};
+use cosmwasm_std::{Addr, Api, CosmosMsg, DepsMut, Env, Order, StdResult, Storage};
 use cyber_std::Response;
 use substrate_fixed::types::I110F18;
 use substrate_fixed::types::I64F64;
 use substrate_fixed::types::I96F32;
 
+#[cfg(test)]
+use crate::state::{TOTAL_COLDKEY_STAKE, TOTAL_STAKE};
+
 /// Executes the necessary operations for each block.
-pub fn block_step(deps: DepsMut, env: Env) -> Result<Response, ContractError> {
+pub fn block_step(deps: DepsMut, env: Env, caller: Option<Addr>) -> Result<Response, ContractError> {
+    if caller.is_some() {
+        ensure_root(deps.storage, &caller.unwrap())?;
+    }
+
     let block_number: u64 = env.block.height;
     deps.api
         .debug(&format!("🕛 block_step for block: {:?} ", block_number));
@@ -141,14 +146,14 @@ pub fn generate_emission(
         ));
 
         let subnet_has_owner = SUBNET_OWNER.has(store, netuid);
-        let mut remaining = I96F32::from_num(new_queued_emission);
+        let remaining = I96F32::from_num(new_queued_emission);
         if subnet_has_owner {
-            let subnet_owner_cut = SUBNET_OWNER_CUT.load(store)?;
-            let cut = remaining
-                .saturating_mul(I96F32::from_num(subnet_owner_cut))
-                .saturating_div(I96F32::from_num(u16::MAX));
-
-            remaining = remaining.saturating_sub(cut);
+            // let subnet_owner_cut = SUBNET_OWNER_CUT.load(store)?;
+            // let cut = remaining
+            //     .saturating_mul(I96F32::from_num(subnet_owner_cut))
+            //     .saturating_div(I96F32::from_num(u16::MAX));
+            //
+            // remaining = remaining.saturating_sub(cut);
 
             // TODO back to this, by default subnet owner cut is zero
             // let subnet_owner = SUBNET_OWNER.load(store, netuid)?;
@@ -159,9 +164,9 @@ pub fn generate_emission(
             //     amount: coins(Uint128::from(cut.to_num::<u64>()).u128(), denom),
             // }));
 
-            TOTAL_ISSUANCE.update(store, |a| -> StdResult<_> {
-                Ok(a.saturating_add(cut.to_num::<u64>()))
-            })?;
+            // TOTAL_ISSUANCE.update(store, |a| -> StdResult<_> {
+            //     Ok(a.saturating_add(cut.to_num::<u64>()))
+            // })?;
         }
         // --- 5. Add remaining amount to the network's pending emission.
         PENDING_EMISSION.update(store, netuid, |queued| -> StdResult<_> {

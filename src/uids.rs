@@ -3,11 +3,14 @@ use cosmwasm_std::{Addr, Api, CosmosMsg, Order, StdError, StdResult, Storage};
 use crate::staking::unstake_all_coldkeys_from_hotkey_account;
 use crate::state::{
     ACTIVE, BLOCK_AT_REGISTRATION, BONDS, CONSENSUS, DIVIDENDS, EMISSION, INCENTIVE,
-    IS_NETWORK_MEMBER, KEYS, LAST_UPDATE, PRUNING_SCORES, RANK, SUBNETWORK_N, TOTAL_HOTKEY_STAKE,
+    IS_NETWORK_MEMBER, KEYS, LAST_UPDATE, PRUNING_SCORES, RANK, SUBNETWORK_N,
     TRUST, UIDS, VALIDATOR_PERMIT, VALIDATOR_TRUST, WEIGHTS,
 };
 use crate::utils::set_active_for_uid;
 use crate::ContractError;
+
+#[cfg(test)]
+use crate::state::TOTAL_HOTKEY_STAKE;
 
 pub fn get_subnetwork_n(store: &dyn Storage, netuid: u16) -> u16 {
     SUBNETWORK_N.load(store, netuid.clone()).unwrap()
@@ -71,7 +74,7 @@ pub fn replace_neuron(
 // Appends the uid to the network.
 pub fn append_neuron(
     store: &mut dyn Storage,
-    api: &dyn Api,
+    _api: &dyn Api,
     netuid: u16,
     new_hotkey: &Addr,
     block_number: u64,
@@ -79,12 +82,12 @@ pub fn append_neuron(
     // 1. Get the next uid. This is always equal to subnetwork_n.
     let next_uid: u16 = get_subnetwork_n(store, netuid.clone());
 
-    api.debug(&format!(
-        "👾 append_neuron ( netuid: {:?} | next_uid: {:?} | new_hotkey: {:?} ) ",
-        netuid,
-        new_hotkey.to_string(),
-        next_uid.clone()
-    ));
+    // api.debug(&format!(
+    //     "👾 append_neuron ( netuid: {:?} | next_uid: {:?} | new_hotkey: {:?} ) ",
+    //     netuid,
+    //     new_hotkey.to_string(),
+    //     next_uid.clone()
+    // ));
 
     // 2. Get and increase the uid count.
     SUBNETWORK_N.save(store, netuid.clone(), &(next_uid.clone() + 1))?;

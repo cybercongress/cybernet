@@ -11,11 +11,11 @@ use crate::staking::{
     create_account_if_non_existent, delegate_hotkey, get_total_stake_for_hotkey, hotkey_is_delegate,
 };
 use crate::state::{
-    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS,
+    Metadata, ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP, BONDS,
     BONDS_MOVING_AVERAGE, BURN, BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DENOM, DIFFICULTY,
     DIVIDENDS, EMISSION, EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, KEYS,
     LAST_ADJUSTMENT_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS, MAX_ALLOWED_VALIDATORS, MAX_BURN,
-    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, METADATA, MIN_ALLOWED_WEIGHTS,
+    MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK, MAX_WEIGHTS_LIMIT, NETWORKS_METADATA, MIN_ALLOWED_WEIGHTS,
     MIN_BURN, MIN_DIFFICULTY, NETWORKS_ADDED, NETWORK_IMMUNITY_PERIOD, NETWORK_LAST_LOCK_COST,
     NETWORK_LAST_REGISTERED, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
     NETWORK_MODALITY, NETWORK_RATE_LIMIT, NETWORK_REGISTERED_AT, NETWORK_REGISTRATION_ALLOWED,
@@ -23,7 +23,7 @@ use crate::state::{
     RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO,
     SERVING_RATE_LIMIT, SUBNETWORK_N, SUBNET_LIMIT, SUBNET_OWNER,
     TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_NETWORKS, TRUST, UIDS, VALIDATOR_PERMIT,
-    VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    VALIDATOR_TRUST, WEIGHTS, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY, TOTAL_REWARDS,
 };
 use crate::uids::{append_neuron, get_hotkey_for_net_and_uid, get_subnetwork_n, replace_neuron};
 use crate::utils::{
@@ -309,7 +309,13 @@ pub fn root_epoch(
 
     // --- 4. Determines the total block emission across all the subnetworks. This is the
     // value which will be distributed based on the computation below.
-    let block_emission: I64F64 = I64F64::from_num(get_block_emission(store));
+    let block_emission_u64: u64 = get_block_emission(store);
+    let block_emission: I64F64 = I64F64::from_num(block_emission_u64);
+    TOTAL_REWARDS.update(store, |val| -> StdResult<_> {
+        let mut amount = val;
+        amount +=  block_emission_u64;
+        Ok(amount)
+    })?;
     api.debug(&format!("🔵 block_emission: {:?}", block_emission));
 
     // --- 5. A collection of all registered hotkeys on the root network. Hotkeys
@@ -576,7 +582,7 @@ pub fn do_root_register(
 
     // --- 13. Force all members on root to become a delegate.
     if !hotkey_is_delegate(deps.storage, &hotkey) {
-        delegate_hotkey(deps.storage, &hotkey, 11796);
+        delegate_hotkey(deps.storage, &hotkey, 13107);
     }
 
     // --- 14. Update the registration counters for both the block and interval.
@@ -776,14 +782,14 @@ pub fn init_new_network(
 
     // --- 6. Set all default values **explicitly**.
     NETWORK_REGISTRATION_ALLOWED.save(store, netuid, &true)?;
-    MAX_ALLOWED_UIDS.save(store, netuid, &256)?;
-    MAX_ALLOWED_VALIDATORS.save(store, netuid, &64)?;
+    MAX_ALLOWED_UIDS.save(store, netuid, &128)?;
+    MAX_ALLOWED_VALIDATORS.save(store, netuid, &32)?;
     MIN_ALLOWED_WEIGHTS.save(store, netuid, &1)?;
     MAX_WEIGHTS_LIMIT.save(store, netuid, &u16::MAX)?;
     ADJUSTMENT_INTERVAL.save(store, netuid, &360)?;
     TARGET_REGISTRATIONS_PER_INTERVAL.save(store, netuid, &1)?;
     ADJUSTMENTS_ALPHA.save(store, netuid, &58000)?;
-    IMMUNITY_PERIOD.save(store, netuid, &7200)?;
+    IMMUNITY_PERIOD.save(store, netuid, &14400)?;
 
     DIFFICULTY.save(store, netuid, &10_000_000)?;
     MIN_DIFFICULTY.save(store, netuid, &10_000_000)?;
@@ -791,8 +797,7 @@ pub fn init_new_network(
 
     // Make network parameters explicit.
     KAPPA.save(store, netuid, &32_767)?; // 0.5 = 65535/2
-                                         // IMMUNITY_PERIOD.save(store, netuid, &0)?;
-    ACTIVITY_CUTOFF.save(store, netuid, &5000)?;
+    ACTIVITY_CUTOFF.save(store, netuid, &14400)?;
     EMISSION_VALUES.save(store, netuid, &0)?;
 
     REGISTRATIONS_THIS_INTERVAL.save(store, netuid, &0)?;
@@ -814,17 +819,23 @@ pub fn init_new_network(
     MAX_BURN.save(store, netuid, &100_000_000_000)?;
 
     REGISTRATIONS_THIS_BLOCK.save(store, netuid, &0)?;
-    // MAX_REGISTRATION_PER_BLOCK.save(store, netuid, &3)?;
     KAPPA.save(store, netuid, &32_767)?;
     RHO.save(store, netuid, &30)?;
     RAO_RECYCLED_FOR_REGISTRATION.save(store, netuid, &0)?;
     SERVING_RATE_LIMIT.save(store, netuid, &50)?;
     ADJUSTMENTS_ALPHA.save(store, netuid, &0)?;
     LAST_UPDATE.save(store, netuid, &vec![])?;
-    METADATA.save(
+    NETWORKS_METADATA.save(
         store,
         netuid,
-        &"Qmd2anGbDQj7pYWMZwv9SEw11QFLQu3nzoGXfi1KwLy3Zr".to_string(),
+        &Metadata {
+            name: "empty".to_string(),
+            particle: "".to_string(),
+            description: "".to_string(),
+            logo: "".to_string(),
+            types: "".to_string(),
+            extra: "".to_string(),
+        }
     )?;
 
     Ok(())
@@ -929,7 +940,7 @@ pub fn remove_network(store: &mut dyn Storage, netuid: u16) -> Result<(), Contra
     ADJUSTMENTS_ALPHA.remove(store, netuid);
     NETWORK_REGISTRATION_ALLOWED.remove(store, netuid);
     TARGET_REGISTRATIONS_PER_INTERVAL.remove(store, netuid);
-    METADATA.remove(store, netuid);
+    NETWORKS_METADATA.remove(store, netuid);
 
     Ok(())
 }

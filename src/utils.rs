@@ -1,27 +1,33 @@
 use std::ops::Deref;
 
-use cosmwasm_std::{ensure, Addr, Api, DepsMut, Env, MessageInfo, Storage};
+use cosmwasm_std::{Addr, Api, BankMsg, coins, CosmosMsg, DepsMut, ensure, Env, MessageInfo, Order, StdResult, Storage, Uint128};
+use cyber_std::Response;
 
+use crate::ContractError;
 use crate::root::if_subnet_exist;
+use crate::stake_info::StakeInfo;
+use crate::staking::decrease_stake_on_coldkey_hotkey_account;
 use crate::state::{
-    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENTS_ALPHA, ADJUSTMENT_INTERVAL, BLOCKS_SINCE_LAST_STEP,
-    BLOCK_AT_REGISTRATION, BLOCK_EMISSION, BONDS_MOVING_AVERAGE, BURN,
-    BURN_REGISTRATIONS_THIS_INTERVAL, CONSENSUS, DEFAULT_TAKE, DIFFICULTY, DIVIDENDS, EMISSION,
-    EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_ADJUSTMENT_BLOCK,
-    LAST_MECHANISM_STEP_BLOCK, LAST_TX_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
+    ACTIVE, ACTIVITY_CUTOFF, ADJUSTMENT_INTERVAL, ADJUSTMENTS_ALPHA, BLOCK_AT_REGISTRATION, BLOCK_EMISSION,
+    BLOCKS_SINCE_LAST_STEP, BONDS_MOVING_AVERAGE, BURN,
+    CONSENSUS, DEFAULT_TAKE, DENOM, DIFFICULTY, DIVIDENDS, EMISSION,
+    EMISSION_VALUES, IMMUNITY_PERIOD, INCENTIVE, KAPPA, LAST_TX_BLOCK, LAST_UPDATE, MAX_ALLOWED_UIDS,
     MAX_ALLOWED_VALIDATORS, MAX_BURN, MAX_DIFFICULTY, MAX_REGISTRATION_PER_BLOCK,
-    MAX_WEIGHTS_LIMIT, METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN, MIN_DIFFICULTY,
-    NETWORK_IMMUNITY_PERIOD, NETWORK_LOCK_REDUCTION_INTERVAL, NETWORK_MIN_LOCK_COST,
-    NETWORK_RATE_LIMIT, NETWORK_REGISTRATION_ALLOWED, PENDING_EMISSION,
-    POW_REGISTRATIONS_THIS_INTERVAL, PRUNING_SCORES, RANK, RAO_RECYCLED_FOR_REGISTRATION,
-    REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT, SERVING_RATE_LIMIT,
-    SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER, SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL,
-    TEMPO, TOTAL_ISSUANCE, TRUST, TX_RATE_LIMIT, VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN,
-    VALIDATOR_TRUST, WEIGHTS_SET_RATE_LIMIT, WEIGHTS_VERSION_KEY,
+    MAX_WEIGHTS_LIMIT, Metadata, NETWORKS_METADATA, MIN_ALLOWED_WEIGHTS, MIN_BURN,
+    MIN_DIFFICULTY, NETWORK_IMMUNITY_PERIOD, NETWORK_LOCK_REDUCTION_INTERVAL,
+    NETWORK_MIN_LOCK_COST, NETWORK_RATE_LIMIT, NETWORK_REGISTRATION_ALLOWED, PRUNING_SCORES, RANK,
+    RAO_RECYCLED_FOR_REGISTRATION, REGISTRATIONS_THIS_BLOCK, REGISTRATIONS_THIS_INTERVAL, RHO, ROOT,
+    SERVING_RATE_LIMIT, STAKE, SUBNET_LIMIT, SUBNET_LOCKED, SUBNET_OWNER,
+    SUBNET_OWNER_CUT, TARGET_REGISTRATIONS_PER_INTERVAL, TEMPO, TOTAL_ISSUANCE, TRUST, TX_RATE_LIMIT,
+    VALIDATOR_PERMIT, VALIDATOR_PRUNE_LEN, VALIDATOR_TRUST, VERSE_METADATA, WEIGHTS_SET_RATE_LIMIT,
+    WEIGHTS_VERSION_KEY, COMMISSION_CHANGE,
 };
 use crate::uids::get_subnetwork_n;
-use crate::ContractError;
-use cyber_std::Response;
+
+#[cfg(test)]
+use crate::state::{LAST_ADJUSTMENT_BLOCK, POW_REGISTRATIONS_THIS_INTERVAL, BURN_REGISTRATIONS_THIS_INTERVAL,
+    LAST_MECHANISM_STEP_BLOCK, PENDING_EMISSION,
+};
 
 pub fn ensure_subnet_owner_or_root(
     store: &dyn Storage,
@@ -661,10 +667,10 @@ pub fn do_sudo_set_weights_set_rate_limit(
 
     WEIGHTS_SET_RATE_LIMIT.save(deps.storage, netuid, &weights_set_rate_limit)?;
 
-    deps.api.debug(&format!(
-        "🛸 WeightsSetRateLimitSet ( netuid: {:?} weights_set_rate_limit: {:?} ) ",
-        netuid, weights_set_rate_limit
-    ));
+    // deps.api.debug(&format!(
+    //     "🛸 WeightsSetRateLimitSet ( netuid: {:?} weights_set_rate_limit: {:?} ) ",
+    //     netuid, weights_set_rate_limit
+    // ));
 
     Ok(Response::default()
         .add_attribute("active", "weights_set_rate_limit_set")
@@ -837,7 +843,7 @@ pub fn do_sudo_set_immunity_period(
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
 
     ensure!(
-        immunity_period <= 7200,
+        immunity_period <= 14400,
         ContractError::StorageValueOutOfRange {}
     );
 
@@ -1599,15 +1605,181 @@ pub fn do_sudo_set_subnet_metadata(
     _env: Env,
     info: MessageInfo,
     netuid: u16,
-    particle: String,
+    metadata: Metadata,
 ) -> Result<Response, ContractError> {
     ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
-    ensure!(particle.len() == 46, ContractError::MetadataSizeError {});
 
-    METADATA.save(deps.storage, netuid, &particle)?;
+    ensure!(metadata.name.len() <= 16, ContractError::MetadataError {});
+    if netuid.ne(&0u16) {
+        ensure!(metadata.name.ne(&"root".to_string()), ContractError::MetadataError {});
+    }
+    ensure!(metadata.particle.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.description.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.logo.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.types.len() <= 256, ContractError::MetadataError {});
+    ensure!(metadata.extra.len() <= 256, ContractError::MetadataError {});
+
+    NETWORKS_METADATA.save(deps.storage, netuid, &metadata)?;
 
     Ok(Response::default()
-        .add_attribute("action", "metadata_set")
+        .add_attribute("action", "subnet_metadata_set")
         .add_attribute("netuid", format!("{}", netuid))
-        .add_attribute("metadata", format!("{}", particle)))
+        .add_attribute("name", format!("{}", metadata.name))
+        .add_attribute("particle", format!("{}", metadata.particle)))
+}
+
+pub fn do_sudo_set_subnet_owner(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    netuid: u16,
+    new_owner: String,
+) -> Result<Response, ContractError> {
+    // TODO change to subnet_owner auth only
+    ensure_subnet_owner_or_root(deps.storage, &info.sender, netuid)?;
+
+    let owner = deps.api.addr_validate(&new_owner)?;
+
+    SUBNET_OWNER.save(deps.storage, netuid, &owner)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "subnet_owner_set")
+        .add_attribute("netuid", format!("{}", netuid))
+        .add_attribute("owner", format!("{}", owner)))
+}
+
+pub fn do_sudo_set_root(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    new_root: String,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    let root = deps.api.addr_validate(&new_root)?;
+
+    ROOT.save(deps.storage, &root)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "root_set")
+        .add_attribute("root", format!("{}", root)))
+}
+
+pub fn do_sudo_set_verse_metadata(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    metadata: Metadata,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    ensure!(metadata.name.len() <= 16, ContractError::MetadataError {});
+    ensure!(metadata.particle.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.description.len() == 46, ContractError::MetadataError {});
+    ensure!(metadata.logo.len() == 46, ContractError::MetadataError {});
+
+    ensure!(metadata.types.len() <= 256, ContractError::MetadataError {});
+    ensure!(metadata.extra.len() <= 256, ContractError::MetadataError {});
+
+    VERSE_METADATA.save(deps.storage, &metadata)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "verse_metadata_set")
+        .add_attribute("verse_name", format!("{}", metadata.name)))
+}
+
+pub fn do_sudo_set_commission_change(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    change: bool,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    COMMISSION_CHANGE.save(deps.storage, &change)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "set_commission_change")
+        .add_attribute("commission_change", format!("{}", change)))
+}
+
+pub fn do_sudo_unstake_all(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    limit: Option<u32>,
+) -> Result<Response, ContractError> {
+    ensure_root(deps.storage, &info.sender)?;
+
+    let take_limit = limit.unwrap_or(20) as usize;
+
+    let stakes = STAKE.range(deps.storage, None, None, Order::Ascending)
+        .filter(
+            |item| {
+                if let Ok((_, stake)) = item {
+                    stake > &0
+                } else {
+                    false
+                }
+            },
+        )
+        .take(take_limit)
+        .map(|item| {
+            item.map(|((hotkey, coldkey), stake)| StakeInfo {
+                hotkey,
+                coldkey,
+                stake,
+            })
+        })
+        .collect::<StdResult<Vec<_>>>()?;
+
+    let mut msgs = vec![];
+    for stake_info in stakes {
+        let (coldkey, hotkey, stake) = (stake_info.coldkey, stake_info.hotkey, stake_info.stake);
+        decrease_stake_on_coldkey_hotkey_account(deps.storage, &coldkey, &hotkey, stake)?;
+
+        let denom = DENOM.load(deps.storage)?;
+        let msg = CosmosMsg::Bank(BankMsg::Send {
+            to_address: coldkey.to_string(),
+            amount: coins(Uint128::from(stake).u128(), denom),
+        });
+        msgs.push(msg);
+    }
+
+    Ok(Response::default()
+        .add_messages(msgs)
+        .add_attribute("action", "sudo_unstake_all"))
+}
+
+#[cfg(test)]
+pub fn unstake_all(
+    store: &mut dyn Storage,
+    limit: Option<u32>,
+) {
+    let take_limit = limit.unwrap_or(20) as usize;
+
+    let stakes = STAKE.range(store, None, None, Order::Ascending)
+        .filter(
+            |item| {
+                if let Ok((_, stake)) = item {
+                    stake > &0
+                } else {
+                    false
+                }
+            },
+        )
+        .take(take_limit)
+        .map(|item| {
+            item.map(|((hotkey, coldkey), stake)| StakeInfo {
+                hotkey,
+                coldkey,
+                stake,
+            })
+        })
+        .collect::<StdResult<Vec<StakeInfo>>>().unwrap();
+
+    for stake_info in stakes {
+        let (coldkey, hotkey, stake) = (stake_info.coldkey, stake_info.hotkey, stake_info.stake);
+        decrease_stake_on_coldkey_hotkey_account(store, &coldkey, &hotkey, stake).unwrap();
+    }
 }

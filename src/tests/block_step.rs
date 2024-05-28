@@ -43,7 +43,7 @@ pub fn epoch_dense(
 ) -> Vec<(Addr, u64, u64)> {
     // Get subnetwork size.
     let n: u16 = get_subnetwork_n(store, netuid);
-    println!("n:\n{:?}\n", n);
+    // println!("n:\n{:?}\n", n);
 
     // ======================
     // == Active & updated ==
@@ -51,29 +51,29 @@ pub fn epoch_dense(
 
     // Get current block.
     // let current_block: u64 = env.block.height;
-    println!("current_block:\n{:?}\n", current_block);
+    // println!("current_block:\n{:?}\n", current_block);
 
     // Get activity cutoff.
     let activity_cutoff: u64 = get_activity_cutoff(store, netuid) as u64;
-    println!("activity_cutoff:\n{:?}\n", activity_cutoff);
+    // println!("activity_cutoff:\n{:?}\n", activity_cutoff);
 
     // Last update vector.
     let last_update: Vec<u64> = get_last_update(store, netuid);
-    println!("Last update:\n{:?}\n", &last_update);
+    // println!("Last update:\n{:?}\n", &last_update);
 
     // Inactive mask.
     let inactive: Vec<bool> = last_update
         .iter()
         .map(|updated| *updated + activity_cutoff < current_block)
         .collect();
-    println!("Inactive:\n{:?}\n", inactive.clone());
+    // println!("Inactive:\n{:?}\n", inactive.clone());
 
     // Logical negation of inactive.
     let active: Vec<bool> = inactive.iter().map(|&b| !b).collect();
 
     // Block at registration vector (block when each neuron was most recently registered).
     let block_at_registration: Vec<u64> = get_block_at_registration(store, netuid);
-    println!("Block at registration:\n{:?}\n", &block_at_registration);
+    // println!("Block at registration:\n{:?}\n", &block_at_registration);
 
     // Outdated matrix, updated_ij=True if i has last updated (weights) after j has last registered.
     let outdated: Vec<Vec<bool>> = last_update
@@ -85,7 +85,7 @@ pub fn epoch_dense(
                 .collect()
         })
         .collect();
-    println!("Outdated:\n{:?}\n", &outdated);
+    // println!("Outdated:\n{:?}\n", &outdated);
 
     // ===========
     // == Stake ==
@@ -99,7 +99,7 @@ pub fn epoch_dense(
         let (uid_i, hotkey) = item.unwrap();
         hotkeys.push((uid_i, hotkey));
     }
-    println!("hotkeys: {:?}", &hotkeys);
+    // println!("hotkeys: {:?}", &hotkeys);
 
     // Access network stake as normalized vector.
     let mut stake_64: Vec<I64F64> = vec![I64F64::from_num(0.0); n as usize];
@@ -108,7 +108,7 @@ pub fn epoch_dense(
     }
     inplace_normalize_64(&mut stake_64);
     let stake: Vec<I32F32> = vec_fixed64_to_fixed32(stake_64);
-    println!("S:\n{:?}\n", &stake);
+    // println!("S:\n{:?}\n", &stake);
 
     // =======================
     // == Validator permits ==
@@ -116,18 +116,18 @@ pub fn epoch_dense(
 
     // Get validator permits.
     let validator_permits: Vec<bool> = get_validator_permit(store, netuid);
-    println!("validator_permits: {:?}", validator_permits);
+    // println!("validator_permits: {:?}", validator_permits);
 
     // Logical negation of validator_permits.
     let validator_forbids: Vec<bool> = validator_permits.iter().map(|&b| !b).collect();
 
     // Get max allowed validators.
     let max_allowed_validators: u16 = get_max_allowed_validators(store, netuid);
-    println!("max_allowed_validators: {:?}", max_allowed_validators);
+    // println!("max_allowed_validators: {:?}", max_allowed_validators);
 
     // Get new validator permits.
     let new_validator_permits: Vec<bool> = is_topk(&stake, max_allowed_validators as usize);
-    println!("new_validator_permits: {:?}", new_validator_permits);
+    // println!("new_validator_permits: {:?}", new_validator_permits);
 
     // ==================
     // == Active Stake ==
@@ -143,7 +143,7 @@ pub fn epoch_dense(
 
     // Normalize active stake.
     inplace_normalize(&mut active_stake);
-    println!("S:\n{:?}\n", &active_stake);
+    // println!("S:\n{:?}\n", &active_stake);
 
     // =============
     // == Weights ==
@@ -151,23 +151,23 @@ pub fn epoch_dense(
 
     // Access network weights row unnormalized.
     let mut weights: Vec<Vec<I32F32>> = get_weights(store, netuid);
-    println!("W:\n{:?}\n", &weights);
+    // println!("W:\n{:?}\n", &weights);
 
     // Mask weights that are not from permitted validators.
     inplace_mask_rows(&validator_forbids, &mut weights);
-    println!("W (permit): {:?}", &weights);
+    // println!("W (permit): {:?}", &weights);
 
     // Remove self-weight by masking diagonal.
     inplace_mask_diag(&mut weights);
-    println!("W (permit+diag):\n{:?}\n", &weights);
+    // println!("W (permit+diag):\n{:?}\n", &weights);
 
     // Mask outdated weights: remove weights referring to deregistered neurons.
     inplace_mask_matrix(&outdated, &mut weights);
-    println!("W (permit+diag+outdate):\n{:?}\n", &weights);
+    // println!("W (permit+diag+outdate):\n{:?}\n", &weights);
 
     // Normalize remaining weights.
     inplace_row_normalize(&mut weights);
-    println!("W (mask+norm):\n{:?}\n", &weights);
+    // println!("W (mask+norm):\n{:?}\n", &weights);
 
     // ================================
     // == Consensus, Validator Trust ==
@@ -194,7 +194,7 @@ pub fn epoch_dense(
 
     inplace_normalize(&mut ranks);
     let incentive: Vec<I32F32> = ranks.clone();
-    println!("I:\n{:?}\n", &incentive);
+    // println!("I:\n{:?}\n", &incentive);
 
     // =========================
     // == Bonds and Dividends ==
@@ -204,12 +204,12 @@ pub fn epoch_dense(
     let mut bonds: Vec<Vec<I32F32>> = get_bonds(store, netuid);
     inplace_mask_matrix(&outdated, &mut bonds); // mask outdated bonds
     inplace_col_normalize(&mut bonds); // sum_i b_ij = 1
-    println!("B:\n{:?}\n", &bonds);
+    // println!("B:\n{:?}\n", &bonds);
 
     // Compute bonds delta column normalized.
     let mut bonds_delta: Vec<Vec<I32F32>> = row_hadamard(&weights, &active_stake); // ΔB = W◦S
     inplace_col_normalize(&mut bonds_delta); // sum_i b_ij = 1
-    println!("ΔB:\n{:?}\n", &bonds_delta);
+    // println!("ΔB:\n{:?}\n", &bonds_delta);
 
     // Compute bonds moving average.
     let bonds_moving_average: I64F64 =
@@ -217,12 +217,12 @@ pub fn epoch_dense(
     let alpha: I32F32 = I32F32::from_num(1) - I32F32::from_num(bonds_moving_average);
     let mut ema_bonds: Vec<Vec<I32F32>> = mat_ema(&bonds_delta, &bonds, alpha);
     inplace_col_normalize(&mut ema_bonds); // sum_i b_ij = 1
-    println!("emaB:\n{:?}\n", &ema_bonds);
+    // println!("emaB:\n{:?}\n", &ema_bonds);
 
     // Compute dividends: d_i = SUM(j) b_ij * inc_j
     let mut dividends: Vec<I32F32> = matmul_transpose(&ema_bonds, &incentive);
     inplace_normalize(&mut dividends);
-    println!("D:\n{:?}\n", &dividends);
+    // println!("D:\n{:?}\n", &dividends);
 
     // =================================
     // == Emission and Pruning scores ==
@@ -292,15 +292,15 @@ pub fn epoch_dense(
         .collect();
 
     // api.debug(&format!( "nSE: {:?}", &normalized_server_emission ));
-    println!("SE: {:?}", &server_emission);
+    // println!("SE: {:?}", &server_emission);
     // api.debug(&format!( "nVE: {:?}", &normalized_validator_emission ));
-    println!("VE: {:?}", &validator_emission);
+    // println!("VE: {:?}", &validator_emission);
     // api.debug(&format!( "nCE: {:?}", &normalized_combined_emission ));
-    println!("CE: {:?}", &combined_emission);
+    // println!("CE: {:?}", &combined_emission);
 
     // Set pruning scores using combined emission scores.
     let pruning_scores: Vec<I32F32> = normalized_combined_emission.clone();
-    println!("P: {:?}", &pruning_scores);
+    // println!("P: {:?}", &pruning_scores);
 
     // ===================
     // == Value storage ==

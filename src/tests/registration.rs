@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::mock_info;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Uint128};
 
 use crate::contract::execute;
 use crate::msg::ExecuteMsg;
@@ -1000,7 +1000,7 @@ fn test_registration_get_neuron_metadata() {
     // let neuron_uid = get_uid_for_net_and_hotkey(&deps.storage,  netuid, &hotkey_account_id ).unwrap();
     let neuron: AxonInfoOf =
         get_axon_info(&deps.storage, netuid, &Addr::unchecked(hotkey_account_id));
-    assert_eq!(neuron.ip, 0);
+    assert_eq!(neuron.ip, Uint128::zero());
     assert_eq!(neuron.version, 0);
     assert_eq!(neuron.port, 0)
 }
